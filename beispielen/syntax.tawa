@@ -1,0 +1,11 @@
+paket "syntax"
+
+"tawa" ist importiert
+
+funk haupt() ganze {
+
+}
+
+funk haupt() {
+
+}
