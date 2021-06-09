@@ -3,6 +3,9 @@ paket "syntax"
 "tawa" ist importiert
 
 funk haupt() {
+    a := b
+    a: a = b
+    a = b
     falls falsch {
 
     } wenn nicht geil

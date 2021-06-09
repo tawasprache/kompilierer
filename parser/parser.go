@@ -28,6 +28,15 @@ type Expression struct {
 		Werden    Expression  `@@`
 		WennNicht *Expression `("wenn" "nicht" @@)?`
 	} `@@ |`
+	Definierung *struct {
+		Variable string     `@Ident`
+		Art      *Art       `":" @@?`
+		Wert     Expression `"=" @@`
+	} `@@ |`
+	Zuweisung *struct {
+		Variable string     `@Ident`
+		Wert     Expression `"=" @@`
+	} `@@ |`
 	Variable *string      `@Ident |`
 	Block    []Expression `("{" @@* "}")`
 }
