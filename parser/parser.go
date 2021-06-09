@@ -24,9 +24,9 @@ type Funktion struct {
 
 type Expression struct {
 	Bedingung *struct {
-		Falls     Expression  `"falls" @@`
-		Werden    Expression  `@@`
-		WennNicht *Expression `("sonst" @@)?`
+		Falls  Expression  `"falls" @@`
+		Werden Expression  `@@`
+		Sonst  *Expression `("sonst" @@)?`
 	} `@@ |`
 	Definierung *struct {
 		Variable string     `@Ident`
