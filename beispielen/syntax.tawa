@@ -6,7 +6,7 @@ funk haupt() {
     a := b
     a: a = b
     a = b
-    falls falsch {
+    wenn falsch {
 
     } sonst a
 }
