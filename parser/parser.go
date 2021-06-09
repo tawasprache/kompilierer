@@ -18,14 +18,20 @@ type Funktion struct {
 		Name string `@Ident ":"`
 		Art  Art    `@@`
 	} `@@* ")"`
-	Resultatart *Art       `@@?`
+	Resultatart *Art       `(":" @@)?`
 	Expression  Expression `@@`
 }
 
 type Expression struct {
-	Block struct{} `"{" "}"`
+	Bedingung *struct {
+		Falls     Expression  `"falls" @@`
+		Werden    Expression  `@@`
+		WennNicht *Expression `("wenn" "nicht" @@)?`
+	} `@@ |`
+	Variable *string      `@Ident |`
+	Block    []Expression `("{" @@* "}")`
 }
 
 var (
-	Parser = participle.MustBuild(&Datei{})
+	Parser = participle.MustBuild(&Datei{}, participle.UseLookahead(2))
 )

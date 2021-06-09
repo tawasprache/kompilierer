@@ -2,8 +2,10 @@ paket "syntax"
 
 "tawa" ist importiert
 
-funk haupt() ganze {
+funk haupt() {
+    falls falsch {
 
+    } wenn nicht geil
 }
 
 funk haupt() {
