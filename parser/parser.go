@@ -26,7 +26,7 @@ type Expression struct {
 	Bedingung *struct {
 		Falls     Expression  `"falls" @@`
 		Werden    Expression  `@@`
-		WennNicht *Expression `("wenn" "nicht" @@)?`
+		WennNicht *Expression `("sonst" @@)?`
 	} `@@ |`
 	Definierung *struct {
 		Variable string     `@Ident`

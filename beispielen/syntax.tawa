@@ -8,7 +8,7 @@ funk haupt() {
     a = b
     falls falsch {
 
-    } wenn nicht geil
+    } wenn nicht a
 }
 
 funk haupt() {
