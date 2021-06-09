@@ -2,10 +2,11 @@ package main
 
 import (
 	"Tawa/parser"
+	"Tawa/typisierung"
+	"fmt"
 	"io/ioutil"
 	"os"
-
-	"github.com/alecthomas/repr"
+	"strings"
 )
 
 func main() {
@@ -18,5 +19,16 @@ func main() {
 	if feh != nil {
 		panic(feh)
 	}
-	repr.Println(es)
+	v := typisierung.VollKontext{}
+	v.Push()
+	err := typisierung.VariabelnDefinierung(&v, &es)
+	if err != nil {
+		if v, ok := err.(*typisierung.Fehler); ok {
+			s := string(datei)
+			fmt.Printf("%s:%d:\n", os.Args[1], v.Line)
+			println(strings.Split(s, "\n")[v.Line-1])
+		}
+		println(err.Error())
+		os.Exit(1)
+	}
 }

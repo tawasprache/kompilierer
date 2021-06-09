@@ -3,14 +3,7 @@ paket "syntax"
 "tawa" ist importiert
 
 funk haupt() {
+    a := {}
     a := b
-    a: a = b
-    a = b
-    wenn falsch {
-
-    } sonst a
 }
 
-funk haupt() {
-
-}

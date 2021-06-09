@@ -1,6 +1,9 @@
 package parser
 
-import "github.com/alecthomas/participle/v2"
+import (
+	"github.com/alecthomas/participle/v2"
+	"github.com/alecthomas/participle/v2/lexer"
+)
 
 type Datei struct {
 	Paket        string     `"paket" @String`
@@ -39,6 +42,9 @@ type Expression struct {
 	} `@@ |`
 	Variable *string      `@Ident |`
 	Block    []Expression `("{" @@* "}")`
+
+	Pos    lexer.Position
+	EndPos lexer.Position
 }
 
 var (
