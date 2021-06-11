@@ -2,4 +2,6 @@ paket "syntax"
 
 "tawa" ist importiert
 
-funk nicht(a: logik) wenn a Falsch sonst Wahr
+funk foo() { foo() foo() foo() wenn nicht(Wahr) Falsch sonst Wahr }
+
+funk nicht(a: logik): logik wenn a Falsch sonst Wahr

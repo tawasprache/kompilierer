@@ -146,6 +146,15 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 		} else {
 			return constant.False
 		}
+	} else if e.Funktionsaufruf != nil {
+		fn := c.lookup(e.Funktionsaufruf.Name).(LLVMValue).Value
+
+		args := []value.Value{}
+		for _, arg := range e.Funktionsaufruf.Argumente {
+			args = append(args, codegenExpression(c, &arg, b))
+		}
+
+		return (*b).NewCall(fn, args...)
 	}
 
 	repr.Println(e)
