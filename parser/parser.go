@@ -15,33 +15,40 @@ type Art struct {
 	Normal *string `@Ident`
 }
 
-type Funktion struct {
-	Name                string `"funk" @Ident "("`
-	Funktionsargumenten []struct {
-		Name string `@Ident ":"`
-		Art  Art    `@@`
-	} `@@* ")"`
-	Resultatart *Art       `(":" @@)?`
-	Expression  Expression `@@`
+type Funktionsargument struct {
+	Name string `@Ident ":"`
+	Art  Art    `@@`
 }
 
+type Funktion struct {
+	Name                string              `"funk" @Ident "("`
+	Funktionsargumenten []Funktionsargument `@@* ")"`
+	Resultatart         *Art                `(":" @@)?`
+	Expression          Expression          `@@`
+}
+
+type Bedingung struct {
+	Wenn   Expression  `"wenn" @@`
+	Werden Expression  `@@`
+	Sonst  *Expression `("sonst" @@)?`
+}
+
+type Definierung struct {
+	Variable string     `@Ident`
+	Art      *Art       `":" @@?`
+	Wert     Expression `"=" @@`
+}
+
+type Zuweisung struct {
+	Variable string     `@Ident`
+	Wert     Expression `"=" @@`
+}
 type Expression struct {
-	Bedingung *struct {
-		Wenn   Expression  `"wenn" @@`
-		Werden Expression  `@@`
-		Sonst  *Expression `("sonst" @@)?`
-	} `@@ |`
-	Definierung *struct {
-		Variable string     `@Ident`
-		Art      *Art       `":" @@?`
-		Wert     Expression `"=" @@`
-	} `@@ |`
-	Zuweisung *struct {
-		Variable string     `@Ident`
-		Wert     Expression `"=" @@`
-	} `@@ |`
-	Variable *string      `@Ident |`
-	Block    []Expression `("{" @@* "}")`
+	Bedingung   *Bedingung   `@@ |`
+	Definierung *Definierung `@@ |`
+	Zuweisung   *Zuweisung   `@@ |`
+	Variable    *string      `@Ident |`
+	Block       []Expression `("{" @@* "}")`
 
 	Pos    lexer.Position
 	EndPos lexer.Position

@@ -10,6 +10,10 @@ import (
 )
 
 func main() {
+	if os.Args[1] == "--parser" {
+		println(parser.Parser.String())
+		return
+	}
 	datei, feh := ioutil.ReadFile(os.Args[1])
 	if feh != nil {
 		panic(feh)

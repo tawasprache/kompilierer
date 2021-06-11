@@ -49,6 +49,9 @@ func definiert(v *VollKontext, e *parser.Expression) error {
 func VariabelnDefinierung(v *VollKontext, d *parser.Datei) error {
 	for _, fnk := range d.Funktionen {
 		v.Push()
+		for _, es := range fnk.Funktionsargumenten {
+			v.Top().Variabeln[es.Name] = Art{}
+		}
 		if err := definiert(v, &fnk.Expression); err != nil {
 			return err
 		}
