@@ -26,10 +26,10 @@ type Funktionsargument struct {
 }
 
 type Funktion struct {
-	Name                string              `"funk" @Ident "("`
-	Funktionsargumenten []Funktionsargument `( @@ ( "," @@ )* )? ")"`
-	Resultatart         *Art                `(":" @@)?`
-	Expression          Expression          `@@`
+	Name               string              `"funk" @Ident "("`
+	Funktionsargumente []Funktionsargument `( @@ ( "," @@ )* )? ")"`
+	Resultatart        *Art                `(":" @@)?`
+	Expression         Expression          `@@`
 }
 
 type Bedingung struct {
@@ -48,12 +48,23 @@ type Zuweisung struct {
 	Variable string     `@Ident`
 	Wert     Expression `"=" @@`
 }
+
+type Funktionsaufruf struct {
+	Name      string       `@Ident`
+	Argumente []Expression `"(" ( @@ ( "," @@ )* )? ")"`
+}
+
+type Block struct {
+	Expr []Expression `("{" @@* "}")`
+}
+
 type Expression struct {
-	Bedingung   *Bedingung   `@@ |`
-	Definierung *Definierung `@@ |`
-	Zuweisung   *Zuweisung   `@@ |`
-	Variable    *string      `@Ident |`
-	Block       []Expression `("{" @@* "}")`
+	Bedingung       *Bedingung       `@@ |`
+	Definierung     *Definierung     `@@ |`
+	Zuweisung       *Zuweisung       `@@ |`
+	Funktionsaufruf *Funktionsaufruf `@@ |`
+	Variable        *string          `@Ident |`
+	Block           *Block           `@@`
 
 	Pos    lexer.Position
 	EndPos lexer.Position

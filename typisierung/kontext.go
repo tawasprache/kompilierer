@@ -43,6 +43,7 @@ func (k *KontextStack) LookupArt(s string) (typen.Art, bool) {
 }
 
 type VollKontext struct {
+	Funktionen map[string]typen.Funktion
 	KontextStack
 }
 
@@ -62,6 +63,7 @@ var (
 
 func NeuVollKontext() *VollKontext {
 	return &VollKontext{
+		Funktionen: map[string]typen.Funktion{},
 		KontextStack: KontextStack{
 			&Kontext{
 				Arten: map[string]typen.Art{

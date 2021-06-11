@@ -2,7 +2,17 @@ paket "syntax"
 
 "tawa" ist importiert
 
+funk foo(a: ganz) {
+    b := a
+}
+
+funk bar(a: vzlosganz) {
+}
+
 funk haupt(a: ganz, b: vzlosganz) {
+    foo(a)
+    bar(a)
+
     d := a
     {
         c := a
