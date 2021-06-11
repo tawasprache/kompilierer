@@ -3,6 +3,10 @@ paket "syntax"
 "tawa" ist importiert
 
 funk haupt(a: ganz, b: vzlosganz) {
-    a = b
+    d := a
+    {
+        c := a
+    }
+    c := a
 }
 

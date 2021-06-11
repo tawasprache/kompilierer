@@ -77,12 +77,16 @@ func artVonExpression(v *VollKontext, e *parser.Expression) (typen.Art, error) {
 	} else if e.Block != nil {
 		var art typen.Art
 		var err error
+
+		v.Push()
 		for _, it := range e.Block {
 			art, err = artVonExpression(v, &it)
 			if err != nil {
 				return nil, err
 			}
 		}
+		v.Pop()
+
 		return art, nil
 	}
 	panic("a")
