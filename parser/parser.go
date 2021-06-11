@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"Tawa/typen"
+
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
 )
@@ -13,6 +15,9 @@ type Datei struct {
 
 type Art struct {
 	Normal *string `@Ident`
+
+	Pos    lexer.Position
+	EndPos lexer.Position
 }
 
 type Funktionsargument struct {
@@ -22,7 +27,7 @@ type Funktionsargument struct {
 
 type Funktion struct {
 	Name                string              `"funk" @Ident "("`
-	Funktionsargumenten []Funktionsargument `@@* ")"`
+	Funktionsargumenten []Funktionsargument `( @@ ( "," @@ )* )? ")"`
 	Resultatart         *Art                `(":" @@)?`
 	Expression          Expression          `@@`
 }
@@ -52,6 +57,8 @@ type Expression struct {
 
 	Pos    lexer.Position
 	EndPos lexer.Position
+
+	Art typen.Art
 }
 
 var (

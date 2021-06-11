@@ -23,9 +23,9 @@ func main() {
 	if feh != nil {
 		panic(feh)
 	}
-	v := typisierung.VollKontext{}
+	v := typisierung.NeuVollKontext()
 	v.Push()
-	err := typisierung.VariabelnDefinierung(&v, &es)
+	err := typisierung.Typisierung(v, &es)
 	if err != nil {
 		if v, ok := err.(*typisierung.Fehler); ok {
 			s := string(datei)

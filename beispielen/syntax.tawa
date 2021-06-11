@@ -2,8 +2,7 @@ paket "syntax"
 
 "tawa" ist importiert
 
-funk haupt(a: ganze) {
-    a := {}
-    a := b
+funk haupt(a: ganz, b: vzlosganz) {
+    a = b
 }
 
