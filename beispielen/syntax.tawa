@@ -2,21 +2,19 @@ paket "syntax"
 
 "tawa" ist importiert
 
-funk foo(a: ganz) {
+funk foo(a: ganz, c: logik) {
     b := a
+
+    wenn c {
+        d := a
+    } sonst wenn c {
+        d := a
+    } sonst a
 }
 
 funk bar(a: vzlosganz) {
 }
 
 funk haupt(a: ganz, b: vzlosganz) {
-    foo(a)
-    bar(a)
-
-    d := a
-    {
-        c := a
-    }
-    c := a
 }
 

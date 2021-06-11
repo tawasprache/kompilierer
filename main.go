@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Tawa/codegenerierung"
 	"Tawa/parser"
 	"Tawa/typisierung"
 	"fmt"
@@ -35,4 +36,5 @@ func main() {
 		println(err.Error())
 		os.Exit(1)
 	}
+	println(codegenerierung.Codegen(&es))
 }

@@ -23,6 +23,8 @@ type Art struct {
 type Funktionsargument struct {
 	Name string `@Ident ":"`
 	Art  Art    `@@`
+
+	TypenArt typen.Art
 }
 
 type Funktion struct {
@@ -30,6 +32,8 @@ type Funktion struct {
 	Funktionsargumente []Funktionsargument `( @@ ( "," @@ )* )? ")"`
 	Resultatart        *Art                `(":" @@)?`
 	Expression         Expression          `@@`
+
+	Art typen.Art
 }
 
 type Bedingung struct {
@@ -58,12 +62,17 @@ type Block struct {
 	Expr []Expression `("{" @@* "}")`
 }
 
+type Integer struct {
+	Value int64 `@Int`
+}
+
 type Expression struct {
 	Bedingung       *Bedingung       `@@ |`
 	Definierung     *Definierung     `@@ |`
 	Zuweisung       *Zuweisung       `@@ |`
 	Funktionsaufruf *Funktionsaufruf `@@ |`
 	Variable        *string          `@Ident |`
+	Integer         *Integer         `@@ |`
 	Block           *Block           `@@`
 
 	Pos    lexer.Position

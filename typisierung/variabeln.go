@@ -20,7 +20,11 @@ func artVonParser(v *VollKontext, a *parser.Art) (typen.Art, error) {
 	panic("a")
 }
 
-func artVonExpression(v *VollKontext, e *parser.Expression) (typen.Art, error) {
+func artVonExpression(v *VollKontext, e *parser.Expression) (a typen.Art, err error) {
+	defer func() {
+		e.Art = a
+	}()
+
 	if e.Bedingung != nil {
 		lArt, err := artVonExpression(v, &e.Bedingung.Wenn)
 		if err != nil {
@@ -117,12 +121,14 @@ func artVonExpression(v *VollKontext, e *parser.Expression) (typen.Art, error) {
 		}
 
 		return f.Returntyp, nil
+	} else if e.Integer != nil {
+		return ganzArt, nil
 	}
 	panic("a")
 }
 
 func Typisierung(v *VollKontext, d *parser.Datei) error {
-	for _, es := range d.Funktionen {
+	for idx, es := range d.Funktionen {
 		t := typen.Funktion{}
 		typ, feh := artVonParser(v, es.Resultatart)
 		if feh != nil {
@@ -138,6 +144,7 @@ func Typisierung(v *VollKontext, d *parser.Datei) error {
 		}
 
 		v.Funktionen[es.Name] = t
+		d.Funktionen[idx].Art = t
 	}
 	for _, fnk := range d.Funktionen {
 		v.Push()
