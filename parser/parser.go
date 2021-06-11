@@ -66,11 +66,16 @@ type Integer struct {
 	Value int64 `@Int`
 }
 
+type Logik struct {
+	Wert string `@("Wahr" | "Falsch")`
+}
+
 type Expression struct {
 	Bedingung       *Bedingung       `@@ |`
 	Definierung     *Definierung     `@@ |`
 	Zuweisung       *Zuweisung       `@@ |`
 	Funktionsaufruf *Funktionsaufruf `@@ |`
+	Logik           *Logik           `@@ |`
 	Variable        *string          `@Ident |`
 	Integer         *Integer         `@@ |`
 	Block           *Block           `@@`

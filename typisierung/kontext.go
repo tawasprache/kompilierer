@@ -48,7 +48,7 @@ type VollKontext struct {
 }
 
 var (
-	logikArt     = typen.Primitiv{Name: "logik"}
+	logikArt     = typen.Logik{}
 	ganzArt      = typen.Primitiv{Name: "ganz"}
 	g8Art        = typen.Primitiv{Name: "g8"}
 	g16Art       = typen.Primitiv{Name: "g16"}

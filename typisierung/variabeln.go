@@ -123,6 +123,8 @@ func artVonExpression(v *VollKontext, e *parser.Expression) (a typen.Art, err er
 		return f.Returntyp, nil
 	} else if e.Integer != nil {
 		return ganzArt, nil
+	} else if e.Logik != nil {
+		return logikArt, nil
 	}
 	panic("a")
 }

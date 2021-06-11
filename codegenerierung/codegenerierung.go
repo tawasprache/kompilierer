@@ -23,8 +23,6 @@ func llvmTypVonTypen(p typen.Art) types.Type {
 		return types.NewFunc(llvmTypVonTypen(w.Returntyp), params...)
 	case typen.Primitiv:
 		switch w.Name {
-		case "logik":
-			return types.I8
 		case "ganz":
 			return types.I32
 		case "g8":
@@ -50,6 +48,8 @@ func llvmTypVonTypen(p typen.Art) types.Type {
 		}
 	case typen.Nichts:
 		return types.Void
+	case typen.Logik:
+		return types.I8
 	default:
 		panic("a")
 	}
@@ -140,6 +140,12 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 		return phi
 	} else if e.Integer != nil {
 		return constant.NewInt(types.I32, e.Integer.Value)
+	} else if e.Logik != nil {
+		if e.Logik.Wert == "Wahr" {
+			return constant.True
+		} else {
+			return constant.False
+		}
 	}
 
 	repr.Println(e)

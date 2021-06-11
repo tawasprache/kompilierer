@@ -73,3 +73,13 @@ func (n Nichts) IstGleich(a Art) bool {
 	_, ok := a.(Nichts)
 	return ok
 }
+
+type Logik struct{}
+
+func (n Logik) String() string {
+	return "logik"
+}
+func (n Logik) IstGleich(a Art) bool {
+	_, ok := a.(Logik)
+	return ok
+}
