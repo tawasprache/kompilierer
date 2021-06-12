@@ -2,6 +2,17 @@ paket "syntax"
 
 "tawa" ist importiert
 
-funk foo() { foo() foo() foo() wenn nicht(Wahr) Falsch sonst Wahr }
+typ Boolean ist logik
 
-funk nicht(a: logik): logik wenn a Falsch sonst Wahr
+funk haupt()
+{
+    nicht(cast Wahr nach Boolean)
+}
+
+funk nicht(a: Boolean): Boolean
+{
+    wenn cast a nach logik
+        cast Falsch nach Boolean
+    sonst
+        cast Wahr nach Boolean
+}

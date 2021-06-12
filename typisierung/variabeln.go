@@ -83,7 +83,7 @@ func artVonExpression(v *VollKontext, e *parser.Expression) (a typen.Art, err er
 		}
 		return typ, nil
 	} else if e.Block != nil {
-		var art typen.Art
+		var art typen.Art = typen.Nichts{}
 		var err error
 
 		v.Push()
@@ -125,11 +125,34 @@ func artVonExpression(v *VollKontext, e *parser.Expression) (a typen.Art, err er
 		return ganzArt, nil
 	} else if e.Logik != nil {
 		return logikArt, nil
+	} else if e.Cast != nil {
+		von, feh := artVonExpression(v, &e.Cast.Von)
+		if feh != nil {
+			return nil, feh
+		}
+		nach, feh := artVonParser(v, &e.Cast.Nach)
+		if feh != nil {
+			return nil, feh
+		}
+		if !(von.KannNach(nach) || nach.KannVon(von)) {
+			return nil, NeuFehler(e.Pos, "»%s« kann nicht nach »%s« umgewandelt werden", von, nach)
+		}
+		return nach, nil
 	}
 	panic("a")
 }
 
 func Typisierung(v *VollKontext, d *parser.Datei) error {
+	for _, es := range d.Typdeklarationen {
+		typ, feh := artVonParser(v, &es.Art)
+		if feh != nil {
+			return feh
+		}
+		v.Top().Arten[es.Name] = typen.Neutyp{
+			Name: es.Name,
+			Von:  typ,
+		}
+	}
 	for idx, es := range d.Funktionen {
 		t := typen.Funktion{}
 		typ, feh := artVonParser(v, es.Resultatart)
@@ -164,7 +187,13 @@ func Typisierung(v *VollKontext, d *parser.Datei) error {
 			return feh
 		}
 
-		_ = art
+		if !art.IstGleich(fnk.Art.(typen.Funktion).Returntyp) && !fnk.Art.(typen.Funktion).Returntyp.IstGleich(typen.Nichts{}) {
+			if art.IstGleich(typen.Nichts{}) {
+				return NeuFehler(fnk.Pos, "kein Return-Anweisung mit Wert, in Funktion mit Rückgabetyp »%s«", fnk.Art.(typen.Funktion).Returntyp)
+			} else {
+				return NeuFehler(fnk.Expression.Pos, "ungültige Umwandlung von »%s« in »%s«", art, fnk.Art.(typen.Funktion).Returntyp)
+			}
+		}
 
 		v.Pop()
 	}

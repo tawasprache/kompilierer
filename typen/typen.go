@@ -1,14 +1,24 @@
 package typen
 
-import "strings"
+import (
+	"strings"
+)
 
 type Art interface {
 	String() string
 	IstGleich(Art) bool
+	KannVon(Art) bool
+	KannNach(Art) bool
 }
+
+type kannVonNicht struct{}
+
+func (kannVonNicht) KannVon(Art) bool  { return false }
+func (kannVonNicht) KannNach(Art) bool { return false }
 
 type Primitiv struct {
 	Name string
+	kannVonNicht
 }
 
 func (p Primitiv) IstGleich(a Art) bool {
@@ -27,6 +37,7 @@ func (p Primitiv) String() string {
 type Funktion struct {
 	Argumente []Art
 	Returntyp Art
+	kannVonNicht
 }
 
 func (p Funktion) IstGleich(a Art) bool {
@@ -64,7 +75,7 @@ func (p Funktion) String() string {
 	return s.String()
 }
 
-type Nichts struct{}
+type Nichts struct{ kannVonNicht }
 
 func (n Nichts) String() string {
 	return "nichts"
@@ -74,7 +85,7 @@ func (n Nichts) IstGleich(a Art) bool {
 	return ok
 }
 
-type Logik struct{}
+type Logik struct{ kannVonNicht }
 
 func (n Logik) String() string {
 	return "logik"
@@ -82,4 +93,45 @@ func (n Logik) String() string {
 func (n Logik) IstGleich(a Art) bool {
 	_, ok := a.(Logik)
 	return ok
+}
+
+type Neutyp struct {
+	Name string
+	Von  Art
+}
+
+func (n Neutyp) String() string {
+	return n.Name
+}
+func (n Neutyp) IstGleich(a Art) bool {
+	v, ok := a.(Neutyp)
+	return ok && v.Name == n.Name
+}
+func (n Neutyp) KannVon(a Art) bool {
+	switch v := n.Von.(type) {
+	case Primitiv:
+		t, ok := a.(Primitiv)
+		if !ok {
+			return false
+		}
+		return v.Name == t.Name
+	case Logik:
+		_, ok := a.(Logik)
+		return ok
+	}
+	return false
+}
+func (n Neutyp) KannNach(a Art) bool {
+	switch v := n.Von.(type) {
+	case Primitiv:
+		t, ok := a.(Primitiv)
+		if !ok {
+			return false
+		}
+		return v.Name == t.Name
+	case Logik:
+		_, ok := a.(Logik)
+		return ok
+	}
+	return false
 }

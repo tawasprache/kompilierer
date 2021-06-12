@@ -50,6 +50,8 @@ func llvmTypVonTypen(p typen.Art) types.Type {
 		return types.Void
 	case typen.Logik:
 		return types.I8
+	case typen.Neutyp:
+		return llvmTypVonTypen(w.Von)
 	default:
 		panic("a")
 	}
@@ -155,6 +157,8 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 		}
 
 		return (*b).NewCall(fn, args...)
+	} else if e.Cast != nil {
+		return codegenExpression(c, &e.Cast.Von, b)
 	}
 
 	repr.Println(e)

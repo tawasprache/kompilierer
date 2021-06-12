@@ -12,6 +12,7 @@ type KontextStack []*Kontext
 func (k *KontextStack) Push() *Kontext {
 	es := &Kontext{}
 	es.Variabeln = map[string]typen.Art{}
+	es.Arten = map[string]typen.Art{}
 	*k = append(*k, es)
 	return es
 }

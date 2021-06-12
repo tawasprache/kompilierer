@@ -8,9 +8,10 @@ import (
 )
 
 type Datei struct {
-	Paket        string     `"paket" @String`
-	Importierten []string   `(@String "ist" "importiert")*`
-	Funktionen   []Funktion `@@*`
+	Paket            string           `"paket" @String`
+	Importierten     []string         `(@String "ist" "importiert")*`
+	Typdeklarationen []Typdeklaration `@@*`
+	Funktionen       []Funktion       `@@*`
 }
 
 type Art struct {
@@ -33,7 +34,14 @@ type Funktion struct {
 	Resultatart        *Art                `(":" @@)?`
 	Expression         Expression          `@@`
 
-	Art typen.Art
+	Art    typen.Art
+	Pos    lexer.Position
+	EndPos lexer.Position
+}
+
+type Typdeklaration struct {
+	Name string `"typ" @Ident "ist"`
+	Art  Art    `@@`
 }
 
 type Bedingung struct {
@@ -70,14 +78,20 @@ type Logik struct {
 	Wert string `@("Wahr" | "Falsch")`
 }
 
+type Cast struct {
+	Von  Expression `"cast" @@`
+	Nach Art        `"nach" @@`
+}
+
 type Expression struct {
 	Bedingung       *Bedingung       `@@ |`
 	Definierung     *Definierung     `@@ |`
 	Zuweisung       *Zuweisung       `@@ |`
 	Funktionsaufruf *Funktionsaufruf `@@ |`
 	Logik           *Logik           `@@ |`
-	Variable        *string          `@Ident |`
+	Cast            *Cast            `@@ |`
 	Integer         *Integer         `@@ |`
+	Variable        *string          `@Ident |`
 	Block           *Block           `@@`
 
 	Pos    lexer.Position
