@@ -49,11 +49,19 @@ func llvmTypVonTypen(p typen.Art) types.Type {
 	case typen.Nichts:
 		return types.Void
 	case typen.Logik:
-		return types.I8
+		return types.I1
 	case typen.Neutyp:
 		return llvmTypVonTypen(w.Von)
+	case typen.Struktur:
+		a := types.NewStruct()
+		for _, it := range w.Fields {
+			a.Fields = append(a.Fields, llvmTypVonTypen(it.Typ))
+		}
+		return a
+	case typen.Zeiger:
+		return types.NewPointer(llvmTypVonTypen(w.Auf))
 	default:
-		panic("a")
+		panic("a " + repr.String(p))
 	}
 }
 
@@ -159,6 +167,57 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 		return (*b).NewCall(fn, args...)
 	} else if e.Cast != nil {
 		return codegenExpression(c, &e.Cast.Von, b)
+	} else if e.Löschen != nil {
+		val := codegenExpression(c, &e.Löschen.Expr, b)
+
+		fn := (*b).Parent.Parent.NewFunc("free", types.Void, ir.NewParam("addr", types.NewInt(64)))
+
+		(*b).NewCall(fn, (*b).NewPtrToInt(val, types.I64))
+
+		return val
+	} else if e.Neu != nil {
+		wert := codegenExpression(c, e.Neu.Expression, b)
+
+		ptr := types.NewPointer(wert.Type())
+
+		gep := (*b).NewGetElementPtr(wert.Type(), constant.NewNull(ptr), constant.NewInt(types.I32, 1))
+		grosse := (*b).NewPtrToInt(gep, types.I64)
+
+		fn := (*b).Parent.Parent.NewFunc("malloc", types.NewPointer(types.NewInt(8)), ir.NewParam("size", types.NewInt(64)))
+
+		ret := (*b).NewCall(fn, grosse)
+
+		ptrret := (*b).NewBitCast(ret, types.NewPointer(wert.Type()))
+
+		(*b).NewStore(wert, ptrret)
+
+		return ptrret
+	} else if e.Stack != nil {
+		kind := c.lookup(e.Stack.Initialisierung.Name).(TypenTyp).Art.(typen.Struktur)
+
+		typ := llvmTypVonTypen(kind)
+		alloca := (*b).NewAlloca(typ)
+
+		for _, it := range e.Stack.Initialisierung.Fields {
+			wert := codegenExpression(c, &it.Wert, b)
+
+			a := -1
+			for pos, f := range kind.Fields {
+				if f.Name == it.Name {
+					println(f.Name)
+					println(pos)
+					a = pos
+					break
+				}
+			}
+
+			ptr := (*b).NewGetElementPtr(typ, alloca, constant.NewInt(types.I32, 0), constant.NewInt(types.I32, int64(a)))
+			_, _ = wert, ptr
+			println(typ.String())
+			_ = (*b).NewStore(wert, ptr)
+		}
+
+		return alloca
 	}
 
 	repr.Println(e)
@@ -186,7 +245,12 @@ func codegenFunktion(c *ctx, d *parser.Funktion, module *ir.Module) {
 	if types.IsVoid(funk.Sig.RetType) {
 		funk.Blocks[len(funk.Blocks)-1].NewRet(nil)
 	} else {
-		funk.Blocks[len(funk.Blocks)-1].NewRet(ret)
+		if types.IsStruct(funk.Sig.RetType) {
+			es := funk.Blocks[len(funk.Blocks)-1].NewLoad(funk.Sig.RetType, ret)
+			funk.Blocks[len(funk.Blocks)-1].NewRet(es)
+		} else {
+			funk.Blocks[len(funk.Blocks)-1].NewRet(ret)
+		}
 	}
 }
 
@@ -206,6 +270,10 @@ func Codegen(d *parser.Datei) string {
 	c := &ctx{
 		names:           []map[string]namedThing{{}},
 		stringConstants: map[string]value.Value{},
+	}
+
+	for _, it := range d.Typdeklarationen {
+		c.names[0][it.Name] = TypenTyp{Art: it.CodeArt}
 	}
 
 	it := codegen(c, d)

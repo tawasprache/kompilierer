@@ -14,8 +14,23 @@ type Datei struct {
 	Funktionen       []Funktion       `@@*`
 }
 
+type Strukturfield struct {
+	Name string `@Ident`
+	Art  Art    `@@`
+}
+
+type Struktur struct {
+	Fields []Strukturfield `"struktur" "(" @@* ")"`
+}
+
+type Zeiger struct {
+	Auf *Art `"zeiger" "auf" @@`
+}
+
 type Art struct {
-	Normal *string `@Ident`
+	Struktur *Struktur `@@ |`
+	Zeiger   *Zeiger   `@@ |`
+	Normal   *string   `@Ident`
 
 	Pos    lexer.Position
 	EndPos lexer.Position
@@ -42,6 +57,8 @@ type Funktion struct {
 type Typdeklaration struct {
 	Name string `"typ" @Ident "ist"`
 	Art  Art    `@@`
+
+	CodeArt typen.Art
 }
 
 type Bedingung struct {
@@ -67,7 +84,7 @@ type Funktionsaufruf struct {
 }
 
 type Block struct {
-	Expr []Expression `("{" @@* "}")`
+	Expr []Expression `("(" @@* ")")`
 }
 
 type Integer struct {
@@ -83,6 +100,31 @@ type Cast struct {
 	Nach Art        `"nach" @@`
 }
 
+type Strukturinitialisierungsfield struct {
+	Name string     `@Ident "ist"`
+	Wert Expression `@@`
+}
+
+type Strukturinitialisierung struct {
+	Name   string                          `@Ident "("`
+	Fields []Strukturinitialisierungsfield `@@* ")"`
+
+	Pos    lexer.Position
+	EndPos lexer.Position
+}
+
+type Neu struct {
+	Expression *Expression `"neu" @@`
+}
+
+type Stack struct {
+	Initialisierung Strukturinitialisierung `"stack" @@`
+}
+
+type Löschen struct {
+	Expr Expression `"lösche" @@`
+}
+
 type Expression struct {
 	Bedingung       *Bedingung       `@@ |`
 	Definierung     *Definierung     `@@ |`
@@ -91,6 +133,9 @@ type Expression struct {
 	Logik           *Logik           `@@ |`
 	Cast            *Cast            `@@ |`
 	Integer         *Integer         `@@ |`
+	Löschen         *Löschen         `@@ |`
+	Neu             *Neu             `@@ |`
+	Stack           *Stack           `@@ |`
 	Variable        *string          `@Ident |`
 	Block           *Block           `@@`
 

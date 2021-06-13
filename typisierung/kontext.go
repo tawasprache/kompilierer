@@ -60,6 +60,7 @@ var (
 	vzlosg16Art  = typen.Primitiv{Name: "vzlosg16"}
 	vzlosg32Art  = typen.Primitiv{Name: "vzlosg32"}
 	vzlosg64Art  = typen.Primitiv{Name: "vzlosg64"}
+	nichtsArt    = typen.Nichts{}
 )
 
 func NeuVollKontext() *VollKontext {
@@ -83,6 +84,8 @@ func NeuVollKontext() *VollKontext {
 					"vzlosg16":  vzlosg16Art,
 					"vzlosg32":  vzlosg32Art,
 					"vzlosg64":  vzlosg64Art,
+
+					"nichts": nichtsArt,
 				},
 				Variabeln: map[string]typen.Art{},
 			},

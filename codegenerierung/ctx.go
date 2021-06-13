@@ -1,6 +1,7 @@
 package codegenerierung
 
 import (
+	"Tawa/typen"
 	"go/types"
 
 	"github.com/llir/llvm/ir/value"
@@ -23,6 +24,10 @@ type LLVMType struct {
 	NamedThingImpl
 	types.Type
 	fields map[string]int
+}
+type TypenTyp struct {
+	NamedThingImpl
+	Art typen.Art
 }
 
 type ctx struct {

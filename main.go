@@ -36,5 +36,5 @@ func main() {
 		println(err.Error())
 		os.Exit(1)
 	}
-	println(codegenerierung.Codegen(&es))
+	os.Stdout.Write([]byte(codegenerierung.Codegen(&es)))
 }

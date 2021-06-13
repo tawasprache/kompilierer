@@ -1,6 +1,7 @@
 package typen
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -133,5 +134,72 @@ func (n Neutyp) KannNach(a Art) bool {
 		_, ok := a.(Logik)
 		return ok
 	}
+	return false
+}
+
+type Strukturfield struct {
+	Name string
+	Typ  Art
+}
+type Struktur struct {
+	Fields []Strukturfield
+}
+
+func (n Struktur) String() string {
+	var s strings.Builder
+	s.WriteString("struktur {")
+	for _, f := range n.Fields {
+		s.WriteString(fmt.Sprintf("%s %s", f.Name, f.Typ))
+	}
+	s.WriteString("}")
+	return s.String()
+}
+func (n Struktur) IstGleich(a Art) bool {
+	an, ok := a.(Struktur)
+	if !ok {
+		return false
+	}
+
+	if len(an.Fields) != len(n.Fields) {
+		return false
+	}
+
+	for idx := range an.Fields {
+		if n.Fields[idx].Name != an.Fields[idx].Name {
+			return false
+		}
+		if !n.Fields[idx].Typ.IstGleich(an.Fields[idx].Typ) {
+			return false
+		}
+	}
+
+	return true
+}
+func (n Struktur) KannVon(a Art) bool {
+	return false
+}
+func (n Struktur) KannNach(a Art) bool {
+	return false
+}
+
+type Zeiger struct {
+	Auf Art
+}
+
+func (n Zeiger) String() string {
+	return fmt.Sprintf("zeiger auf %s", n.Auf)
+}
+func (n Zeiger) IstGleich(a Art) bool {
+	z, ok := a.(Zeiger)
+	if !ok {
+		return false
+	}
+
+	return z.Auf.IstGleich(n.Auf)
+}
+func (n Zeiger) KannVon(a Art) bool {
+	return false
+}
+func (n Zeiger) KannNach(a Art) bool {
 	return false
 }

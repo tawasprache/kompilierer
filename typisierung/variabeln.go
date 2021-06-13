@@ -1,6 +1,8 @@
 package typisierung
 
 import (
+	"github.com/alecthomas/repr"
+
 	"Tawa/parser"
 	"Tawa/typen"
 )
@@ -16,8 +18,68 @@ func artVonParser(v *VollKontext, a *parser.Art) (typen.Art, error) {
 			return nil, NeuFehler(a.Pos, "Typ »%s« nicht definiert", *a.Normal)
 		}
 		return we, nil
+	} else if a.Struktur != nil {
+		s := typen.Struktur{}
+
+		for _, f := range a.Struktur.Fields {
+			t, feh := artVonParser(v, &f.Art)
+			if feh != nil {
+				return nil, feh
+			}
+
+			s.Fields = append(s.Fields, typen.Strukturfield{
+				Name: f.Name,
+				Typ:  t,
+			})
+		}
+
+		return s, nil
+	} else if a.Zeiger != nil {
+		t, feh := artVonParser(v, a.Zeiger.Auf)
+		if feh != nil {
+			return nil, feh
+		}
+
+		return typen.Zeiger{Auf: t}, nil
 	}
-	panic("a")
+
+	panic("a " + repr.String(a))
+}
+
+func artVonStrukt(v *VollKontext, e *parser.Strukturinitialisierung) (a typen.Art, err error) {
+	we, ok := v.LookupArt(e.Name)
+	if !ok {
+		return nil, NeuFehler(e.Pos, "typ »%s« nicht deklariert", e.Name)
+	}
+	nt, ok := we.(typen.Neutyp)
+	if !ok {
+		return nil, NeuFehler(e.Pos, "typ »%s« ist kein Struktur", e.Name)
+	}
+	strukt, ok := nt.Von.(typen.Struktur)
+	if !ok {
+		return nil, NeuFehler(e.Pos, "typ »%s« ist kein Struktur", e.Name)
+	}
+
+outer:
+	for _, it := range e.Fields {
+		for _, f := range strukt.Fields {
+			if f.Name == it.Name {
+				v, err := artVonExpression(v, &it.Wert)
+				if err != nil {
+					return nil, err
+				}
+
+				if !v.IstGleich(f.Typ) {
+					return nil, NeuFehler(e.Pos, "field »%s« ist nicht »%s«, sondern »%s«", it.Name, v, f.Typ)
+				}
+
+				continue outer
+			}
+		}
+		return nil, NeuFehler(e.Pos, "»%s« ist kein field von »%s«", it.Name, e.Name)
+	}
+
+	return we, nil
 }
 
 func artVonExpression(v *VollKontext, e *parser.Expression) (a typen.Art, err error) {
@@ -138,16 +200,32 @@ func artVonExpression(v *VollKontext, e *parser.Expression) (a typen.Art, err er
 			return nil, NeuFehler(e.Pos, "»%s« kann nicht nach »%s« umgewandelt werden", von, nach)
 		}
 		return nach, nil
+	} else if e.Löschen != nil {
+		_, err := artVonExpression(v, &e.Löschen.Expr)
+		if err != nil {
+			return nil, err
+		}
+		return nichtsArt, nil
+	} else if e.Stack != nil {
+		return artVonStrukt(v, &e.Stack.Initialisierung)
+	} else if e.Neu != nil {
+		es, err := artVonExpression(v, e.Neu.Expression)
+		if err != nil {
+			return nil, err
+		}
+		return typen.Zeiger{Auf: es}, nil
 	}
-	panic("a")
+
+	panic("a " + repr.String(e))
 }
 
 func Typisierung(v *VollKontext, d *parser.Datei) error {
-	for _, es := range d.Typdeklarationen {
+	for idx, es := range d.Typdeklarationen {
 		typ, feh := artVonParser(v, &es.Art)
 		if feh != nil {
 			return feh
 		}
+		d.Typdeklarationen[idx].CodeArt = typ
 		v.Top().Arten[es.Name] = typen.Neutyp{
 			Name: es.Name,
 			Von:  typ,
