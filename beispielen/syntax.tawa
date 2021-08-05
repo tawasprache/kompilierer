@@ -43,3 +43,10 @@ funk nicht(a: Boolean): Boolean
     sonst
         cast Wahr nach Boolean
 )
+
+funk main()
+(
+    NeuHallöchen()
+
+    nicht(cast Wahr nach Boolean)
+)

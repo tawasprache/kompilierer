@@ -1,13 +1,17 @@
+// +build !wasm
+
 package main
 
 import (
-	"Tawa/codegenerierung"
+	"Tawa/interpreter"
 	"Tawa/parser"
 	"Tawa/typisierung"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/alecthomas/repr"
 )
 
 func main() {
@@ -36,5 +40,9 @@ func main() {
 		println(err.Error())
 		os.Exit(1)
 	}
-	os.Stdout.Write([]byte(codegenerierung.Codegen(&es)))
+
+	vk := interpreter.NeuVollKontext()
+	vk.Push()
+
+	repr.Println(interpreter.Interpret(es, "main", vk))
 }
