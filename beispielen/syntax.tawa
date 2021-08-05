@@ -10,6 +10,16 @@ typ Hallöchen ist struktur
     Es zeiger auf logik
 )
 
+typ Farbe ist entweder
+    Grün oder Gelb oder Rot
+
+typ ReligiöseFührer ist entweder
+    Judentum von (entweder USAReformRabbi oder UKReformRabbi oder MasortiRabbi oder OrthodoxRabbi oder AnderesRabbi)
+    oder
+    Christentum von (entweder Papst oder Priester oder Pastor)
+    oder
+    Pronomen von (Nom und Acc)
+
 funk haupt()
 (
     nicht(cast Wahr nach Boolean)
