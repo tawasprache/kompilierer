@@ -3,6 +3,7 @@
 package main
 
 import (
+	"Tawa/codegenerierung"
 	"Tawa/interpreter"
 	"Tawa/parser"
 	"Tawa/typisierung"
@@ -28,6 +29,7 @@ func main() {
 	if feh != nil {
 		panic(feh)
 	}
+	es.Vorverarbeiten()
 	v := typisierung.NeuVollKontext()
 	v.Push()
 	err := typisierung.Typisierung(v, &es)
@@ -40,6 +42,8 @@ func main() {
 		println(err.Error())
 		os.Exit(1)
 	}
+
+	println(codegenerierung.Codegen(&es))
 
 	vk := interpreter.NeuVollKontext()
 	vk.Push()

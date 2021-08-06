@@ -7,13 +7,13 @@ import (
 	"github.com/alecthomas/repr"
 )
 
-func interpretExpression(es parser.Datei, fn parser.Expression, mit *VollKontext) (wert, error) {
+func interpretExpression(es parser.Datei, fn parser.Expression, mit *VollKontext) (*vollwert, error) {
 	if fn.Bedingung != nil {
 		cond, err := interpretExpression(es, fn.Bedingung.Wenn, mit)
 		if err != nil {
 			return nil, err
 		}
-		if cond.(logik).val {
+		if cond.rechts.(logik).val {
 			return interpretExpression(es, fn.Bedingung.Wenn, mit)
 		} else if fn.Bedingung.Sonst != nil {
 			return interpretExpression(es, *fn.Bedingung.Sonst, mit)
@@ -24,14 +24,14 @@ func interpretExpression(es parser.Datei, fn parser.Expression, mit *VollKontext
 		if err != nil {
 			return nil, err
 		}
-		mit.Top().Variabeln[fn.Definierung.Variable] = w
+		mit.Top().Variabeln[fn.Definierung.Variable] = w.rechts
 		return w, nil
 	} else if fn.Zuweisung != nil {
 		w, err := interpretExpression(es, fn.Zuweisung.Wert, mit)
 		if err != nil {
 			return nil, err
 		}
-		mit.Top().Variabeln[fn.Zuweisung.Variable] = w
+		mit.Top().Variabeln[fn.Zuweisung.Variable] = w.rechts
 		return w, nil
 	} else if fn.Funktionsaufruf != nil {
 		var exprs []wert
@@ -40,7 +40,7 @@ func interpretExpression(es parser.Datei, fn parser.Expression, mit *VollKontext
 			if err != nil {
 				return nil, err
 			}
-			exprs = append(exprs, w)
+			exprs = append(exprs, w.rechts)
 		}
 
 		mit.Push()
@@ -52,18 +52,18 @@ func interpretExpression(es parser.Datei, fn parser.Expression, mit *VollKontext
 
 		return interpretExpression(es, mit.Funktionen[fn.Funktionsaufruf.Name].Expression, mit)
 	} else if fn.Logik != nil {
-		return logik{val: fn.Logik.Wert == "Wahr"}, nil
+		return vrechts(logik{val: fn.Logik.Wert == "Wahr"}), nil
 	} else if fn.Cast != nil {
 		return interpretExpression(es, fn.Cast.Von, mit)
 	} else if fn.Integer != nil {
-		return ganz{val: fn.Integer.Value}, nil
+		return vrechts(ganz{val: fn.Integer.Value}), nil
 	} else if fn.Löschen != nil {
 		w, err := interpretExpression(es, *&fn.Löschen.Expr, mit)
 		if err != nil {
 			return nil, err
 		}
 
-		*(w.(ptr).w) = nil
+		*(w.rechts.(ptr)).w = nil
 		return nil, nil
 	} else if fn.Neu != nil {
 		w, err := interpretExpression(es, *fn.Neu.Expression, mit)
@@ -72,9 +72,9 @@ func interpretExpression(es parser.Datei, fn parser.Expression, mit *VollKontext
 		}
 
 		a := new(*wert)
-		*a = &w
+		*a = &w.rechts
 
-		return ptr{w: a}, nil
+		return vrechts(ptr{w: a}), nil
 	} else if fn.Stack != nil {
 		a, ok := mit.LookupArt(fn.Stack.Initialisierung.Name)
 		if !ok {
@@ -82,16 +82,16 @@ func interpretExpression(es parser.Datei, fn parser.Expression, mit *VollKontext
 		}
 		b := a.(typen.Neutyp).Von.(typen.Struktur)
 
-		userExprs := map[string]wert{}
+		userExprs := map[string]*wert{}
 		for _, it := range fn.Stack.Initialisierung.Fields {
 			w, err := interpretExpression(es, it.Wert, mit)
 			if err != nil {
 				return nil, err
 			}
-			userExprs[it.Name] = w
+			userExprs[it.Name] = &w.rechts
 		}
 
-		exprs := map[string]wert{}
+		exprs := map[string]*wert{}
 		for _, it := range b.Fields {
 			if v, ok := userExprs[it.Name]; ok {
 				exprs[it.Name] = v
@@ -100,13 +100,13 @@ func interpretExpression(es parser.Datei, fn parser.Expression, mit *VollKontext
 			}
 		}
 
-		return struktur{fields: exprs}, nil
+		return vrechts(struktur{fields: exprs}), nil
 	} else if fn.Variable != nil {
 		v, ok := mit.LookupVariable(*fn.Variable)
 		if !ok {
 			panic("var nicht gefunden")
 		}
-		return v, nil
+		return vrechts(v), nil
 	} else if fn.Block != nil {
 		mit.Push()
 		defer mit.Pop()
@@ -116,15 +116,41 @@ func interpretExpression(es parser.Datei, fn parser.Expression, mit *VollKontext
 			if err != nil {
 				return nil, err
 			}
-			v = va
+			v = va.rechts
 		}
-		return v, nil
+		return vrechts(v), nil
 	} else if fn.Dereferenzierung != nil {
 		v, feh := interpretExpression(es, fn.Dereferenzierung.Expr, mit)
 		if feh != nil {
 			return nil, feh
 		}
-		return **v.(ptr).w, nil
+		conv := v.rechts.(ptr)
+		return vrechts(**conv.w), nil
+	} else if fn.Fieldexpression != nil {
+		v, feh := interpretExpression(es, fn.Fieldexpression.Expr, mit)
+		if feh != nil {
+			return nil, feh
+		}
+
+		fn := v.rechts.(struktur).fields[fn.Fieldexpression.Field]
+
+		a := new(*wert)
+		*a = fn
+
+		return &vollwert{links: lvalue{w: a}, rechts: **a}, nil
+	} else if fn.Zuweisungsexpression != nil {
+		l, feh := interpretExpression(es, fn.Zuweisungsexpression.Links, mit)
+		if feh != nil {
+			return nil, feh
+		}
+
+		r, feh := interpretExpression(es, fn.Zuweisungsexpression.Rechts, mit)
+		if feh != nil {
+			return nil, feh
+		}
+
+		**l.links.w = r.rechts
+		return r, nil
 	}
 
 	panic("e")
@@ -185,7 +211,8 @@ func Interpret(es parser.Datei, von string, mit *VollKontext) (wert, error) {
 	}
 	for _, it := range es.Funktionen {
 		if it.Name == von {
-			return interpretExpression(es, it.Expression, mit)
+			it, err := interpretExpression(es, it.Expression, mit)
+			return it.rechts, err
 		}
 	}
 	panic("missing foo")

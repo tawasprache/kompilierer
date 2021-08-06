@@ -15,6 +15,7 @@ func Evaluate(prog, filename string) string {
 	if feh != nil {
 		return feh.Error()
 	}
+	es.Vorverarbeiten()
 	v := typisierung.NeuVollKontext()
 	v.Push()
 	err := typisierung.Typisierung(v, &es)

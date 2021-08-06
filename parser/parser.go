@@ -129,25 +129,105 @@ type Dereferenzierung struct {
 	Expr Expression `"deref" @@`
 }
 
+type Fieldoperator struct {
+	Field string `"." @Ident`
+}
+
+type Zuweisungsoperator struct {
+	Wert Expression `"=" @@`
+}
+
+type Fieldexpression struct {
+	Expr  Expression
+	Field string
+
+	FieldIndex int
+}
+
+type Zuweisungsexpression struct {
+	Links  Expression
+	Rechts Expression
+}
+
+type Postfix struct {
+	Fieldoperator      *Fieldoperator      `@@ |`
+	Zuweisungsoperator *Zuweisungsoperator `@@`
+
+	Pos    lexer.Position
+	EndPos lexer.Position
+}
+
 type Expression struct {
-	Bedingung        *Bedingung        `@@ |`
-	Definierung      *Definierung      `@@ |`
-	Zuweisung        *Zuweisung        `@@ |`
-	Funktionsaufruf  *Funktionsaufruf  `@@ |`
-	Logik            *Logik            `@@ |`
-	Cast             *Cast             `@@ |`
-	Integer          *Integer          `@@ |`
-	Löschen          *Löschen          `@@ |`
-	Neu              *Neu              `@@ |`
-	Stack            *Stack            `@@ |`
-	Dereferenzierung *Dereferenzierung `@@ |`
-	Variable         *string           `@Ident |`
-	Block            *Block            `@@`
+	Bedingung            *Bedingung        `(@@ |`
+	Definierung          *Definierung      `@@ |`
+	Zuweisung            *Zuweisung        `@@ |`
+	Funktionsaufruf      *Funktionsaufruf  `@@ |`
+	Logik                *Logik            `@@ |`
+	Cast                 *Cast             `@@ |`
+	Integer              *Integer          `@@ |`
+	Löschen              *Löschen          `@@ |`
+	Neu                  *Neu              `@@ |`
+	Stack                *Stack            `@@ |`
+	Dereferenzierung     *Dereferenzierung `@@ |`
+	Variable             *string           `@Ident |`
+	Block                *Block            `@@)`
+	Fieldexpression      *Fieldexpression
+	Zuweisungsexpression *Zuweisungsexpression
+
+	Postfix []*Postfix `(@@*)?`
 
 	Pos    lexer.Position
 	EndPos lexer.Position
 
 	Art typen.Art
+}
+
+func (d Expression) Vorverarbeiten() Expression {
+	if d.Block != nil {
+		for idx, it := range d.Block.Expr {
+			d.Block.Expr[idx] = it.Vorverarbeiten()
+		}
+	}
+
+	if len(d.Postfix) == 0 {
+		return d
+	}
+
+	head := d.Postfix[0]
+	elm := d.Postfix[1:]
+	d.Postfix = []*Postfix{}
+
+	if head.Fieldoperator != nil {
+		return Expression{
+			Fieldexpression: &Fieldexpression{
+				Expr:  d,
+				Field: head.Fieldoperator.Field,
+			},
+			Pos:     d.Pos,
+			EndPos:  head.EndPos,
+			Postfix: elm,
+		}.Vorverarbeiten()
+	} else if head.Zuweisungsoperator != nil {
+		return Expression{
+			Zuweisungsexpression: &Zuweisungsexpression{
+				Links:  d,
+				Rechts: head.Zuweisungsoperator.Wert,
+			},
+			Pos:     d.Pos,
+			EndPos:  head.EndPos,
+			Postfix: elm,
+		}.Vorverarbeiten()
+	} else {
+		panic("e")
+	}
+}
+
+func (d *Datei) Vorverarbeiten() {
+	for idx, it := range d.Funktionen {
+		e := it.Expression
+
+		d.Funktionen[idx].Expression = e.Vorverarbeiten()
+	}
 }
 
 var (

@@ -1,5 +1,14 @@
 package interpreter
 
+type vollwert struct {
+	links  lvalue
+	rechts wert
+}
+
+func vrechts(v wert) *vollwert {
+	return &vollwert{rechts: v}
+}
+
 type wert interface{ isWert() }
 
 type IsWert struct{}
@@ -24,8 +33,14 @@ type ptr struct {
 	w **wert
 }
 
+type lvalue struct {
+	IsWert
+
+	w **wert
+}
+
 type struktur struct {
 	IsWert
 
-	fields map[string]wert
+	fields map[string]*wert
 }

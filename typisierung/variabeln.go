@@ -226,6 +226,55 @@ func artVonExpression(v *VollKontext, e *parser.Expression) (a typen.Art, err er
 		}
 
 		return v.Auf, nil
+	} else if e.Zuweisungsexpression != nil {
+		es, err := artVonExpression(v, &e.Zuweisungsexpression.Links)
+		if err != nil {
+			return nil, err
+		}
+
+		r, err := artVonExpression(v, &e.Zuweisungsexpression.Rechts)
+		if err != nil {
+			return nil, err
+		}
+
+		if !es.IstGleich(r) {
+			return nil, NeuFehler(e.Pos, "»%s« kann nicht als »%s« in Zuweisung genutzt werden", r, es)
+		}
+
+		return r, nil
+	} else if e.Fieldexpression != nil {
+		es, err := artVonExpression(v, &e.Fieldexpression.Expr)
+		if err != nil {
+			return nil, err
+		}
+
+		nt, ok := es.(typen.Neutyp)
+		if !ok {
+			return nil, NeuFehler(e.Pos, "»%s« ist kein Struktur", es)
+		}
+		v, ok := nt.Von.(typen.Struktur)
+		if !ok {
+			return nil, NeuFehler(e.Pos, "»%s« ist kein Struktur", es)
+		}
+
+		var f typen.Art
+		var i int
+		for idx, it := range v.Fields {
+			if it.Name == e.Fieldexpression.Field {
+				f = it.Typ
+				i = idx
+				break
+			}
+		}
+		e.Fieldexpression.FieldIndex = i
+
+		if f == nil {
+			return nil, NeuFehler(e.Pos, "»%s« ist kein Field von »%s«", e.Fieldexpression.Field, v)
+		}
+
+		return f, nil
+	} else {
+		panic("e " + repr.String(e))
 	}
 
 	panic("a " + repr.String(e))

@@ -2,6 +2,7 @@ paket "syntax"
 
 "tawa" ist importiert
 
+/*
 typ Boolean ist logik
 
 typ Hallöchen ist struktur
@@ -61,8 +62,40 @@ funk main()
 
     nicht(cast Wahr nach Boolean)
 )
+*/
 
-funk NeuEs(): Es
+typ Funkyer ist struktur (
+    Ok logik
+)
+
+typ Funky ist struktur (
+    Ok logik
+    F Funkyer
+)
+
+funk A()
 (
-    a := stack Es( )
+    a := stack Funky ( Ok ist Falsch )
+    a.Ok = Falsch
+)
+
+funk main()
+(
+    a := stack Funky (
+        Ok ist Falsch
+        F ist stack Funkyer (
+            Ok ist Wahr
+        )
+    )
+    a.F.Ok = Falsch
+    a.F.Ok
+)
+
+funk fubar(): logik
+(
+    a := stack Funky (
+        Ok ist Falsch
+    )
+
+    a.Ok
 )

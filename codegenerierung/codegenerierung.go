@@ -13,6 +13,15 @@ import (
 	"github.com/llir/llvm/ir/value"
 )
 
+type vollwert struct {
+	links  value.Value
+	rechts value.Value
+}
+
+func vrechts(v value.Value) *vollwert {
+	return &vollwert{rechts: v}
+}
+
 func llvmTypVonTypen(p typen.Art) types.Type {
 	switch w := p.(type) {
 	case typen.Funktion:
@@ -80,7 +89,7 @@ func codegenPrefunktionen(c *ctx, d *parser.Datei, module *ir.Module) {
 	}
 }
 
-func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
+func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) *vollwert {
 	if e == nil {
 		return nil
 	}
@@ -90,16 +99,16 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 
 		c.pushScope()
 		for _, statement := range e.Block.Expr {
-			last = codegenExpression(c, &statement, b)
+			last = codegenExpression(c, &statement, b).rechts
 		}
 		c.popScope()
 
-		return last
+		return vrechts(last)
 	} else if e.Definierung != nil {
 		val := codegenExpression(c, &e.Definierung.Wert, b)
 
-		alloca := (*b).NewAlloca(val.Type())
-		(*b).NewStore(val, alloca)
+		alloca := (*b).NewAlloca(val.rechts.Type())
+		(*b).NewStore(val.rechts, alloca)
 
 		c.top()[e.Definierung.Variable] = LLVMMutableValue{Value: alloca}
 
@@ -107,9 +116,12 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 	} else if e.Variable != nil {
 		switch v := c.lookup(*e.Variable).(type) {
 		case LLVMValue:
-			return v.Value
+			return vrechts(v.Value)
 		case LLVMMutableValue:
-			return (*b).NewLoad(v.Value.Type().(*types.PointerType).ElemType, v.Value)
+			return &vollwert{
+				links:  v.Value,
+				rechts: (*b).NewLoad(v.Value.Type().(*types.PointerType).ElemType, v.Value),
+			}
 		default:
 			panic("aa")
 		}
@@ -123,7 +135,7 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 		thenBloc := fn.NewBlock("then" + strconv.Itoa(c.i))
 		thenValue := codegenExpression(c, &e.Bedingung.Werden, &thenBloc)
 
-		condCmp := (*b).NewICmp(enum.IPredNE, condVal, constant.False)
+		condCmp := (*b).NewICmp(enum.IPredNE, condVal.rechts, constant.False)
 		elseBloc := fn.NewBlock("else" + strconv.Itoa(c.i))
 
 		if e.Bedingung.Sonst == nil {
@@ -136,7 +148,7 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 		elseValue := codegenExpression(c, e.Bedingung.Sonst, &elseBloc)
 
 		mergeBloc := fn.NewBlock("ifcont" + strconv.Itoa(c.i))
-		phi := mergeBloc.NewPhi(ir.NewIncoming(thenValue, thenBloc), ir.NewIncoming(elseValue, elseBloc))
+		phi := mergeBloc.NewPhi(ir.NewIncoming(thenValue.rechts, thenBloc), ir.NewIncoming(elseValue.rechts, elseBloc))
 
 		// time to add the conditional now that we built the blocks
 		(*b).NewCondBr(condCmp, thenBloc, elseBloc)
@@ -147,24 +159,24 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 
 		*b = mergeBloc
 
-		return phi
+		return vrechts(phi)
 	} else if e.Integer != nil {
-		return constant.NewInt(types.I32, e.Integer.Value)
+		return vrechts(constant.NewInt(types.I32, e.Integer.Value))
 	} else if e.Logik != nil {
 		if e.Logik.Wert == "Wahr" {
-			return constant.True
+			return vrechts(constant.True)
 		} else {
-			return constant.False
+			return vrechts(constant.False)
 		}
 	} else if e.Funktionsaufruf != nil {
 		fn := c.lookup(e.Funktionsaufruf.Name).(LLVMValue).Value
 
 		args := []value.Value{}
 		for _, arg := range e.Funktionsaufruf.Argumente {
-			args = append(args, codegenExpression(c, &arg, b))
+			args = append(args, codegenExpression(c, &arg, b).rechts)
 		}
 
-		return (*b).NewCall(fn, args...)
+		return vrechts((*b).NewCall(fn, args...))
 	} else if e.Cast != nil {
 		return codegenExpression(c, &e.Cast.Von, b)
 	} else if e.Löschen != nil {
@@ -172,26 +184,26 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 
 		fn := (*b).Parent.Parent.NewFunc("free", types.Void, ir.NewParam("addr", types.NewInt(64)))
 
-		(*b).NewCall(fn, (*b).NewPtrToInt(val, types.I64))
+		(*b).NewCall(fn, (*b).NewPtrToInt(val.rechts, types.I64))
 
 		return val
 	} else if e.Neu != nil {
 		wert := codegenExpression(c, e.Neu.Expression, b)
 
-		ptr := types.NewPointer(wert.Type())
+		ptr := types.NewPointer(wert.rechts.Type())
 
-		gep := (*b).NewGetElementPtr(wert.Type(), constant.NewNull(ptr), constant.NewInt(types.I32, 1))
+		gep := (*b).NewGetElementPtr(wert.rechts.Type(), constant.NewNull(ptr), constant.NewInt(types.I32, 1))
 		grosse := (*b).NewPtrToInt(gep, types.I64)
 
 		fn := (*b).Parent.Parent.NewFunc("malloc", types.NewPointer(types.NewInt(8)), ir.NewParam("size", types.NewInt(64)))
 
 		ret := (*b).NewCall(fn, grosse)
 
-		ptrret := (*b).NewBitCast(ret, types.NewPointer(wert.Type()))
+		ptrret := (*b).NewBitCast(ret, types.NewPointer(wert.rechts.Type()))
 
-		(*b).NewStore(wert, ptrret)
+		(*b).NewStore(wert.rechts, ptrret)
 
-		return ptrret
+		return vrechts(ptrret)
 	} else if e.Stack != nil {
 		kind := c.lookup(e.Stack.Initialisierung.Name).(TypenTyp).Art.(typen.Struktur)
 
@@ -204,26 +216,50 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 			a := -1
 			for pos, f := range kind.Fields {
 				if f.Name == it.Name {
-					println(f.Name)
-					println(pos)
 					a = pos
 					break
 				}
 			}
 
 			ptr := (*b).NewGetElementPtr(typ, alloca, constant.NewInt(types.I32, 0), constant.NewInt(types.I32, int64(a)))
-			_, _ = wert, ptr
-			println(typ.String())
-			_ = (*b).NewStore(wert, ptr)
+
+			if v, ok := wert.rechts.(*ir.InstAlloca); ok {
+				loaded := (*b).NewLoad(v.ElemType, wert.rechts)
+				_ = (*b).NewStore(loaded, wert.rechts)
+			} else {
+				_ = (*b).NewStore(wert.rechts, ptr)
+			}
+
 		}
 
-		return alloca
+		return vrechts(alloca)
 	} else if e.Dereferenzierung != nil {
 		w := codegenExpression(c, &e.Dereferenzierung.Expr, b)
 
-		l := (*b).NewLoad(w.Type().(*types.PointerType).ElemType, w)
+		l := (*b).NewLoad(w.rechts.Type().(*types.PointerType).ElemType, w.rechts)
 
-		return l
+		return vrechts(l)
+	} else if e.Zuweisungsexpression != nil {
+		links := codegenExpression(c, &e.Zuweisungsexpression.Links, b)
+		rechts := codegenExpression(c, &e.Zuweisungsexpression.Rechts, b)
+
+		es := (*b).NewStore(rechts.rechts, links.links)
+
+		return vrechts(es.Src)
+	} else if e.Fieldexpression != nil {
+		expr := codegenExpression(c, &e.Fieldexpression.Expr, b)
+		idx := e.Fieldexpression.FieldIndex
+
+		t := expr.rechts.(value.Value).Type().(*types.PointerType).ElemType.(*types.StructType)
+
+		ptr := (*b).NewGetElementPtr(expr.rechts.Type().(*types.PointerType).ElemType, expr.rechts, constant.NewInt(types.I32, 0), constant.NewInt(types.I32, int64(idx)))
+		a := (*b).NewLoad(t.Fields[idx], ptr)
+
+		if types.IsStruct(a.Type()) {
+			return &vollwert{links: ptr, rechts: ptr}
+		} else {
+			return &vollwert{links: ptr, rechts: a}
+		}
 	}
 
 	repr.Println(e)
@@ -252,10 +288,10 @@ func codegenFunktion(c *ctx, d *parser.Funktion, module *ir.Module) {
 		funk.Blocks[len(funk.Blocks)-1].NewRet(nil)
 	} else {
 		if types.IsStruct(funk.Sig.RetType) {
-			es := funk.Blocks[len(funk.Blocks)-1].NewLoad(funk.Sig.RetType, ret)
+			es := funk.Blocks[len(funk.Blocks)-1].NewLoad(funk.Sig.RetType, ret.rechts)
 			funk.Blocks[len(funk.Blocks)-1].NewRet(es)
 		} else {
-			funk.Blocks[len(funk.Blocks)-1].NewRet(ret)
+			funk.Blocks[len(funk.Blocks)-1].NewRet(ret.rechts)
 		}
 	}
 }
