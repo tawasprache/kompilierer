@@ -218,6 +218,12 @@ func codegenExpression(c *ctx, e *parser.Expression, b **ir.Block) value.Value {
 		}
 
 		return alloca
+	} else if e.Dereferenzierung != nil {
+		w := codegenExpression(c, &e.Dereferenzierung.Expr, b)
+
+		l := (*b).NewLoad(w.Type().(*types.PointerType).ElemType, w)
+
+		return l
 	}
 
 	repr.Println(e)

@@ -125,19 +125,24 @@ type Löschen struct {
 	Expr Expression `"lösche" @@`
 }
 
+type Dereferenzierung struct {
+	Expr Expression `"deref" @@`
+}
+
 type Expression struct {
-	Bedingung       *Bedingung       `@@ |`
-	Definierung     *Definierung     `@@ |`
-	Zuweisung       *Zuweisung       `@@ |`
-	Funktionsaufruf *Funktionsaufruf `@@ |`
-	Logik           *Logik           `@@ |`
-	Cast            *Cast            `@@ |`
-	Integer         *Integer         `@@ |`
-	Löschen         *Löschen         `@@ |`
-	Neu             *Neu             `@@ |`
-	Stack           *Stack           `@@ |`
-	Variable        *string          `@Ident |`
-	Block           *Block           `@@`
+	Bedingung        *Bedingung        `@@ |`
+	Definierung      *Definierung      `@@ |`
+	Zuweisung        *Zuweisung        `@@ |`
+	Funktionsaufruf  *Funktionsaufruf  `@@ |`
+	Logik            *Logik            `@@ |`
+	Cast             *Cast             `@@ |`
+	Integer          *Integer          `@@ |`
+	Löschen          *Löschen          `@@ |`
+	Neu              *Neu              `@@ |`
+	Stack            *Stack            `@@ |`
+	Dereferenzierung *Dereferenzierung `@@ |`
+	Variable         *string           `@Ident |`
+	Block            *Block            `@@`
 
 	Pos    lexer.Position
 	EndPos lexer.Position
@@ -146,5 +151,5 @@ type Expression struct {
 }
 
 var (
-	Parser = participle.MustBuild(&Datei{}, participle.UseLookahead(2))
+	Parser = participle.MustBuild(&Datei{}, participle.UseLookahead(4))
 )

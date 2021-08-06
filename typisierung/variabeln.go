@@ -214,6 +214,18 @@ func artVonExpression(v *VollKontext, e *parser.Expression) (a typen.Art, err er
 			return nil, err
 		}
 		return typen.Zeiger{Auf: es}, nil
+	} else if e.Dereferenzierung != nil {
+		es, err := artVonExpression(v, &e.Dereferenzierung.Expr)
+		if err != nil {
+			return nil, err
+		}
+
+		v, ok := es.(typen.Zeiger)
+		if !ok {
+			return nil, NeuFehler(e.Pos, "»%s« ist kein Zeiger", v)
+		}
+
+		return v.Auf, nil
 	}
 
 	panic("a " + repr.String(e))

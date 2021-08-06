@@ -10,6 +10,10 @@ typ Hallöchen ist struktur
     Es zeiger auf logik
 )
 
+typ Es ist struktur (
+    Ok logik
+)
+
 funk haupt()
 (
     nicht(cast Wahr nach Boolean)
@@ -19,6 +23,8 @@ funk NeuHallöchen(): Hallöchen
 (
     b := 1
     a := neu b
+
+    c := deref a
     lösche a
 
     lösche neu stack Hallöchen (
@@ -27,6 +33,11 @@ funk NeuHallöchen(): Hallöchen
     stack Hallöchen (
         Ok ist Falsch
     )
+)
+
+funk Foo(): ganz
+(
+    deref neu 1
 )
 
 funk NeuHallöchenZeiger(): zeiger auf Hallöchen
@@ -49,4 +60,9 @@ funk main()
     NeuHallöchen()
 
     nicht(cast Wahr nach Boolean)
+)
+
+funk NeuEs(): Es
+(
+    a := stack Es( )
 )

@@ -119,6 +119,12 @@ func interpretExpression(es parser.Datei, fn parser.Expression, mit *VollKontext
 			v = va
 		}
 		return v, nil
+	} else if fn.Dereferenzierung != nil {
+		v, feh := interpretExpression(es, fn.Dereferenzierung.Expr, mit)
+		if feh != nil {
+			return nil, feh
+		}
+		return **v.(ptr).w, nil
 	}
 
 	panic("e")
