@@ -7,25 +7,30 @@ import (
 	"Tawa/interpreter"
 	"Tawa/parser"
 	"Tawa/typisierung"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
-
-	"github.com/alecthomas/repr"
 )
 
 func main() {
-	if os.Args[1] == "--parser" {
+	llvm := flag.Bool("als-llvm", false, "compilieren nach llvm")
+	interp := flag.Bool("als-interpreter", false, "interpreter")
+	parse := flag.Bool("parser", false, "parser drücken")
+
+	flag.Parse()
+
+	if *parse {
 		println(parser.Parser.String())
 		return
 	}
-	datei, feh := ioutil.ReadFile(os.Args[1])
+	datei, feh := ioutil.ReadFile(flag.Arg(0))
 	if feh != nil {
 		panic(feh)
 	}
 	es := parser.Datei{}
-	feh = parser.Parser.ParseBytes(os.Args[1], datei, &es)
+	feh = parser.Parser.ParseBytes(flag.Arg(0), datei, &es)
 	if feh != nil {
 		panic(feh)
 	}
@@ -36,17 +41,29 @@ func main() {
 	if err != nil {
 		if v, ok := err.(*typisierung.Fehler); ok {
 			s := string(datei)
-			fmt.Printf("%s:%d:\n", os.Args[1], v.Line)
+			fmt.Printf("%s:%d:\n", flag.Arg(0), v.Line)
 			println(strings.Split(s, "\n")[v.Line-1])
 		}
 		println(err.Error())
 		os.Exit(1)
 	}
 
-	println(codegenerierung.Codegen(&es))
+	if *llvm {
+		println(codegenerierung.Codegen(&es))
+		return
+	} else if *interp {
+		vk := interpreter.NeuVollKontext()
+		vk.Push()
 
-	vk := interpreter.NeuVollKontext()
-	vk.Push()
+		ok, err := interpreter.Interpret(es, "main", vk)
+		if err != nil {
+			println(err.Error())
+			os.Exit(1)
+		}
 
-	repr.Println(interpreter.Interpret(es, "main", vk))
+		println(ok.AlsString())
+		return
+	}
+
+	flag.PrintDefaults()
 }

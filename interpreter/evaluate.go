@@ -5,8 +5,6 @@ import (
 	"Tawa/typisierung"
 	"fmt"
 	"strings"
-
-	"github.com/alecthomas/repr"
 )
 
 func Evaluate(prog, filename string) string {
@@ -37,5 +35,5 @@ func Evaluate(prog, filename string) string {
 		return err.Error()
 	}
 
-	return repr.String(a)
+	return a.AlsString()
 }
