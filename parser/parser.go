@@ -65,6 +65,8 @@ type Bedingung struct {
 	Wenn   Expression  `"wenn" @@`
 	Werden Expression  `@@`
 	Sonst  *Expression `("sonst" @@)?`
+
+	Art typen.Art
 }
 
 type Definierung struct {

@@ -89,6 +89,10 @@ funk main()
     )
     a.F.Ok = Falsch
     a.F.Ok
+
+    wenn Wahr a.F.Ok
+
+    wenn Wahr a.F.Ok sonst a.Ok
 )
 
 funk fubar(): logik

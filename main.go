@@ -4,7 +4,9 @@ package main
 
 import (
 	"Tawa/codegenerierung"
+	"Tawa/codegenerierungaufgccjit"
 	"Tawa/interpreter"
+	"Tawa/libgccjit"
 	"Tawa/parser"
 	"Tawa/typisierung"
 	"flag"
@@ -15,7 +17,11 @@ import (
 )
 
 func main() {
+	a := libgccjit.NewContext()
+	_ = a
+
 	llvm := flag.Bool("als-llvm", false, "compilieren nach llvm")
+	gcc := flag.Bool("als-gcc", false, "compilieren nach gcc")
 	interp := flag.Bool("als-interpreter", false, "interpreter")
 	parse := flag.Bool("parser", false, "parser drücken")
 
@@ -50,6 +56,9 @@ func main() {
 
 	if *llvm {
 		println(codegenerierung.Codegen(&es))
+		return
+	} else if *gcc {
+		codegenerierungaufgccjit.CodegenZuDatei(&es, "file")
 		return
 	} else if *interp {
 		vk := interpreter.NeuVollKontext()

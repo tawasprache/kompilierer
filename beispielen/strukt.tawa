@@ -1,0 +1,13 @@
+paket "syntax"
+
+"tawa" ist importiert
+
+typ Hallöchen ist struktur
+(
+    Ok logik
+)
+
+funk main()
+(
+    lösche neu stack Hallöchen ()
+)

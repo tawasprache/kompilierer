@@ -1,0 +1,14 @@
+paket "syntax"
+
+"tawa" ist importiert
+
+funk geil()
+(
+    wenn Falsch
+        1
+
+    wenn Wahr
+        1
+    sonst
+        2
+)

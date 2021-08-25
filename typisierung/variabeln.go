@@ -111,9 +111,12 @@ func artVonExpression(v *VollKontext, e *parser.Expression) (a typen.Art, err er
 			if !rArt.IstGleich(sonstArt) {
 				return nil, NeuFehler(e.Bedingung.Sonst.Pos, "alle branchen sind nicht gleich")
 			}
+
+			e.Bedingung.Art = rArt
+			return rArt, nil
 		}
 
-		return rArt, nil
+		return typen.Nichts{}, nil
 	} else if e.Definierung != nil {
 		if _, ok := v.LookupVariable(e.Definierung.Variable); ok {
 			return nil, NeuFehler(e.Pos, "redefinition von »%s«", e.Definierung.Variable)
