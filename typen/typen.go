@@ -2,6 +2,7 @@ package typen
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -201,5 +202,62 @@ func (n Zeiger) KannVon(a Art) bool {
 	return false
 }
 func (n Zeiger) KannNach(a Art) bool {
+	return false
+}
+
+type Typvariable struct {
+	Name string
+	Idx  int
+}
+
+func (n Typvariable) String() string {
+	return fmt.Sprintf("%s", n.Name)
+}
+func (n Typvariable) IstGleich(a Art) bool {
+	return false
+}
+func (n Typvariable) KannVon(a Art) bool {
+	return false
+}
+func (n Typvariable) KannNach(a Art) bool {
+	return false
+}
+
+type Entweder struct {
+	Fallen map[string]Art
+}
+
+func (n Entweder) String() string {
+	var a strings.Builder
+	a.WriteString("entweder\n")
+
+	i := false
+	for k, v := range n.Fallen {
+		if i {
+			a.WriteString("oder ")
+		}
+		if v == nil {
+			a.WriteString(fmt.Sprintf("%s", k))
+		} else {
+			a.WriteString(fmt.Sprintf("%s von %s", k, v))
+		}
+		i = true
+	}
+
+	return a.String()
+}
+
+func (n Entweder) IstGleich(a Art) bool {
+	z, ok := a.(Entweder)
+	if !ok {
+		return false
+	}
+
+	return reflect.DeepEqual(n.Fallen, z.Fallen)
+}
+func (n Entweder) KannVon(a Art) bool {
+	return false
+}
+func (n Entweder) KannNach(a Art) bool {
 	return false
 }

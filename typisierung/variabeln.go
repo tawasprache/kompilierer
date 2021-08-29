@@ -41,6 +41,23 @@ func artVonParser(v *VollKontext, a *parser.Art) (typen.Art, error) {
 		}
 
 		return typen.Zeiger{Auf: t}, nil
+	} else if a.Entweder != nil {
+		f := typen.Entweder{Fallen: map[string]typen.Art{}}
+
+		for _, it := range a.Entweder.Fallen {
+			if it.Von == nil {
+				f.Fallen[it.Name] = nil
+			} else {
+				t, feh := artVonParser(v, it.Von)
+				if feh != nil {
+					return nil, feh
+				}
+
+				f.Fallen[it.Name] = t
+			}
+		}
+
+		return f, nil
 	}
 
 	panic("a " + repr.String(a))
@@ -285,7 +302,12 @@ func artVonExpression(v *VollKontext, e *parser.Expression) (a typen.Art, err er
 
 func Typisierung(v *VollKontext, d *parser.Datei) error {
 	for idx, es := range d.Typdeklarationen {
+		ctx := v.Push()
+		for i, it := range es.Typargumenten {
+			ctx.Arten[it] = typen.Typvariable{Name: it, Idx: i}
+		}
 		typ, feh := artVonParser(v, &es.Art)
+		v.Pop()
 		if feh != nil {
 			return feh
 		}

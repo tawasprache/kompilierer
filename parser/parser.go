@@ -27,10 +27,22 @@ type Zeiger struct {
 	Auf *Art `"zeiger" "auf" @@`
 }
 
+type Entwedersfall struct {
+	Name string `@Ident`
+	Von  *Art   `("von" @@)?`
+}
+
+type Entweder struct {
+	Fallen []Entwedersfall `"entweder" ( @@ ( "oder" @@ )* )?`
+}
+
 type Art struct {
 	Struktur *Struktur `@@ |`
 	Zeiger   *Zeiger   `@@ |`
+	Entweder *Entweder `@@ |`
 	Normal   *string   `@Ident`
+
+	Typargumenten []Art `("[" ( @@ ( "," @@ )* )? "]")?`
 
 	Pos    lexer.Position
 	EndPos lexer.Position
@@ -55,8 +67,9 @@ type Funktion struct {
 }
 
 type Typdeklaration struct {
-	Name string `"typ" @Ident "ist"`
-	Art  Art    `@@`
+	Name          string   `"typ" @Ident`
+	Typargumenten []string `((?! "ist") @Ident)* "ist"`
+	Art           Art      `@@`
 
 	CodeArt typen.Art
 }

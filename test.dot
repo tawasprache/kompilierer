@@ -1,0 +1,8 @@
+digraph main {
+	block_0 [shape=record,style=filled,fillcolor=white,label="{zuerst:\l\
+*((struct\ struktur\ \{Ok\ logik\}\ *)malloc\ (((unsigned\ char\ *)&(struct\ struktur\ \{Ok\ logik\}\ *)0x7ffce6621b48[(size_t)1]\ -\ (unsigned\ char\ *)(struct\ struktur\ \{Ok\ logik\}\ *)0x7ffce6621b48)))\ =\ __tawa__struktur__1;\l\
+(void)free\ (((struct\ struktur\ \{Ok\ logik\}\ *)malloc\ (((unsigned\ char\ *)&(struct\ struktur\ \{Ok\ logik\}\ *)0x7ffce6621b48[(size_t)1]\ -\ (unsigned\ char\ *)(struct\ struktur\ \{Ok\ logik\}\ *)0x7ffce6621b48))));\l\
+return;\l\
+}"];
+
+}

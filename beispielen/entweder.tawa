@@ -1,0 +1,14 @@
+paket "syntax"
+
+"tawa" ist importiert
+
+typ Vielleicht a ist entweder
+         Nur von a
+    oder Nichts
+
+typ VielleichtLogik ist Vielleicht[logik]
+
+funk main()
+(
+    a := cast Nur Wahr nach VielleichtLogik
+)
