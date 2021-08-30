@@ -4,13 +4,43 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/alecthomas/repr"
 )
+
+type Typargumenten struct {
+	Argumenten *[]Typvariable
+}
+
+func (t Typargumenten) Typvariablen() []Typvariable {
+	if *t.Argumenten == nil {
+		*t.Argumenten = []Typvariable{}
+	}
+	return *t.Argumenten
+}
+
+func (t Typargumenten) SetTypvariablen(tv []Typvariable) {
+	*t.Argumenten = tv
+}
+
+type keiner struct {
+}
+
+func (k keiner) Typvariablen() []Typvariable {
+	return []Typvariable{}
+}
+
+func (k keiner) SetTypvariablen(t []Typvariable) {
+
+}
 
 type Art interface {
 	String() string
 	IstGleich(Art) bool
 	KannVon(Art) bool
 	KannNach(Art) bool
+	Typvariablen() []Typvariable
+	SetTypvariablen(t []Typvariable)
 }
 
 type kannVonNicht struct{}
@@ -21,6 +51,7 @@ func (kannVonNicht) KannNach(Art) bool { return false }
 type Primitiv struct {
 	Name string
 	kannVonNicht
+	keiner
 }
 
 func (p Primitiv) IstGleich(a Art) bool {
@@ -39,6 +70,7 @@ func (p Primitiv) String() string {
 type Funktion struct {
 	Argumente []Art
 	Returntyp Art
+	Typargumenten
 	kannVonNicht
 }
 
@@ -77,7 +109,10 @@ func (p Funktion) String() string {
 	return s.String()
 }
 
-type Nichts struct{ kannVonNicht }
+type Nichts struct {
+	kannVonNicht
+	keiner
+}
 
 func (n Nichts) String() string {
 	return "nichts"
@@ -87,7 +122,10 @@ func (n Nichts) IstGleich(a Art) bool {
 	return ok
 }
 
-type Logik struct{ kannVonNicht }
+type Logik struct {
+	kannVonNicht
+	keiner
+}
 
 func (n Logik) String() string {
 	return "logik"
@@ -100,6 +138,7 @@ func (n Logik) IstGleich(a Art) bool {
 type Neutyp struct {
 	Name string
 	Von  Art
+	Typargumenten
 }
 
 func (n Neutyp) String() string {
@@ -144,6 +183,7 @@ type Strukturfield struct {
 }
 type Struktur struct {
 	Fields []Strukturfield
+	keiner
 }
 
 func (n Struktur) String() string {
@@ -185,6 +225,7 @@ func (n Struktur) KannNach(a Art) bool {
 
 type Zeiger struct {
 	Auf Art
+	keiner
 }
 
 func (n Zeiger) String() string {
@@ -208,6 +249,7 @@ func (n Zeiger) KannNach(a Art) bool {
 type Typvariable struct {
 	Name string
 	Idx  int
+	keiner
 }
 
 func (n Typvariable) String() string {
@@ -225,16 +267,17 @@ func (n Typvariable) KannNach(a Art) bool {
 
 type Entweder struct {
 	Fallen map[string]Art
+	Typargumenten
 }
 
 func (n Entweder) String() string {
 	var a strings.Builder
-	a.WriteString("entweder\n")
+	a.WriteString("entweder ")
 
 	i := false
 	for k, v := range n.Fallen {
 		if i {
-			a.WriteString("oder ")
+			a.WriteString(" oder ")
 		}
 		if v == nil {
 			a.WriteString(fmt.Sprintf("%s", k))
@@ -253,11 +296,15 @@ func (n Entweder) IstGleich(a Art) bool {
 		return false
 	}
 
+	repr.Println(z.Fallen)
+	repr.Println(n.Fallen)
+	repr.Println(z.Fallen)
+
 	return reflect.DeepEqual(n.Fallen, z.Fallen)
 }
 func (n Entweder) KannVon(a Art) bool {
-	return false
+	return n.IstGleich(a)
 }
 func (n Entweder) KannNach(a Art) bool {
-	return false
+	return n.IstGleich(a)
 }

@@ -7,7 +7,7 @@ import (
 	"Tawa/typen"
 )
 
-func artVonParser(v *VollKontext, a *parser.Art) (typen.Art, error) {
+func artVonParser(v *VollKontext, a *parser.Art) (rart typen.Art, rerr error) {
 	if a == nil {
 		return typen.Nichts{}, nil
 	}
@@ -54,6 +54,24 @@ func artVonParser(v *VollKontext, a *parser.Art) (typen.Art, error) {
 				}
 
 				f.Fallen[it.Name] = t
+			}
+		}
+
+		for _, it := range a.Entweder.Fallen {
+			if it.Von == nil {
+				v.Funktionen[it.Name] = typen.Funktion{
+					Returntyp: f,
+				}
+			} else {
+				t, feh := artVonParser(v, it.Von)
+				if feh != nil {
+					panic(feh)
+				}
+
+				v.Funktionen[it.Name] = typen.Funktion{
+					Argumente: []typen.Art{t},
+					Returntyp: f,
+				}
 			}
 		}
 
@@ -192,14 +210,24 @@ func artVonExpression(v *VollKontext, e *parser.Expression) (a typen.Art, err er
 			}
 		}
 
+		kk := map[string]typen.Art{}
+
 		for idx := range f.Argumente {
 			typ, feh := artVonExpression(v, &e.Funktionsaufruf.Argumente[idx])
 			if feh != nil {
 				return nil, feh
 			}
+			if v, ok := f.Argumente[idx].(typen.Typvariable); ok {
+				kk[v.Name] = typ
+				f.Argumente[idx] = typ
+			}
 			if !typ.IstGleich(f.Argumente[idx]) {
 				return nil, NeuFehler(e.Funktionsaufruf.Argumente[idx].Pos, "»%s« kann nicht als »%s« in Funktionsaufruf genutzt werden", typ, f.Argumente[idx])
 			}
+		}
+
+		if v, ok := f.Returntyp.(typen.Typvariable); ok {
+			return kk[v.Name], nil
 		}
 
 		return f.Returntyp, nil

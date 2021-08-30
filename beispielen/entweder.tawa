@@ -10,5 +10,5 @@ typ VielleichtLogik ist Vielleicht[logik]
 
 funk main()
 (
-    a := cast Nur Wahr nach VielleichtLogik
+    a := cast Nur(Wahr) nach VielleichtLogik
 )
