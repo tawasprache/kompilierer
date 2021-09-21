@@ -16,7 +16,10 @@ type Datei struct {
 
 type Art struct {
 	Name          string `@Ident`
-	Typargumenten []*Art `("(" @@* ")")?`
+	Typargumenten []*Art `("[" @@* "]")?`
+
+	Pos    lexer.Position
+	EndPos lexer.Position
 }
 
 type Funktionsargument struct {
@@ -25,12 +28,14 @@ type Funktionsargument struct {
 }
 
 type Funktion struct {
-	Name               string              `"funk" @Ident "("`
-	Funktionsargumente []Funktionsargument `( @@ ( "," @@ )* )? ")"`
+	Name               string              `"funk" @Ident `
+	Typargumenten      []string            `("[" @Ident* "]")?`
+	Funktionsargumente []Funktionsargument `"(" ( @@ ( "," @@ )* )? ")"`
 	Resultatart        *Art                `(":" @@)?`
-	Expression         Expression          `@@`
+	Expression         Expression          `("=" ">")? @@`
 
-	CodeTyp typen.Typ
+	CodeTyp                       typen.Typ
+	MonomorphisierteTypargumenten map[string]typen.Typ
 
 	// Pos    lexer.Position
 	// EndPos lexer.Position
@@ -63,6 +68,9 @@ type Block struct {
 type Funktionsaufruf struct {
 	Name      string       `@Ident`
 	Argumente []Expression `"(" ( @@ ( "," @@ )* )? ")"`
+
+	MonomorphisierteTyp           typen.Typ
+	MonomorphisierteTypargumenten map[string]typen.Typ
 }
 
 type Expression struct {

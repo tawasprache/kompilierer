@@ -1,5 +1,7 @@
 paket Main
 
+funk Ident[A](val: A): A => val
+
 funk main(): ganz tu
-    0
+    Ident(0)
 beende

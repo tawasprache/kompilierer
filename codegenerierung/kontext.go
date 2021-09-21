@@ -1,6 +1,7 @@
 package codegenerierung
 
 import (
+	"Tawa/typen"
 	"fmt"
 
 	"github.com/pontaoski/gccjit"
@@ -9,16 +10,24 @@ import (
 type kontext struct {
 	funktionen map[string]*gccjit.Function
 	typen      map[string]gccjit.IType
-	namen      []map[string]*wert
+	namen      []scope
 	i          int
 	ii         int
 	löschen    *gccjit.Function
 	neu        *gccjit.Function
 }
 
+type scope struct {
+	namen map[string]*wert
+	typen map[string]typen.Typ
+}
+
 func (c *kontext) pushScope() {
 	c.i++
-	c.namen = append(c.namen, make(map[string]*wert))
+	c.namen = append(c.namen, scope{
+		namen: map[string]*wert{},
+		typen: map[string]typen.Typ{},
+	})
 }
 
 func (c *kontext) name() string {
@@ -38,7 +47,18 @@ func (c *kontext) namemiti(s string) string {
 
 func (c *kontext) lookup(id string) *wert {
 	for i := len(c.namen) - 1; i >= 0; i-- {
-		val, ok := c.namen[i][id]
+		val, ok := c.namen[i].namen[id]
+		if ok {
+			return val
+		}
+	}
+
+	panic("nicht gefunden: " + id)
+}
+
+func (c *kontext) lookupTyp(id string) typen.Typ {
+	for i := len(c.namen) - 1; i >= 0; i-- {
+		val, ok := c.namen[i].typen[id]
 		if ok {
 			return val
 		}
@@ -49,9 +69,9 @@ func (c *kontext) lookup(id string) *wert {
 
 func (c *kontext) assign(id string, v *wert) {
 	for i := len(c.namen) - 1; i >= 0; i-- {
-		_, ok := c.namen[i][id]
+		_, ok := c.namen[i].namen[id]
 		if ok {
-			c.namen[i][id] = v
+			c.namen[i].namen[id] = v
 			return
 		}
 	}
@@ -59,8 +79,8 @@ func (c *kontext) assign(id string, v *wert) {
 	panic("nicht gefunden: " + id)
 }
 
-func (c *kontext) top() map[string]*wert {
-	return c.namen[len(c.namen)-1]
+func (c *kontext) top() *scope {
+	return &c.namen[len(c.namen)-1]
 }
 
 type wert struct {

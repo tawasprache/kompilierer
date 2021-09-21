@@ -8,7 +8,7 @@ import (
 	"github.com/pontaoski/gccjit"
 )
 
-func gccjitTypVonTypen(p typen.Typ, ctx *gccjit.Context) gccjit.IType {
+func gccjitTypVonTypen(p typen.Typ, ctx *gccjit.Context, ktx *kontext) gccjit.IType {
 	switch w := p.(type) {
 	case typen.Logik:
 		return ctx.GetType(gccjit.TypeBool)
@@ -16,6 +16,8 @@ func gccjitTypVonTypen(p typen.Typ, ctx *gccjit.Context) gccjit.IType {
 		return ctx.GetType(gccjit.TypeInt)
 	case typen.Nichts:
 		return ctx.GetType(gccjit.TypeVoid)
+	case typen.Typevar:
+		return gccjitTypVonTypen(ktx.lookupTyp(w.Name), ctx, ktx)
 	default:
 		_ = w
 		panic("a " + repr.String(p))
@@ -27,14 +29,19 @@ func codegenPrefunktionen(c *kontext, d *parser.Datei, ctx *gccjit.Context) {
 		typ := funk.CodeTyp.(typen.Funktion)
 
 		var params []gccjit.Param
+		c.pushScope()
+		for k, v := range funk.MonomorphisierteTypargumenten {
+			c.top().typen[k] = v
+		}
 		for idx, es := range funk.Funktionsargumente {
 			params = append(params, gccjit.Param{
-				Type: gccjitTypVonTypen(typ.Eingabe[idx], ctx),
+				Type: gccjitTypVonTypen(typ.Eingabe[idx], ctx, c),
 				Name: es.Name,
 			})
 		}
+		c.popScope()
 
-		c.funktionen[funk.Name] = ctx.CreateFunction(funk.Name, gccjit.Exported, gccjitTypVonTypen(typ.Ausgabe, ctx), params, false)
+		c.funktionen[funk.Name] = ctx.CreateFunction(funk.Name, gccjit.Exported, gccjitTypVonTypen(typ.Ausgabe, ctx, c), params, false)
 	}
 }
 
@@ -63,6 +70,8 @@ func codegenExpression(c *kontext, e *parser.Expression, ctx *gccjit.Context, fn
 		c.popScope()
 
 		return last
+	} else if e.Variable != nil {
+		return c.lookup(*e.Variable)
 	}
 
 	repr.Println(e)
@@ -75,10 +84,13 @@ func codegenFunktion(c *kontext, d *parser.Funktion, ctx *gccjit.Context) {
 	blk := fn.NewBlock("zuerst")
 
 	c.pushScope()
+	for k, v := range d.MonomorphisierteTypargumenten {
+		c.top().typen[k] = v
+	}
 	for idx, arg := range d.Funktionsargumente {
 		it := fn.GetParam(idx)
 
-		c.top()[arg.Name] = links(it, it.Kind())
+		c.top().namen[arg.Name] = links(it, it.Kind())
 	}
 	ret := codegenExpression(c, &d.Expression, ctx, fn, &blk)
 	c.popScope()
@@ -111,7 +123,7 @@ func codegen(c *kontext, d *parser.Datei) *gccjit.Context {
 
 func CodegenZuDatei(d *parser.Datei, output string) {
 	c := &kontext{
-		namen:      []map[string]*wert{{}},
+		namen:      []scope{},
 		funktionen: map[string]*gccjit.Function{},
 		typen:      map[string]gccjit.IType{},
 	}

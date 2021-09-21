@@ -1,0 +1,9 @@
+paket Test
+
+funk IdentLogik(a: logik): logik => a
+funk NochIdent[T](a: T): T => IdentLogik(a)
+funk Ident[T](a: T): T => NochIdent(a)
+
+funk Haupt(): ganz tu
+    Ident(10)
+beende

@@ -2,6 +2,7 @@ package main
 
 import (
 	"Tawa/codegenerierung"
+	"Tawa/monomorphisation"
 	"Tawa/parser"
 	"Tawa/typisierung"
 	"os"
@@ -31,6 +32,7 @@ func main() {
 					}
 
 					typisierung.PrüfDatei(&dat)
+					dat = monomorphisation.Monomorphise(dat)
 					codegenerierung.CodegenZuDatei(&dat, c.Args().Get(1))
 
 					return nil

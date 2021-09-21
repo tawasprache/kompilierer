@@ -2,6 +2,7 @@ package typisierung_test
 
 import (
 	"Tawa/parser"
+	"Tawa/typen"
 	"Tawa/typisierung"
 	_ "embed"
 	"testing"
@@ -24,6 +25,15 @@ var nichts string
 
 //go:embed data/self.tawa
 var self string
+
+//go:embed data/generisch.tawa
+var generisch string
+
+//go:embed data/schlechte-generisch.tawa
+var schlechteGenerisch string
+
+//go:embed data/gute-generisch.tawa
+var guteGenerisch string
 
 func TestNichtGefunden(t *testing.T) {
 	a := parser.VonStringX("data/nicht-gefunden.tawa", nichtGefunden)
@@ -67,6 +77,35 @@ func TestNichts(t *testing.T) {
 
 func TestSelf(t *testing.T) {
 	a := parser.VonStringX("data/self.tawa", self)
+	err := typisierung.PrüfDatei(&a)
+	if err != nil {
+		t.Fatalf("expected no errors, got one: %+s", err)
+	}
+}
+
+func TestGenerisch(t *testing.T) {
+	a := parser.VonStringX("data/generisch.tawa", generisch)
+	err := typisierung.PrüfDatei(&a)
+	if err != nil {
+		t.Fatalf("expected no errors, got one: %+s", err)
+	}
+}
+
+func TestSchlechtGenerisch(t *testing.T) {
+	a := parser.VonStringX("data/schlechte-generisch.tawa", schlechteGenerisch)
+	err := typisierung.PrüfDatei(&a)
+
+	if err == nil {
+		t.Fatalf("expected an error, didn't get one")
+	}
+
+	if err.(*typisierung.ErrMismatch).A != (typen.Logik{}) || err.(*typisierung.ErrMismatch).B != (typen.Integer{}) {
+		t.Fatalf("expected A = logik and B = ganz")
+	}
+}
+
+func TestGuteGenerisch(t *testing.T) {
+	a := parser.VonStringX("data/gute-generisch.tawa", guteGenerisch)
 	err := typisierung.PrüfDatei(&a)
 	if err != nil {
 		t.Fatalf("expected no errors, got one: %+s", err)
