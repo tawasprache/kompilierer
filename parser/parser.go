@@ -36,13 +36,16 @@ type Entweder struct {
 	Fallen []Entwedersfall `"entweder" ( @@ ( "oder" @@ )* )?`
 }
 
-type Art struct {
-	Struktur *Struktur `@@ |`
-	Zeiger   *Zeiger   `@@ |`
-	Entweder *Entweder `@@ |`
-	Normal   *string   `@Ident`
+type Normalart struct {
+	Name          string `@Ident`
+	Typargumenten []Art  `("[" ( @@ ( "," @@ )* )? "]")?`
+}
 
-	Typargumenten []Art `("[" ( @@ ( "," @@ )* )? "]")?`
+type Art struct {
+	Struktur *Struktur  `@@ |`
+	Zeiger   *Zeiger    `@@ |`
+	Entweder *Entweder  `@@ |`
+	Normal   *Normalart `@@`
 
 	Pos    lexer.Position
 	EndPos lexer.Position

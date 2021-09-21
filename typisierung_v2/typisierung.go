@@ -10,7 +10,48 @@ import (
 )
 
 type kontext struct {
-	fns map[string]funktion
+	scopes []*scope
+}
+
+func (k *kontext) head() *scope {
+	return k.scopes[len(k.scopes)-1]
+}
+
+func (k *kontext) neuScope() *scope {
+	k.scopes = append(k.scopes, &scope{
+		fns:  map[string]funktion{},
+		typs: map[string]typ{},
+	})
+	return k.scopes[len(k.scopes)-1]
+}
+
+func (k *kontext) loescheScope() {
+	k.scopes = k.scopes[:len(k.scopes)-1]
+}
+
+func (k *kontext) sucheFn(n string) (funktion, bool) {
+	for i := range k.scopes {
+		ding := k.scopes[len(k.scopes)-1-i]
+		if v, ok := ding.fns[n]; ok {
+			return v, true
+		}
+	}
+	return funktion{}, false
+}
+
+func (k *kontext) sucheTyps(n string) (typ, bool) {
+	for i := range k.scopes {
+		ding := k.scopes[len(k.scopes)-1-i]
+		if v, ok := ding.typs[n]; ok {
+			return v, true
+		}
+	}
+	return nil, false
+}
+
+type scope struct {
+	fns  map[string]funktion
+	typs map[string]typ
 }
 
 type typ interface{ istTyp() }
@@ -116,9 +157,9 @@ func gleich(a typ, b typ) bool {
 }
 
 func neuKontext() *kontext {
-	return &kontext{
-		fns: map[string]funktion{},
-	}
+	a := &kontext{}
+	a.neuScope()
+	return a
 }
 
 // typeof e == a
@@ -136,7 +177,7 @@ func checkExpression(ktx *kontext, expr *parser.Expression, gegenArt typ) error 
 
 		return nil
 	} else if expr.Funktionsaufruf != nil {
-		funktionArt, ok := ktx.fns[expr.Funktionsaufruf.Name]
+		funktionArt, ok := ktx.sucheFn(expr.Funktionsaufruf.Name)
 		if !ok {
 			return errNichtGefunden
 		}
@@ -164,7 +205,7 @@ func synthExpression(ktx *kontext, expr *parser.Expression) (typ, error) {
 	} else if expr.Logik != nil {
 		return logik{}, nil
 	} else if expr.Funktionsaufruf != nil {
-		funktionArt, ok := ktx.fns[expr.Funktionsaufruf.Name]
+		funktionArt, ok := ktx.sucheFn(expr.Funktionsaufruf.Name)
 		if !ok {
 			return nil, errNichtGefunden
 		}
@@ -238,4 +279,37 @@ func synthApplication(ktx *kontext, funk funktion, arg []parser.Expression) (typ
 	}
 
 	return ret, nil
+}
+
+func typVonParser(k *kontext, a *parser.Art) (typ, error) {
+	return nil, errors.New("nicht implemented")
+}
+
+func CheckDatei(d *parser.Datei) error {
+	ctx := neuKontext()
+
+	for _, it := range d.Typdeklarationen {
+		scope := ctx.neuScope()
+
+		for _, arg := range it.Typargumenten {
+			scope.typs[arg] = kvar{n: arg}
+		}
+
+		typ, feh := typVonParser(ctx, &it.Art)
+
+		ctx.loescheScope()
+
+		if feh != nil {
+			return feh
+		}
+
+		ctx.head().typs[it.Name] = typ
+	}
+
+	for idx, es := range d.Funktionen {
+		_ = idx
+		checkExpression(ctx, &es.Expression, nil)
+	}
+
+	return nil
 }

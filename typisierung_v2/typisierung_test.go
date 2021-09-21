@@ -65,7 +65,7 @@ func TestFunktion(t *testing.T) {
 	}
 	ekind := integer{}
 	ctx := neuKontext()
-	ctx.fns["ident"] = funktion{
+	ctx.head().fns["ident"] = funktion{
 		eingabe: []typ{
 			kvar{n: "a"},
 		},
@@ -115,7 +115,7 @@ func TestFunktionZwei(t *testing.T) {
 	}
 	ekind := integer{}
 	ctx := neuKontext()
-	ctx.fns["ident"] = funktion{
+	ctx.head().fns["ident"] = funktion{
 		eingabe: []typ{
 			kvar{n: "a"},
 			kvar{n: "a"},
@@ -178,7 +178,7 @@ func TestFunktionDrei(t *testing.T) {
 		"a": integer{},
 	})
 
-	ctx.fns["anMaybe"] = funktion{
+	ctx.head().fns["anMaybe"] = funktion{
 		eingabe: []typ{
 			kvar{n: "a"},
 		},
@@ -186,7 +186,7 @@ func TestFunktionDrei(t *testing.T) {
 			"a": kvar{n: "a"},
 		}),
 	}
-	ctx.fns["abMaybe"] = funktion{
+	ctx.head().fns["abMaybe"] = funktion{
 		eingabe: []typ{
 			maybeT.voll(map[string]typ{
 				"a": kvar{n: "a"},
@@ -236,7 +236,7 @@ func TestFunktionVier(t *testing.T) {
 		"a": integer{},
 	})
 
-	ctx.fns["anMaybe"] = funktion{
+	ctx.head().fns["anMaybe"] = funktion{
 		eingabe: []typ{
 			kvar{n: "a"},
 		},
@@ -244,7 +244,7 @@ func TestFunktionVier(t *testing.T) {
 			"a": kvar{n: "a"},
 		}),
 	}
-	ctx.fns["withDefault"] = funktion{
+	ctx.head().fns["withDefault"] = funktion{
 		eingabe: []typ{
 			maybeT.voll(map[string]typ{
 				"a": kvar{n: "a"},
@@ -296,4 +296,63 @@ func TestFunktionVier(t *testing.T) {
 	checkExpr(ctx, expr1, maybeInt, true, t)
 	checkExpr(ctx, expr2, integer{}, true, t)
 	checkExpr(ctx, expr3, integer{}, false, t)
+}
+
+func TestCheckDatei(t *testing.T) {
+	err := CheckDatei(&parser.Datei{
+		Typdeklarationen: []parser.Typdeklaration{
+			{
+				Name:          "Maybe",
+				Typargumenten: []string{"A"},
+				Art: parser.Art{
+					Entweder: &parser.Entweder{
+						Fallen: []parser.Entwedersfall{
+							{
+								Name: "Nur",
+								Von: &parser.Art{
+									Normal: &parser.Normalart{
+										Name: "A",
+									},
+								},
+							},
+							{
+								Name: "Nichts",
+							},
+						},
+					},
+				},
+			},
+		},
+		Funktionen: []parser.Funktion{
+			{
+				Name: "haupt",
+				Resultatart: &parser.Art{
+					Normal: &parser.Normalart{
+						Name: "Maybe",
+						Typargumenten: []parser.Art{
+							{
+								Normal: &parser.Normalart{
+									Name: "logik",
+								},
+							},
+						},
+					},
+				},
+				Expression: parser.Expression{
+					Block: &parser.Block{
+						Expr: []parser.Expression{
+							{
+								Logik: &parser.Logik{
+									Wert: "Wahr",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
 }
