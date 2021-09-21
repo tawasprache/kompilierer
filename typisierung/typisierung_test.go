@@ -22,6 +22,9 @@ var mismatch string
 //go:embed data/nichts.tawa
 var nichts string
 
+//go:embed data/self.tawa
+var self string
+
 func TestNichtGefunden(t *testing.T) {
 	a := parser.VonStringX("data/nicht-gefunden.tawa", nichtGefunden)
 	err := typisierung.PrüfDatei(&a)
@@ -56,6 +59,14 @@ func TestMismatch(t *testing.T) {
 
 func TestNichts(t *testing.T) {
 	a := parser.VonStringX("data/nichts.tawa", nichts)
+	err := typisierung.PrüfDatei(&a)
+	if err != nil {
+		t.Fatalf("expected no errors, got one: %+s", err)
+	}
+}
+
+func TestSelf(t *testing.T) {
+	a := parser.VonStringX("data/self.tawa", self)
 	err := typisierung.PrüfDatei(&a)
 	if err != nil {
 		t.Fatalf("expected no errors, got one: %+s", err)

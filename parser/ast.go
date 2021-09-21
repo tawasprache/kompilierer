@@ -68,7 +68,8 @@ type Funktionsaufruf struct {
 type Expression struct {
 	Ganz            *int64           `@Int |`
 	Funktionsaufruf *Funktionsaufruf `@@ |`
-	Block           *Block           `@@`
+	Block           *Block           `@@ |`
+	Variable        *string          `(?! "beende") @Ident`
 
 	// Bedingung        *Bedingung        `(@@ |`
 	// Definierung      *Definierung      `@@ |`
@@ -80,8 +81,6 @@ type Expression struct {
 	// Neu              *Neu              `@@ |`
 	// Stack            *Stack            `@@ |`
 	// Dereferenzierung *Dereferenzierung `@@ |`
-	// Variable         *string           `@Ident |`
-	// Block            *Block            `@@)`
 	// Fieldexpression      *Fieldexpression
 	// Zuweisungsexpression *Zuweisungsexpression
 

@@ -27,6 +27,7 @@ func (k *kontext) neuScope() *scope {
 	k.scopes = append(k.scopes, &scope{
 		fns:  map[string]typen.Funktion{},
 		typs: map[string]typen.Typ{},
+		vars: map[string]typen.Typ{},
 	})
 	return k.scopes[len(k.scopes)-1]
 }
@@ -39,6 +40,16 @@ func (k *kontext) sucheFn(n string) (typen.Funktion, bool) {
 	for i := range k.scopes {
 		ding := k.scopes[len(k.scopes)-1-i]
 		if v, ok := ding.fns[n]; ok {
+			return v, true
+		}
+	}
+	return typen.Funktion{}, false
+}
+
+func (k *kontext) sucheVar(n string) (typen.Typ, bool) {
+	for i := range k.scopes {
+		ding := k.scopes[len(k.scopes)-1-i]
+		if v, ok := ding.vars[n]; ok {
 			return v, true
 		}
 	}
@@ -67,4 +78,5 @@ func (k *kontext) typVonParser(p *parser.Art) (typen.Typ, bool) {
 type scope struct {
 	fns  map[string]typen.Funktion
 	typs map[string]typen.Typ
+	vars map[string]typen.Typ
 }

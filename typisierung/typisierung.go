@@ -39,6 +39,12 @@ func checkExpression(ktx *kontext, expr *parser.Expression, gegenArt typen.Typ) 
 			return err
 		}
 		return gleichErr(ruck, gegenArt)
+	} else if expr.Variable != nil {
+		ruck, err := synthExpression(ktx, expr)
+		if err != nil {
+			return err
+		}
+		return gleichErr(ruck, gegenArt)
 	}
 	panic("feh checkExpression")
 }
@@ -66,6 +72,13 @@ func synthExpression(ktx *kontext, expr *parser.Expression) (typen.Typ, error) {
 		}
 
 		return synthApplication(ktx, funktionArt, expr.Funktionsaufruf.Argumente)
+	} else if expr.Variable != nil {
+		varArt, ok := ktx.sucheVar(*expr.Variable)
+		if !ok {
+			return nil, errNichtGefunden
+		}
+
+		return varArt, nil
 	}
 	panic("feh synthExpression")
 }
@@ -140,10 +153,20 @@ func PrüfDatei(d *parser.Datei) error {
 	}
 
 	for _, it := range d.Funktionen {
-		err := checkExpression(ktx, &it.Expression, it.CodeTyp.(typen.Funktion).Ausgabe)
+		ktx.neuScope()
+
+		kind := it.CodeTyp.(typen.Funktion)
+
+		for idx, v := range it.Funktionsargumente {
+			ktx.head().vars[v.Name] = kind.Eingabe[idx]
+		}
+
+		err := checkExpression(ktx, &it.Expression, kind.Ausgabe)
 		if err != nil {
 			return err
 		}
+
+		ktx.loescheScope()
 	}
 
 	return nil

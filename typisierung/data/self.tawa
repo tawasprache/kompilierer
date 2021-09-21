@@ -1,0 +1,5 @@
+paket Test
+
+funk A(a: ganz): ganz tu
+    a
+beende
