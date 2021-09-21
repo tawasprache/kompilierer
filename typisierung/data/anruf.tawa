@@ -1,0 +1,7 @@
+paket Test
+
+funk Zehn(): ganz 10
+
+funk Haupt(): ganz tu
+    Zehn()
+beende

@@ -1,0 +1,9 @@
+paket Test
+
+funk Nichts() tu
+
+beende
+
+funk Haupt() tu
+    Nichts()
+beende
