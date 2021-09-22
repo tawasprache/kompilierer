@@ -35,6 +35,9 @@ var schlechteGenerisch string
 //go:embed data/gute-generisch.tawa
 var guteGenerisch string
 
+//go:embed data/var-nicht-gefunden.tawa
+var varNichtGefunden string
+
 func TestNichtGefunden(t *testing.T) {
 	a := parser.VonStringX("data/nicht-gefunden.tawa", nichtGefunden)
 	err := typisierung.PrüfDatei(&a)
@@ -109,5 +112,13 @@ func TestGuteGenerisch(t *testing.T) {
 	err := typisierung.PrüfDatei(&a)
 	if err != nil {
 		t.Fatalf("expected no errors, got one: %+s", err)
+	}
+}
+
+func TestVarNichtGefunden(t *testing.T) {
+	a := parser.VonStringX("data/var-nicht-gefunden.tawa", varNichtGefunden)
+	err := typisierung.PrüfDatei(&a)
+	if err == nil {
+		t.Fatalf("expected an error, didn't get one")
 	}
 }
