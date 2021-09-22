@@ -72,6 +72,20 @@ func codegenExpression(c *kontext, e *parser.Expression, ctx *gccjit.Context, fn
 		return last
 	} else if e.Variable != nil {
 		return c.lookup(*e.Variable)
+	} else if e.Definierung != nil {
+		val := codegenExpression(c, e.Definierung.Wert, ctx, fn, b)
+
+		loc := fn.NewLocal(c.namemiti(e.Definierung.Name), val.typ)
+
+		c.top().namen[e.Definierung.Name] = links(loc, val.typ)
+
+		return val
+	} else if e.Zuweisungsexpression != nil {
+		lval := codegenExpression(c, &e.Zuweisungsexpression.Links, ctx, fn, b)
+		rval := codegenExpression(c, &e.Zuweisungsexpression.Links, ctx, fn, b)
+		(*b).AddAssign(lval.lvalue, rval.rvalue)
+
+		return rval
 	}
 
 	repr.Println(e)

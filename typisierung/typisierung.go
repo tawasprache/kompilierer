@@ -77,6 +77,18 @@ func checkExpression(ktx *kontext, expr *parser.Expression, gegenArt typen.Typ) 
 			return err
 		}
 		return gleichErr(ruck, gegenArt, expr.Pos)
+	} else if expr.Definierung != nil {
+		ruck, err := synthExpression(ktx, expr)
+		if err != nil {
+			return err
+		}
+		return gleichErr(ruck, gegenArt, expr.Pos)
+	} else if expr.Zuweisungsexpression != nil {
+		ruck, err := synthExpression(ktx, expr)
+		if err != nil {
+			return err
+		}
+		return gleichErr(ruck, gegenArt, expr.Pos)
 	}
 	panic("feh checkExpression")
 }
@@ -115,6 +127,49 @@ func synthExpression(ktx *kontext, expr *parser.Expression) (typen.Typ, error) {
 		}
 
 		return varArt, nil
+	} else if expr.Definierung != nil {
+		if expr.Definierung.Art != nil {
+			varArt, ok := ktx.sucheTyps(expr.Definierung.Art.Name)
+			if !ok {
+				return nil, nichtGefundenErr(expr.Definierung.Art.Pos)
+			}
+
+			err := checkExpression(ktx, expr.Definierung.Wert, varArt)
+			if err != nil {
+				return nil, err
+			}
+
+			ktx.head().vars[expr.Definierung.Name] = varArt
+
+			return varArt, nil
+		}
+
+		varArt, err := synthExpression(ktx, expr.Definierung.Wert)
+
+		if err != nil {
+			return nil, err
+		}
+
+		ktx.head().vars[expr.Definierung.Name] = varArt
+
+		return varArt, nil
+	} else if expr.Zuweisungsexpression != nil {
+		links, err := synthExpression(ktx, &expr.Zuweisungsexpression.Links)
+		if err != nil {
+			return nil, err
+		}
+
+		rechts, err := synthExpression(ktx, &expr.Zuweisungsexpression.Rechts)
+		if err != nil {
+			return nil, err
+		}
+
+		err = gleichErr(links, rechts, expr.Pos)
+		if err != nil {
+			return nil, err
+		}
+
+		return rechts, nil
 	}
 	panic("feh synthExpression")
 }

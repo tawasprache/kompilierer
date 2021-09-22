@@ -3,5 +3,7 @@ paket Main
 funk Ident[A](val: A): A => val
 
 funk main(): ganz tu
-    Ident(0)
+    lass a: ganz = Ident(0)
+    a = Ident(10)
+    a
 beende

@@ -53,13 +53,17 @@ type Funktion struct {
 // 	Rechts Expression
 // }
 
-// type Postfix struct {
-// 	Fieldoperator      *Fieldoperator      `@@ |`
-// 	Zuweisungsoperator *Zuweisungsoperator `@@`
+type Zuweisungsoperator struct {
+	Wert Expression `"=" @@`
+}
 
-// 	Pos    lexer.Position
-// 	EndPos lexer.Position
-// }
+type Postfix struct {
+	//	Fieldoperator      *Fieldoperator      `@@ |`
+	Zuweisungsoperator *Zuweisungsoperator `@@`
+
+	Pos    lexer.Position
+	EndPos lexer.Position
+}
 
 type Block struct {
 	Expressionen []*Expression `"tu" @@* "beende"`
@@ -73,14 +77,27 @@ type Funktionsaufruf struct {
 	MonomorphisierteTypargumenten map[string]typen.Typ
 }
 
+type Definierung struct {
+	Name string      `"lass" @Ident`
+	Art  *Art        `":" @@?`
+	Wert *Expression `"=" @@`
+}
+
+type Zuweisungsexpression struct {
+	Links  Expression
+	Rechts Expression
+}
+
 type Expression struct {
 	Ganz            *int64           `@Int |`
 	Funktionsaufruf *Funktionsaufruf `@@ |`
+	Definierung     *Definierung     `@@ |`
 	Block           *Block           `@@ |`
 	Variable        *string          `(?! "beende") @Ident`
 
+	Zuweisungsexpression *Zuweisungsexpression
+
 	// Bedingung        *Bedingung        `(@@ |`
-	// Definierung      *Definierung      `@@ |`
 	// Zuweisung        *Zuweisung        `@@ |`
 	// Logik            *Logik            `@@ |`
 	// Cast             *Cast             `@@ |`
@@ -90,61 +107,50 @@ type Expression struct {
 	// Stack            *Stack            `@@ |`
 	// Dereferenzierung *Dereferenzierung `@@ |`
 	// Fieldexpression      *Fieldexpression
-	// Zuweisungsexpression *Zuweisungsexpression
 
-	// Postfix []*Postfix `(@@*)?`
+	Postfix []*Postfix `(@@*)?`
 
 	Pos    lexer.Position
 	EndPos lexer.Position
 }
 
-// func (d Expression) Vorverarbeiten() Expression {
-// 	if d.Block != nil {
-// 		for idx, it := range d.Block.Expr {
-// 			d.Block.Expr[idx] = it.Vorverarbeiten()
-// 		}
-// 	}
+func (d Expression) Vorverarbeiten() Expression {
+	if d.Block != nil {
+		for idx, it := range d.Block.Expressionen {
+			*d.Block.Expressionen[idx] = it.Vorverarbeiten()
+		}
+	}
 
-// 	if len(d.Postfix) == 0 {
-// 		return d
-// 	}
+	if len(d.Postfix) == 0 {
+		return d
+	}
 
-// 	head := d.Postfix[0]
-// 	elm := d.Postfix[1:]
-// 	d.Postfix = []*Postfix{}
+	head := d.Postfix[0]
+	elm := d.Postfix[1:]
+	d.Postfix = []*Postfix{}
 
-// 	if head.Fieldoperator != nil {
-// 		return Expression{
-// 			Fieldexpression: &Fieldexpression{
-// 				Expr:  d,
-// 				Field: head.Fieldoperator.Field,
-// 			},
-// 			Pos:     d.Pos,
-// 			EndPos:  head.EndPos,
-// 			Postfix: elm,
-// 		}.Vorverarbeiten()
-// 	} else if head.Zuweisungsoperator != nil {
-// 		return Expression{
-// 			Zuweisungsexpression: &Zuweisungsexpression{
-// 				Links:  d,
-// 				Rechts: head.Zuweisungsoperator.Wert,
-// 			},
-// 			Pos:     d.Pos,
-// 			EndPos:  head.EndPos,
-// 			Postfix: elm,
-// 		}.Vorverarbeiten()
-// 	} else {
-// 		panic("e")
-// 	}
-// }
+	if head.Zuweisungsoperator != nil {
+		return Expression{
+			Zuweisungsexpression: &Zuweisungsexpression{
+				Links:  d,
+				Rechts: head.Zuweisungsoperator.Wert,
+			},
+			Pos:     d.Pos,
+			EndPos:  head.EndPos,
+			Postfix: elm,
+		}.Vorverarbeiten()
+	} else {
+		panic("e")
+	}
+}
 
-// func (d *Datei) Vorverarbeiten() {
-// 	for idx, it := range d.Funktionen {
-// 		e := it.Expression
+func (d *Datei) Vorverarbeiten() {
+	for idx, it := range d.Funktionen {
+		e := it.Expression
 
-// 		d.Funktionen[idx].Expression = e.Vorverarbeiten()
-// 	}
-// }
+		d.Funktionen[idx].Expression = e.Vorverarbeiten()
+	}
+}
 
 var (
 	Parser = participle.MustBuild(&Datei{}, participle.UseLookahead(4))
@@ -155,5 +161,6 @@ func VonStringX(filename, content string) (r Datei) {
 	if err != nil {
 		panic(err)
 	}
+	r.Vorverarbeiten()
 	return
 }

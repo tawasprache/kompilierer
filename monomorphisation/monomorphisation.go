@@ -45,6 +45,10 @@ func monomorphise(e *parser.Expression, fns map[string]parser.Funktion, genFunct
 		fns[name] = gen
 
 		e.Funktionsaufruf.Name = name
+	} else if e.Definierung != nil {
+		monomorphise(e.Definierung.Wert, fns, genFunctions)
+	} else if e.Zuweisungsexpression != nil {
+		monomorphise(e.Definierung.Wert, fns, genFunctions)
 	}
 }
 

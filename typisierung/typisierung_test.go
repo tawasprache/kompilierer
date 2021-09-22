@@ -38,6 +38,9 @@ var guteGenerisch string
 //go:embed data/var-nicht-gefunden.tawa
 var varNichtGefunden string
 
+//go:embed data/variabeln.tawa
+var variabeln string
+
 func TestNichtGefunden(t *testing.T) {
 	a := parser.VonStringX("data/nicht-gefunden.tawa", nichtGefunden)
 	err := typisierung.PrüfDatei(&a)
@@ -120,5 +123,13 @@ func TestVarNichtGefunden(t *testing.T) {
 	err := typisierung.PrüfDatei(&a)
 	if err == nil {
 		t.Fatalf("expected an error, didn't get one")
+	}
+}
+
+func TestVariabeln(t *testing.T) {
+	a := parser.VonStringX("data/variabeln.tawa", variabeln)
+	err := typisierung.PrüfDatei(&a)
+	if err != nil {
+		t.Fatalf("expected no errors, got one: %s", err)
 	}
 }

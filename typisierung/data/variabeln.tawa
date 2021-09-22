@@ -1,0 +1,9 @@
+paket Test
+
+funk Ident[A](wert: A): A => wert
+
+funk Haupt(): ganz tu
+    lass a := Ident(10)
+    a = Ident(20)
+    a
+beende
