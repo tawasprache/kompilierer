@@ -1,5 +1,0 @@
-paket Test
-
-funk Ident[A](wert: A): A => wert
-
-funk Ganz(): ganz => Ident(10)

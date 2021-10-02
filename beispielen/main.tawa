@@ -1,9 +1,12 @@
 paket Main
 
-funk Ident[A](val: A): A => val
+funk Haupt() ident(5)
 
-funk main(): ganz tu
-    lass a: ganz = Ident(0)
-    a = Ident(10)
-    a
-beende
+funk OderLogik(wert: Vielleicht[Logik], defaultWert: Logik): Logik
+    passt wert zu
+        #Nur(logik) =>
+            logik.
+
+        #Nichts =>
+            defaultWert.
+    beende

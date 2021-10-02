@@ -1,0 +1,24 @@
+paket Eingebaut
+
+typ Logik ist
+    | Wahr
+    | Falsch
+beende
+
+typ Vielleicht[A] ist
+    | Nur (wert: §A)
+    | Nichts
+beende
+
+typ Folge[T, Fehler] ist
+    | Okay (wert: §T)
+    | Fehler (fehler: §Fehler)
+beende
+
+typ Ganz ist
+beende
+
+typ Einheit ist
+beende
+
+funk ident[A](wert: §A): §A => wert

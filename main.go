@@ -1,23 +1,25 @@
 package main
 
 import (
-	"Tawa/codegenerierung"
-	"Tawa/monomorphisation"
-	"Tawa/parser"
-	"Tawa/typisierung"
+	"Tawa/kompilierer/ast"
+	"Tawa/kompilierer/codegenierung"
+	"Tawa/kompilierer/typisierung"
 	"os"
 
+	"github.com/alecthomas/repr"
 	"github.com/urfave/cli/v2"
+
+	_ "Tawa/kompilierer/codegenierung/typescript"
 )
 
 func main() {
 	a := cli.App{
 		Name:  "tawac",
-		Usage: "the tawa compiler",
+		Usage: "the tawa parser",
 		Commands: []*cli.Command{
 			{
-				Name:  "compile",
-				Usage: "compile a file",
+				Name:  "parse",
+				Usage: "parse a file",
 				Action: func(c *cli.Context) error {
 					fi, err := os.Open(c.Args().First())
 					if err != nil {
@@ -25,15 +27,100 @@ func main() {
 					}
 					defer fi.Close()
 
-					dat := parser.Datei{}
-					err = parser.Parser.Parse(c.Args().First(), fi, &dat)
+					dat := ast.Modul{}
+					err = ast.Parser.Parse(c.Args().First(), fi, &dat)
 					if err != nil {
 						return err
 					}
 
-					typisierung.PrüfDatei(&dat)
-					dat = monomorphisation.Monomorphise(dat)
-					codegenerierung.CodegenZuDatei(&dat, c.Args().Get(1))
+					repr.Println(dat)
+
+					return nil
+				},
+			},
+			{
+				Name:  "typecheck",
+				Usage: "typecheck a file",
+				Action: func(c *cli.Context) error {
+					fi, err := os.Open(c.Args().First())
+					if err != nil {
+						return err
+					}
+					defer fi.Close()
+
+					dat := ast.Modul{}
+					err = ast.Parser.Parse(c.Args().First(), fi, &dat)
+					if err != nil {
+						return err
+					}
+
+					ktx := typisierung.NeuKontext()
+					getypt, err := typisierung.ZuGetypisierteAst(ktx, "User", dat)
+					if err != nil {
+						return err
+					}
+
+					repr.Println(getypt)
+
+					return nil
+				},
+			},
+			{
+				Name:  "dev",
+				Usage: "does whatever i want it to for dev",
+				Action: func(c *cli.Context) error {
+					typisierung.NeuKontext()
+
+					return nil
+				},
+			},
+			{
+				Name:  "compile",
+				Usage: "compile a file",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "backend",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					fi, err := os.Open(c.Args().First())
+					if err != nil {
+						return err
+					}
+					defer fi.Close()
+
+					dat := ast.Modul{}
+					err = ast.Parser.Parse(c.Args().First(), fi, &dat)
+					if err != nil {
+						return err
+					}
+
+					ktx := typisierung.NeuKontext()
+					getypt, err := typisierung.ZuGetypisierteAst(ktx, "User", dat)
+					if err != nil {
+						return err
+					}
+
+					os.Mkdir(c.Args().Get(1), 0o777)
+
+					unterbau := codegenierung.GetUnterbau(c.String("backend"))
+
+					o := codegenierung.Optionen{
+						Outpath: c.Args().Get(1),
+					}
+
+					feh := unterbau.Pregen(o)
+					if feh != nil {
+						return feh
+					}
+
+					for _, it := range append(getypt.Dependencies, getypt.Name) {
+						feh := unterbau.CodegenModul(o, ktx.Module[it])
+						if feh != nil {
+							return feh
+						}
+					}
 
 					return nil
 				},

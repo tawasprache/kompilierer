@@ -1,7 +1,0 @@
-paket Test
-
-funk Zehn(): ganz 10
-
-funk Haupt(): logik tu
-    Zehn()
-beende
