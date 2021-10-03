@@ -51,6 +51,10 @@ func isVoid(e getypisiertast.ITyp) bool {
 	return false
 }
 
+func istBool(url getypisiertast.SymbolURL) bool {
+	return url.Paket == "Tawa/Eingebaut" && url.Name == "Logik"
+}
+
 func typZuIdent(e getypisiertast.ITyp, aktuellePaket string) string {
 	switch k := e.(type) {
 	case getypisiertast.Typnutzung:
@@ -89,6 +93,27 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 		f.AddK(`%s`, e.Wert)
 	case getypisiertast.Variable:
 		f.AddK(`%s`, e.Name)
+	case getypisiertast.Variantaufruf:
+		if istBool(e.Variant) {
+			if e.Konstruktor == "Wahr" {
+				f.AddK(`true`)
+			} else {
+				f.AddK(`false`)
+			}
+			return
+		}
+		if len(e.Argumenten) == 0 {
+			f.AddK(`{__variant: {__tag: '%s'}}`, e.Konstruktor)
+		} else {
+			f.AddK(`{__variant: {__tag: '%s', __data: [`, e.Konstruktor)
+			for idx, it := range e.Argumenten {
+				genExpr(f, it, aktuellePaket)
+				if idx != len(e.Argumenten)-1 {
+					f.AddK(`, `)
+				}
+			}
+			f.AddK(`] }}`)
+		}
 	case getypisiertast.Funktionsaufruf:
 		f.AddK(`%s(`, symZuIdent(e.Funktion, aktuellePaket))
 		for idx, it := range e.Argumenten {
@@ -103,9 +128,29 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 		f.Einzug++
 		f.AddNL()
 
-		f.Add(`switch (__pat.__variant.__tag) {`)
+		var boolean bool
+		switch k := e.Wert.Typ().(type) {
+		case getypisiertast.Typnutzung:
+			boolean = istBool(k.SymbolURL)
+		}
+
+		if boolean {
+			f.Add(`switch (__pat) {`)
+		} else {
+			f.Add(`switch (__pat.__variant.__tag) {`)
+		}
+
 		for _, it := range e.Mustern {
-			f.AddI(`case "%s":`, it.Konstruktor)
+			if boolean {
+				switch it.Konstruktor {
+				case "Wahr":
+					f.AddI(`case true:`)
+				case "Falsch":
+					f.AddI(`case false:`)
+				}
+			} else {
+				f.AddI(`case "%s":`, it.Konstruktor)
+			}
 			for _, vari := range it.Variablen {
 				f.Add(`let %s = __pat.__variant.__data[%d]`, vari.Name, vari.VonFeld)
 			}
@@ -149,15 +194,17 @@ func (t typescriptUnterbau) CodegenModul(o codegenierung.Optionen, m getypisiert
 			for _, vari := range it.Varianten {
 				f.AddI(`| {`)
 				f.Add(`__tag: '%s'`, vari.Name)
-				f.AddE(`__data: [`, vari.Name)
-				for idx, it := range vari.Datenfelden {
-					f.Add(`%s`, it.Name, typZuIdent(it.Typ, m.Name))
-					if idx != len(vari.Datenfelden)-1 {
-						f.AddK(`, `)
+				if len(vari.Datenfelden) > 0 {
+					f.AddE(`__data: [`)
+					for idx, it := range vari.Datenfelden {
+						f.AddK(`%s`, typZuIdent(it.Typ, m.Name))
+						if idx != len(vari.Datenfelden)-1 {
+							f.AddK(`, `)
+						}
 					}
+					f.AddK(`]`)
+					f.AddNL()
 				}
-				f.AddK(`]`)
-				f.AddNL()
 				f.AddD(`}`)
 			}
 

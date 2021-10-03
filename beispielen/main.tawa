@@ -14,3 +14,9 @@ funk OderLogik(wert: Vielleicht[Logik], defaultWert: Logik): Logik
 
 funk Haupt(): Zeichenkette
     "Hallo welt!"
+
+funk Nicht(wert: Logik): Logik
+    passt wert zu
+        #Wahr => #Falsch.
+        #Falsch => #Wahr.
+    beende
