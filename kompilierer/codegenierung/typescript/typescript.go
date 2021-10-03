@@ -62,6 +62,8 @@ func typZuIdent(e getypisiertast.ITyp, aktuellePaket string) string {
 				return "number"
 			case "Logik":
 				return "boolean"
+			case "Zeichenkette":
+				return "string"
 			}
 		}
 		ident := symZuIdent(k.SymbolURL, aktuellePaket)
@@ -83,6 +85,8 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 	switch e := expr.(type) {
 	case getypisiertast.Ganzzahl:
 		f.AddK(`%d`, e.Wert)
+	case getypisiertast.Zeichenkette:
+		f.AddK(`%s`, e.Wert)
 	case getypisiertast.Variable:
 		f.AddK(`%s`, e.Name)
 	case getypisiertast.Funktionsaufruf:
@@ -118,7 +122,7 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 		f.AddK(`)`)
 		f.AddNL()
 	default:
-		panic("e")
+		panic("e " + repr.String(e))
 	}
 }
 

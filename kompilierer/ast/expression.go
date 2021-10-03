@@ -6,6 +6,7 @@ type Expression struct {
 	Pos lexer.Position
 
 	Ganzzahl        *int             `  @Int`
+	Zeichenkette    *string          `| @String`
 	Passt           *Passt           `| @@`
 	Variantaufruf   *Variantaufruf   `| @@`
 	Funktionsaufruf *Funktionsaufruf `| @@`

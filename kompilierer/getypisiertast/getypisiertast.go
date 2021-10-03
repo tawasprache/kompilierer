@@ -94,6 +94,22 @@ func (g Ganzzahl) Typ() ITyp {
 	}
 }
 
+type Zeichenkette struct {
+	Wert string
+	LPos lexer.Position
+}
+
+func (g Zeichenkette) Pos() lexer.Position { return g.LPos }
+func (g Zeichenkette) istExpression()      {}
+func (g Zeichenkette) Typ() ITyp {
+	return Typnutzung{
+		SymbolURL: SymbolURL{
+			Paket: "Tawa/Eingebaut",
+			Name:  "Zeichenkette",
+		},
+	}
+}
+
 type Variable struct {
 	Name string
 	ITyp ITyp

@@ -11,3 +11,6 @@ funk Oder[A, B](wert: §B, defaultWert: §A): §A
 
 funk OderLogik(wert: Vielleicht[Logik], defaultWert: Logik): Logik
     Oder(wert, defaultWert)
+
+funk Haupt(): Zeichenkette
+    "Hallo welt!"

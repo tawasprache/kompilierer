@@ -140,6 +140,11 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			ITyp: getypisiertast.Nichtunifiziert{},
 			LPos: astExpr.Pos,
 		}, nil
+	} else if astExpr.Zeichenkette != nil {
+		return getypisiertast.Zeichenkette{
+			Wert: *astExpr.Zeichenkette,
+			LPos: astExpr.Pos,
+		}, nil
 	}
 
 	panic("unhandled case")

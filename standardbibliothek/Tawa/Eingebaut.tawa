@@ -21,4 +21,7 @@ beende
 typ Einheit ist
 beende
 
+typ Zeichenkette ist
+beende
+
 funk ident[A](wert: §A): §A => wert

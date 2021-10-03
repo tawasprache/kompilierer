@@ -26,6 +26,8 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 	switch e := expr.(type) {
 	case getypisiertast.Ganzzahl:
 		return e, nil
+	case getypisiertast.Zeichenkette:
+		return e, nil
 	case getypisiertast.Funktionsaufruf:
 		rumpf, feh := l.funktionsrumpf(e.Funktion, expr.Pos())
 		if feh != nil {
