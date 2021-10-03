@@ -9,6 +9,8 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	"github.com/alecthomas/repr"
 )
 
 func init() {
@@ -29,7 +31,10 @@ func zuIdent(s string) string {
 	return strings.ReplaceAll(s, "/", "_")
 }
 
-func symZuIdent(e getypisiertast.SymbolURL) string {
+func symZuIdent(e getypisiertast.SymbolURL, aktuellePaket string) string {
+	if aktuellePaket == e.Paket {
+		return e.Name
+	}
 	return zuIdent(e.Paket) + "." + e.Name
 }
 
@@ -46,7 +51,7 @@ func isVoid(e getypisiertast.ITyp) bool {
 	return false
 }
 
-func typZuIdent(e getypisiertast.ITyp) string {
+func typZuIdent(e getypisiertast.ITyp, aktuellePaket string) string {
 	switch k := e.(type) {
 	case getypisiertast.Typnutzung:
 		if k.SymbolURL.Paket == "Tawa/Eingebaut" {
@@ -59,11 +64,11 @@ func typZuIdent(e getypisiertast.ITyp) string {
 				return "boolean"
 			}
 		}
-		ident := symZuIdent(k.SymbolURL)
+		ident := symZuIdent(k.SymbolURL, aktuellePaket)
 		if len(k.Generischeargumenten) > 0 {
 			var gens []string
 			for _, it := range k.Generischeargumenten {
-				gens = append(gens, typZuIdent(it))
+				gens = append(gens, typZuIdent(it, aktuellePaket))
 			}
 			ident += fmt.Sprintf(`<%s>`, strings.Join(gens, `, `))
 		}
@@ -74,16 +79,16 @@ func typZuIdent(e getypisiertast.ITyp) string {
 	panic("e")
 }
 
-func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression) {
+func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktuellePaket string) {
 	switch e := expr.(type) {
 	case getypisiertast.Ganzzahl:
 		f.AddK(`%d`, e.Wert)
 	case getypisiertast.Variable:
 		f.AddK(`%s`, e.Name)
 	case getypisiertast.Funktionsaufruf:
-		f.AddK(`%s(`, symZuIdent(e.Funktion))
+		f.AddK(`%s(`, symZuIdent(e.Funktion, aktuellePaket))
 		for idx, it := range e.Argumenten {
-			genExpr(f, it)
+			genExpr(f, it, aktuellePaket)
 			if idx != len(e.Argumenten)-1 {
 				f.AddK(`, `)
 			}
@@ -96,12 +101,12 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression) {
 
 		f.Add(`switch (__pat.__variant.__tag) {`)
 		for _, it := range e.Mustern {
-			f.AddI(`case "%s":`, it.Name)
+			f.AddI(`case "%s":`, it.Konstruktor)
 			for _, vari := range it.Variablen {
-				f.Add(`let %s = __pat.__variant.%s`, vari.Name, vari.VonFeld)
+				f.Add(`let %s = __pat.__variant.__data[%d]`, vari.Name, vari.VonFeld)
 			}
 			f.AddE(`return `)
-			genExpr(f, it.Expression)
+			genExpr(f, it.Expression, aktuellePaket)
 			f.AddNL()
 			f.Einzug--
 		}
@@ -109,7 +114,7 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression) {
 
 		f.Einzug--
 		f.AddE(`})(`)
-		genExpr(f, e.Wert)
+		genExpr(f, e.Wert, aktuellePaket)
 		f.AddK(`)`)
 		f.AddNL()
 	default:
@@ -140,9 +145,15 @@ func (t typescriptUnterbau) CodegenModul(o codegenierung.Optionen, m getypisiert
 			for _, vari := range it.Varianten {
 				f.AddI(`| {`)
 				f.Add(`__tag: '%s'`, vari.Name)
-				for _, it := range vari.Datenfelden {
-					f.Add(`%s: %s`, it.Name, typZuIdent(it.Typ))
+				f.AddE(`__data: [`, vari.Name)
+				for idx, it := range vari.Datenfelden {
+					f.Add(`%s`, it.Name, typZuIdent(it.Typ, m.Name))
+					if idx != len(vari.Datenfelden)-1 {
+						f.AddK(`, `)
+					}
 				}
+				f.AddK(`]`)
+				f.AddNL()
 				f.AddD(`}`)
 			}
 
@@ -155,17 +166,17 @@ func (t typescriptUnterbau) CodegenModul(o codegenierung.Optionen, m getypisiert
 		var sig []string
 
 		for _, arg := range it.Funktionssignatur.Formvariabeln {
-			sig = append(sig, fmt.Sprintf(`%s: %s`, arg.Name, typZuIdent(arg.Typ)))
+			sig = append(sig, fmt.Sprintf(`%s: %s`, arg.Name, typZuIdent(arg.Typ, m.Name)))
 		}
 
-		f.Add(`export function %s%s(%s): %s`, it.SymbolURL.Name, generischeString(it.Funktionssignatur.Generischeargumenten), strings.Join(sig, ", "), typZuIdent(it.Funktionssignatur.Rückgabetyp))
+		f.Add(`export function %s%s(%s): %s`, it.SymbolURL.Name, generischeString(it.Funktionssignatur.Generischeargumenten), strings.Join(sig, ", "), typZuIdent(it.Funktionssignatur.Rückgabetyp, m.Name))
 		f.AddI(`{`)
 		if !isVoid(it.Funktionssignatur.Rückgabetyp) {
 			f.AddE(`return `)
 		} else {
 			f.AddE(``)
 		}
-		genExpr(&f, it.Expression)
+		genExpr(&f, it.Expression, m.Name)
 		f.AddNL()
 		f.AddD(`}`)
 
@@ -174,6 +185,8 @@ func (t typescriptUnterbau) CodegenModul(o codegenierung.Optionen, m getypisiert
 	// AUSGABE
 
 	target := path.Join(o.Outpath, m.Name+".ts")
+	repr.Println(m)
+	println(target)
 
 	fehler := os.MkdirAll(path.Dir(target), 0o777)
 	if fehler != nil {

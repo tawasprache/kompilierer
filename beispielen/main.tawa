@@ -1,12 +1,13 @@
 paket Main
 
-funk Haupt() ident(5)
-
-funk OderLogik(wert: Vielleicht[Logik], defaultWert: Logik): Logik
+funk Oder[A, B](wert: §B, defaultWert: §A): §A
     passt wert zu
-        #Nur(logik) =>
-            logik.
+        #Nur(a) =>
+            a.
 
         #Nichts =>
             defaultWert.
     beende
+
+funk OderLogik(wert: Vielleicht[Logik], defaultWert: Logik): Logik
+    Oder(wert, defaultWert)

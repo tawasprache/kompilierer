@@ -48,7 +48,7 @@ type scope struct {
 	vars map[string]getypisiertast.ITyp
 }
 
-func (l *lokalekontext) sucheTyp(n string, pos lexer.Position) (getypisiertast.SymbolURL, error) {
+func (l *lokalekontext) auflöseTyp(n string, pos lexer.Position) (getypisiertast.SymbolURL, error) {
 	for _, it := range l.modul.Typen {
 		if it.SymbolURL.Name == n {
 			return it.SymbolURL, nil
@@ -65,7 +65,7 @@ func (l *lokalekontext) sucheTyp(n string, pos lexer.Position) (getypisiertast.S
 	return getypisiertast.SymbolURL{}, neuFehler(pos, "typ »%s« nicht gefunden", n)
 }
 
-func (l *lokalekontext) sucheTypDekl(url getypisiertast.SymbolURL, pos lexer.Position) (t getypisiertast.Typ, e error) {
+func (l *lokalekontext) typDekl(url getypisiertast.SymbolURL, pos lexer.Position) (t getypisiertast.Typ, e error) {
 	defer func() {
 		t = copy(t).(getypisiertast.Typ)
 	}()
@@ -85,7 +85,7 @@ func (l *lokalekontext) sucheTypDekl(url getypisiertast.SymbolURL, pos lexer.Pos
 	return getypisiertast.Typ{}, neuFehler(pos, "typ »%s« nicht gefunden", url)
 }
 
-func (l *lokalekontext) sucheVariant(n string, pos lexer.Position) (t getypisiertast.Typ, v getypisiertast.Variant, s getypisiertast.SymbolURL, e error) {
+func (l *lokalekontext) auflöseVariant(n string, pos lexer.Position) (t getypisiertast.Typ, v getypisiertast.Variant, s getypisiertast.SymbolURL, e error) {
 	defer func() {
 		t = copy(t).(getypisiertast.Typ)
 		v = copy(v).(getypisiertast.Variant)
@@ -110,7 +110,7 @@ func (l *lokalekontext) sucheVariant(n string, pos lexer.Position) (t getypisier
 	return getypisiertast.Typ{}, getypisiertast.Variant{}, getypisiertast.SymbolURL{}, neuFehler(pos, "variant »%s« nicht gefunden", n)
 }
 
-func (l *lokalekontext) sucheFunkSig(n string, pos lexer.Position) (s getypisiertast.Funktionssignatur, sym getypisiertast.SymbolURL, e error) {
+func (l *lokalekontext) auflöseFunkSig(n string, pos lexer.Position) (s getypisiertast.Funktionssignatur, sym getypisiertast.SymbolURL, e error) {
 	defer func() {
 		s = copy(s).(getypisiertast.Funktionssignatur)
 		sym = copy(sym).(getypisiertast.SymbolURL)
@@ -134,7 +134,7 @@ func (l *lokalekontext) sucheFunkSig(n string, pos lexer.Position) (s getypisier
 	return getypisiertast.Funktionssignatur{}, getypisiertast.SymbolURL{}, neuFehler(pos, "funktion »%s« nicht gefunden", n)
 }
 
-func (l *lokalekontext) sucheFunktionsrumpf(url getypisiertast.SymbolURL, pos lexer.Position) (f getypisiertast.Funktion, e error) {
+func (l *lokalekontext) funktionsrumpf(url getypisiertast.SymbolURL, pos lexer.Position) (f getypisiertast.Funktion, e error) {
 	defer func() {
 		f = copy(f).(getypisiertast.Funktion)
 	}()

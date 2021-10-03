@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/alecthomas/participle/v2/lexer"
+	"github.com/ztrue/tracerr"
 )
 
 func neuFehler(l lexer.Position, format string, a ...interface{}) error {
-	return fmt.Errorf("%s: %s", l, fmt.Sprintf(format, a...))
+	return tracerr.Wrap(fmt.Errorf("%s: %s", l, fmt.Sprintf(format, a...)))
 }

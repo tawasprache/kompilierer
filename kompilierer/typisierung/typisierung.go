@@ -1,55 +1,53 @@
 package typisierung
 
-import (
-	"Tawa/kompilierer/ast"
-	"Tawa/kompilierer/getypisiertast"
-)
+import "Tawa/kompilierer/getypisiertast"
 
-func ZuGetypisierteAst(k *Kontext, modulePrefix string, d ast.Modul) (getypisiertast.Modul, error) {
-	modul := getypisiertast.Modul{}
+func Typiere(k *Kontext, m getypisiertast.Modul, modulePrefix string) (getypisiertast.Modul, error) {
+	m = copy(m).(getypisiertast.Modul)
+
 	l := &lokalekontext{
 		k:                k,
-		modul:            &modul,
-		inModul:          modulePrefix + "/" + d.Package,
+		modul:            &m,
+		inModul:          modulePrefix + "/" + m.Name,
 		lokaleFunktionen: map[string]getypisiertast.Funktionssignatur{},
-		importieren:      []string{"Tawa/Eingebaut"},
+		importieren:      m.Dependencies,
 	}
-	modul.Name = modulePrefix + "/" + d.Package
-	if modul.Name == "Tawa/Eingebaut" {
-		l.importieren = []string{}
-	}
-	for _, it := range d.Importierungen {
-		l.importieren = append(l.importieren, it.Import)
-		// TODO: geimportierte paket zum kontext hinzufuegen
-	}
-	modul.Dependencies = append(modul.Dependencies, l.importieren...)
 
-	for _, it := range d.Deklarationen {
-		if it.Funktiondeklaration != nil {
-			sig, err := funkZuSignatur(l, *it.Funktiondeklaration)
-			if err != nil {
-				return getypisiertast.Modul{}, err
-			}
-			l.lokaleFunktionen[it.Funktiondeklaration.Name] = sig
+	for _, it := range m.Funktionen {
+		l.lokaleFunktionen[it.SymbolURL.Name] = it.Funktionssignatur
+	}
+
+	for idx, it := range m.Funktionen {
+		s := scopes{}
+		s.neuScope()
+
+		for _, it := range it.Funktionssignatur.Formvariabeln {
+			s.head().vars[it.Name] = it.Typ
 		}
-	}
 
-	for _, it := range d.Deklarationen {
-		if it.Typdeklarationen != nil {
-			it, err := typDeklZu(l, *it.Typdeklarationen)
-			if err != nil {
-				return getypisiertast.Modul{}, err
-			}
-			modul.Typen = append(modul.Typen, it)
-		} else if it.Funktiondeklaration != nil {
-			it, err := funkZu(l, *it.Funktiondeklaration)
-			if err != nil {
-				return getypisiertast.Modul{}, err
-			}
-			modul.Funktionen = append(modul.Funktionen, it)
+		istEinheit := false
+		v, ok := it.Funktionssignatur.Rückgabetyp.(getypisiertast.Typnutzung)
+		if ok && v.SymbolURL.Name == "Einheit" && v.SymbolURL.Paket == "Tawa/Eingebaut" {
+			istEinheit = true
 		}
+
+		var rückgabe getypisiertast.Expression
+		var err error
+
+		if istEinheit {
+			rückgabe, err = synthGetypisiertExpression(l, &s, it.Expression)
+			if err != nil {
+				return getypisiertast.Modul{}, err
+			}
+		} else {
+			rückgabe, err = checkGetypisiertExpression(l, &s, it.Expression, it.Funktionssignatur.Rückgabetyp)
+			if err != nil {
+				return getypisiertast.Modul{}, err
+			}
+		}
+
+		m.Funktionen[idx].Expression = rückgabe
 	}
 
-	k.Module[modul.Name] = modul
-	return modul, nil
+	return m, nil
 }

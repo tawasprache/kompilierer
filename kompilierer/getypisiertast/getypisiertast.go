@@ -1,6 +1,8 @@
 package getypisiertast
 
-import "github.com/alecthomas/participle/v2/lexer"
+import (
+	"github.com/alecthomas/participle/v2/lexer"
+)
 
 type Modul struct {
 	Name         string
@@ -42,6 +44,11 @@ type Typnutzung struct {
 }
 
 func (t Typnutzung) istTyp() {}
+
+type Nichtunifiziert struct {
+}
+
+func (t Nichtunifiziert) istTyp() {}
 
 type SymbolURL struct {
 	Paket string
@@ -110,9 +117,10 @@ func (v Funktionsaufruf) Typ() ITyp           { return v.Rückgabetyp }
 func (v Funktionsaufruf) Pos() lexer.Position { return v.LPos }
 
 type Variantaufruf struct {
-	Variant    SymbolURL
-	Argumenten []Expression
-	Varianttyp ITyp
+	Variant     SymbolURL
+	Konstruktor string
+	Argumenten  []Expression
+	Varianttyp  ITyp
 
 	LPos lexer.Position
 }
@@ -134,15 +142,18 @@ func (v Pattern) Typ() ITyp           { return v.LTyp }
 func (v Pattern) Pos() lexer.Position { return v.LPos }
 
 type Muster struct {
-	Name      string
+	Variante    SymbolURL
+	Konstruktor string
+
 	Variablen []Mustervariable
 
 	Expression Expression
 }
 
 type Mustervariable struct {
-	Name    string
-	VonFeld string
+	Variante    SymbolURL
+	Konstruktor string
+	VonFeld     int
 
-	ITyp ITyp
+	Name string
 }

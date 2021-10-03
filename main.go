@@ -55,22 +55,17 @@ func main() {
 					}
 
 					ktx := typisierung.NeuKontext()
-					getypt, err := typisierung.ZuGetypisierteAst(ktx, "User", dat)
+					genannt, err := typisierung.Auflösenamen(ktx, dat, "User")
+					if err != nil {
+						return err
+					}
+
+					getypt, err := typisierung.Typiere(ktx, genannt, "User")
 					if err != nil {
 						return err
 					}
 
 					repr.Println(getypt)
-
-					return nil
-				},
-			},
-			{
-				Name:  "dev",
-				Usage: "does whatever i want it to for dev",
-				Action: func(c *cli.Context) error {
-					typisierung.NeuKontext()
-
 					return nil
 				},
 			},
@@ -97,10 +92,17 @@ func main() {
 					}
 
 					ktx := typisierung.NeuKontext()
-					getypt, err := typisierung.ZuGetypisierteAst(ktx, "User", dat)
+					genannt, err := typisierung.Auflösenamen(ktx, dat, "User")
 					if err != nil {
 						return err
 					}
+
+					getypt, err := typisierung.Typiere(ktx, genannt, "User")
+					if err != nil {
+						return err
+					}
+
+					ktx.Module[getypt.Name] = getypt
 
 					os.Mkdir(c.Args().Get(1), 0o777)
 
@@ -129,6 +131,7 @@ func main() {
 	}
 	err := a.Run(os.Args)
 	if err != nil {
-		panic(err)
+		println(err.Error())
+		os.Exit(1)
 	}
 }

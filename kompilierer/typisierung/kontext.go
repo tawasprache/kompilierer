@@ -10,6 +10,18 @@ type Kontext struct {
 	Module map[string]getypisiertast.Modul
 }
 
+func zuGetypisierteAst(k *Kontext, p string, m ast.Modul) (getypisiertast.Modul, error) {
+	genannt, feh := Auflösenamen(k, m, p)
+	if feh != nil {
+		return getypisiertast.Modul{}, feh
+	}
+	getypt, feh := Typiere(k, genannt, p)
+	if feh != nil {
+		return getypisiertast.Modul{}, feh
+	}
+	return getypt, nil
+}
+
 func ladeEingebaute(k *Kontext, path string) {
 	modul := ast.Modul{}
 	builtin, _ := standardbibliothek.StandardBibliothek.ReadFile(path + ".tawa")
@@ -17,7 +29,7 @@ func ladeEingebaute(k *Kontext, path string) {
 	if err != nil {
 		panic(err)
 	}
-	g, err := ZuGetypisierteAst(k, "Tawa", modul)
+	g, err := zuGetypisierteAst(k, "Tawa", modul)
 	if err != nil {
 		panic(err)
 	}
