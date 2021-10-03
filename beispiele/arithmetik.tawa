@@ -1,0 +1,4 @@
+paket Main
+
+funk Maths()
+    (1 * 3) == 10

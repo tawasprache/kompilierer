@@ -154,6 +154,51 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 				LPos: e.Pos(),
 			}, nil
 		}
+	case getypisiertast.ValBinaryOperator:
+		links, feh := synthGetypisiertExpression(l, s, e.Links)
+		if feh != nil {
+			return nil, feh
+		}
+		rechts, feh := synthGetypisiertExpression(l, s, e.Rechts)
+		if feh != nil {
+			return nil, feh
+		}
+
+		linksIstGanz := gleich(links.Typ(), getypisiertast.TypGanz)
+		rechtsIstGanz := gleich(rechts.Typ(), getypisiertast.TypGanz)
+
+		if !linksIstGanz {
+			return nil, gleichErr(links.Pos(), "term", links.Typ(), getypisiertast.TypGanz)
+		}
+		if !rechtsIstGanz {
+			return nil, gleichErr(rechts.Pos(), "term", links.Typ(), getypisiertast.TypGanz)
+		}
+
+		return getypisiertast.ValBinaryOperator{
+			Links:  links,
+			Rechts: rechts,
+			Art:    e.Art,
+			LTyp:   getypisiertast.TypGanz,
+			LPos:   e.LPos,
+		}, nil
+	case getypisiertast.LogikBinaryOperator:
+		links, feh := synthGetypisiertExpression(l, s, e.Links)
+		if feh != nil {
+			return nil, feh
+		}
+		rechts, feh := synthGetypisiertExpression(l, s, e.Rechts)
+		if feh != nil {
+			return nil, feh
+		}
+		if !gleich(links.Typ(), rechts.Typ()) {
+			return nil, gleichErr(e.Pos(), "vergleich", links.Typ(), rechts.Typ())
+		}
+		return getypisiertast.LogikBinaryOperator{
+			Links:  links,
+			Rechts: rechts,
+			Art:    e.Art,
+			LPos:   e.Pos(),
+		}, nil
 	}
 	panic("unreachable " + repr.String(expr))
 }

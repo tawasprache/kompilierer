@@ -27,7 +27,7 @@ type Funktiondeklaration struct {
 	Generischeargumenten []string       `("[" ( @Ident ( "," @Ident )* )? "]")?`
 	Formvariabeln        []Formvariable `"(" ( @@ ( "," @@ )* )? ")"`
 	Rückgabetyp          *Typ           `(":" @@)?`
-	Expression           Expression     `(("=" ">") | ("-" ">"))? @@`
+	Expression           Expression     `(("=>") | ("->"))? @@`
 }
 
 type Typdeklarationen struct {
@@ -66,7 +66,8 @@ type Typkonstruktor struct {
 }
 
 var (
-	Parser = participle.MustBuild(&Modul{}, participle.UseLookahead(4))
+	Parser   = participle.MustBuild(&Modul{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}))
+	terminal = participle.MustBuild(&Terminal{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}))
 )
 
 func VonStringX(filename, content string) (r Modul) {

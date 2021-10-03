@@ -86,12 +86,26 @@ type Ganzzahl struct {
 func (g Ganzzahl) Pos() lexer.Position { return g.LPos }
 func (g Ganzzahl) istExpression()      {}
 func (g Ganzzahl) Typ() ITyp {
-	return Typnutzung{
-		SymbolURL: SymbolURL{
-			Paket: "Tawa/Eingebaut",
-			Name:  "Ganz",
-		},
-	}
+	return TypGanz
+}
+
+var TypGanz = Typnutzung{
+	SymbolURL: SymbolURL{
+		Paket: "Tawa/Eingebaut",
+		Name:  "Ganz",
+	},
+}
+var TypLogik = Typnutzung{
+	SymbolURL: SymbolURL{
+		Paket: "Tawa/Eingebaut",
+		Name:  "Logik",
+	},
+}
+var TypZeichenkette = Typnutzung{
+	SymbolURL: SymbolURL{
+		Paket: "Tawa/Eingebaut",
+		Name:  "Zeichenkette",
+	},
 }
 
 type Zeichenkette struct {
@@ -102,12 +116,7 @@ type Zeichenkette struct {
 func (g Zeichenkette) Pos() lexer.Position { return g.LPos }
 func (g Zeichenkette) istExpression()      {}
 func (g Zeichenkette) Typ() ITyp {
-	return Typnutzung{
-		SymbolURL: SymbolURL{
-			Paket: "Tawa/Eingebaut",
-			Name:  "Zeichenkette",
-		},
-	}
+	return TypZeichenkette
 }
 
 type Variable struct {
@@ -172,4 +181,55 @@ type Mustervariable struct {
 	VonFeld     int
 
 	Name string
+}
+
+type ValBinOp int
+
+const (
+	_ ValBinOp = iota
+	BinOpAdd
+	BinOpSub
+	BinOpMul
+	BinOpDiv
+	BinOpPow
+	BinOpMod
+)
+
+type LogikBinOp int
+
+const (
+	_ LogikBinOp = iota
+	BinOpGleich
+	BinOpNichtGleich
+	BinOpWeniger
+	BinOpWenigerGleich
+	BinOpGrößer
+	BinOpGrößerGleich
+)
+
+type ValBinaryOperator struct {
+	Links  Expression
+	Rechts Expression
+	Art    ValBinOp
+
+	LTyp ITyp
+	LPos lexer.Position
+}
+
+func (v ValBinaryOperator) istExpression()      {}
+func (v ValBinaryOperator) Typ() ITyp           { return v.LTyp }
+func (v ValBinaryOperator) Pos() lexer.Position { return v.LPos }
+
+type LogikBinaryOperator struct {
+	Links  Expression
+	Rechts Expression
+	Art    LogikBinOp
+
+	LPos lexer.Position
+}
+
+func (v LogikBinaryOperator) istExpression()      {}
+func (v LogikBinaryOperator) Pos() lexer.Position { return v.LPos }
+func (v LogikBinaryOperator) Typ() ITyp {
+	return TypLogik
 }

@@ -10,141 +10,246 @@ import (
 func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.Expression) (getypisiertast.Expression, error) {
 	var feh error
 
-	if astExpr.Ganzzahl != nil {
-		return getypisiertast.Ganzzahl{
-			Wert: *astExpr.Ganzzahl,
-			LPos: astExpr.Pos,
-		}, nil
-	} else if astExpr.Passt != nil {
-		var (
-			wert    getypisiertast.Expression
-			mustern []getypisiertast.Muster
+	if astExpr.Terminal != nil {
+		terminal := *astExpr.Terminal
 
-			lTyp getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
-			lPos lexer.Position      = astExpr.Pos
-		)
+		if terminal.Ganzzahl != nil {
+			return getypisiertast.Ganzzahl{
+				Wert: *terminal.Ganzzahl,
+				LPos: terminal.Pos,
+			}, nil
+		} else if terminal.Passt != nil {
+			var (
+				wert    getypisiertast.Expression
+				mustern []getypisiertast.Muster
 
-		wert, feh = exprNamensauflösung(k, s, l, astExpr.Passt.Wert)
-		if feh != nil {
-			return nil, feh
-		}
+				lTyp getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
+				lPos lexer.Position      = terminal.Pos
+			)
 
-		for _, it := range astExpr.Passt.Mustern {
-			_, _, sym, feh := l.auflöseVariant(it.Pattern.Name, it.Pattern.Pos)
+			wert, feh = exprNamensauflösung(k, s, l, terminal.Passt.Wert)
 			if feh != nil {
 				return nil, feh
 			}
 
-			muster := getypisiertast.Muster{
-				Variante:    sym,
-				Konstruktor: it.Pattern.Name,
-			}
+			for _, it := range terminal.Passt.Mustern {
+				_, _, sym, feh := l.auflöseVariant(it.Pattern.Name, it.Pattern.Pos)
+				if feh != nil {
+					return nil, feh
+				}
 
-			s.neuScope()
-			defer s.loescheScope()
-
-			for idx, musterVari := range it.Pattern.Variabeln {
-				s.head().vars[musterVari] = getypisiertast.Nichtunifiziert{}
-				muster.Variablen = append(muster.Variablen, getypisiertast.Mustervariable{
+				muster := getypisiertast.Muster{
 					Variante:    sym,
 					Konstruktor: it.Pattern.Name,
-					VonFeld:     idx,
-					Name:        musterVari,
-				})
+				}
+
+				s.neuScope()
+				defer s.loescheScope()
+
+				for idx, musterVari := range it.Pattern.Variabeln {
+					s.head().vars[musterVari] = getypisiertast.Nichtunifiziert{}
+					muster.Variablen = append(muster.Variablen, getypisiertast.Mustervariable{
+						Variante:    sym,
+						Konstruktor: it.Pattern.Name,
+						VonFeld:     idx,
+						Name:        musterVari,
+					})
+				}
+
+				musterExpr, feh := exprNamensauflösung(k, s, l, it.Expression)
+				if feh != nil {
+					return nil, feh
+				}
+
+				muster.Expression = musterExpr
+
+				mustern = append(mustern, muster)
 			}
 
-			musterExpr, feh := exprNamensauflösung(k, s, l, it.Expression)
+			return getypisiertast.Pattern{
+				Wert:    wert,
+				Mustern: mustern,
+
+				LTyp: lTyp,
+				LPos: lPos,
+			}, nil
+		} else if terminal.Variantaufruf != nil {
+			var (
+				variant     getypisiertast.SymbolURL
+				konstruktor string = terminal.Variantaufruf.Name
+				argumenten  []getypisiertast.Expression
+				varianttyp  getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
+
+				lPos lexer.Position = terminal.Pos
+			)
+
+			_, _, variant, feh := l.auflöseVariant(terminal.Variantaufruf.Name, terminal.Pos)
 			if feh != nil {
 				return nil, feh
 			}
 
-			muster.Expression = musterExpr
+			for _, it := range terminal.Variantaufruf.Argumente {
+				variExpr, feh := exprNamensauflösung(k, s, l, it)
+				if feh != nil {
+					return nil, feh
+				}
+				argumenten = append(argumenten, variExpr)
+			}
 
-			mustern = append(mustern, muster)
+			return getypisiertast.Variantaufruf{
+				Variant:     variant,
+				Konstruktor: konstruktor,
+				Argumenten:  argumenten,
+				Varianttyp:  varianttyp,
+
+				LPos: lPos,
+			}, nil
+		} else if terminal.Funktionsaufruf != nil {
+			var (
+				funktion    getypisiertast.SymbolURL
+				argumenten  []getypisiertast.Expression
+				rückgabetyp getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
+				lPos        lexer.Position      = terminal.Pos
+			)
+
+			_, funktion, feh = l.auflöseFunkSig(terminal.Funktionsaufruf.Name, terminal.Pos)
+			if feh != nil {
+				return nil, feh
+			}
+
+			for _, arg := range terminal.Funktionsaufruf.Argumente {
+				garg, feh := exprNamensauflösung(k, s, l, arg)
+				if feh != nil {
+					return nil, feh
+				}
+				argumenten = append(argumenten, garg)
+			}
+
+			return getypisiertast.Funktionsaufruf{
+				Funktion:    funktion,
+				Argumenten:  argumenten,
+				Rückgabetyp: rückgabetyp,
+				LPos:        lPos,
+			}, nil
+		} else if terminal.Variable != nil {
+			_, gefunden := s.suche(*terminal.Variable)
+
+			if !gefunden {
+				return nil, neuFehler(terminal.Pos, "variable »%s« nicht gefunden", *terminal.Variable)
+			}
+
+			return getypisiertast.Variable{
+				Name: *terminal.Variable,
+				ITyp: getypisiertast.Nichtunifiziert{},
+				LPos: terminal.Pos,
+			}, nil
+		} else if terminal.Zeichenkette != nil {
+			return getypisiertast.Zeichenkette{
+				Wert: *terminal.Zeichenkette,
+				LPos: terminal.Pos,
+			}, nil
 		}
-
-		return getypisiertast.Pattern{
-			Wert:    wert,
-			Mustern: mustern,
-
-			LTyp: lTyp,
-			LPos: lPos,
-		}, nil
-	} else if astExpr.Variantaufruf != nil {
-		var (
-			variant     getypisiertast.SymbolURL
-			konstruktor string = astExpr.Variantaufruf.Name
-			argumenten  []getypisiertast.Expression
-			varianttyp  getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
-
-			lPos lexer.Position = astExpr.Pos
-		)
-
-		_, _, variant, feh := l.auflöseVariant(astExpr.Variantaufruf.Name, astExpr.Pos)
+	} else {
+		links, feh := exprNamensauflösung(k, s, l, *astExpr.Links)
 		if feh != nil {
 			return nil, feh
 		}
-
-		for _, it := range astExpr.Variantaufruf.Argumente {
-			variExpr, feh := exprNamensauflösung(k, s, l, it)
-			if feh != nil {
-				return nil, feh
-			}
-			argumenten = append(argumenten, variExpr)
-		}
-
-		return getypisiertast.Variantaufruf{
-			Variant:     variant,
-			Konstruktor: konstruktor,
-			Argumenten:  argumenten,
-			Varianttyp:  varianttyp,
-
-			LPos: lPos,
-		}, nil
-	} else if astExpr.Funktionsaufruf != nil {
-		var (
-			funktion    getypisiertast.SymbolURL
-			argumenten  []getypisiertast.Expression
-			rückgabetyp getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
-			lPos        lexer.Position      = astExpr.Pos
-		)
-
-		_, funktion, feh = l.auflöseFunkSig(astExpr.Funktionsaufruf.Name, astExpr.Pos)
+		rechts, feh := exprNamensauflösung(k, s, l, *astExpr.Rechts)
 		if feh != nil {
 			return nil, feh
 		}
-
-		for _, arg := range astExpr.Funktionsaufruf.Argumente {
-			garg, feh := exprNamensauflösung(k, s, l, arg)
-			if feh != nil {
-				return nil, feh
-			}
-			argumenten = append(argumenten, garg)
+		switch *astExpr.Op {
+		case ast.BinOpAdd:
+			return getypisiertast.ValBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpAdd,
+				LTyp:   getypisiertast.Nichtunifiziert{},
+				LPos:   astExpr.Pos,
+			}, nil
+		case ast.BinOpSub:
+			return getypisiertast.ValBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpSub,
+				LTyp:   getypisiertast.Nichtunifiziert{},
+				LPos:   astExpr.Pos,
+			}, nil
+		case ast.BinOpMul:
+			return getypisiertast.ValBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpMul,
+				LTyp:   getypisiertast.Nichtunifiziert{},
+				LPos:   astExpr.Pos,
+			}, nil
+		case ast.BinOpDiv:
+			return getypisiertast.ValBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpDiv,
+				LTyp:   getypisiertast.Nichtunifiziert{},
+				LPos:   astExpr.Pos,
+			}, nil
+		case ast.BinOpPow:
+			return getypisiertast.ValBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpPow,
+				LTyp:   getypisiertast.Nichtunifiziert{},
+				LPos:   astExpr.Pos,
+			}, nil
+		case ast.BinOpMod:
+			return getypisiertast.ValBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpMod,
+				LTyp:   getypisiertast.Nichtunifiziert{},
+				LPos:   astExpr.Pos,
+			}, nil
+		case ast.BinOpGleich:
+			return getypisiertast.LogikBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpGleich,
+				LPos:   astExpr.Pos,
+			}, nil
+		case ast.BinOpNichtGleich:
+			return getypisiertast.LogikBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpNichtGleich,
+				LPos:   astExpr.Pos,
+			}, nil
+		case ast.BinOpWeniger:
+			return getypisiertast.LogikBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpWeniger,
+				LPos:   astExpr.Pos,
+			}, nil
+		case ast.BinOpWenigerGleich:
+			return getypisiertast.LogikBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpWenigerGleich,
+				LPos:   astExpr.Pos,
+			}, nil
+		case ast.BinOpGrößer:
+			return getypisiertast.LogikBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpGrößer,
+				LPos:   astExpr.Pos,
+			}, nil
+		case ast.BinOpGrößerGleich:
+			return getypisiertast.LogikBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpGrößerGleich,
+				LPos:   astExpr.Pos,
+			}, nil
 		}
-
-		return getypisiertast.Funktionsaufruf{
-			Funktion:    funktion,
-			Argumenten:  argumenten,
-			Rückgabetyp: rückgabetyp,
-			LPos:        lPos,
-		}, nil
-	} else if astExpr.Variable != nil {
-		_, gefunden := s.suche(*astExpr.Variable)
-
-		if !gefunden {
-			return nil, neuFehler(astExpr.Pos, "variable »%s« nicht gefunden", *astExpr.Variable)
-		}
-
-		return getypisiertast.Variable{
-			Name: *astExpr.Variable,
-			ITyp: getypisiertast.Nichtunifiziert{},
-			LPos: astExpr.Pos,
-		}, nil
-	} else if astExpr.Zeichenkette != nil {
-		return getypisiertast.Zeichenkette{
-			Wert: *astExpr.Zeichenkette,
-			LPos: astExpr.Pos,
-		}, nil
 	}
 
 	panic("unhandled case")
