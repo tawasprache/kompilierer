@@ -22,9 +22,21 @@ type typescriptUnterbau struct{}
 //go:embed tsconfig.json
 var tsc []byte
 
+//go:embed "Js Helpers.ts"
+var jshelpers []byte
+
 func (t typescriptUnterbau) Pregen(o codegenierung.Optionen) error {
-	path := path.Join(o.Outpath, "tsconfig.json")
-	return ioutil.WriteFile(path, tsc, 0o666)
+	path_ := path.Join(o.Outpath, "tsconfig.json")
+	feh := ioutil.WriteFile(path_, tsc, 0o666)
+	if feh != nil {
+		return feh
+	}
+	path_ = path.Join(o.Outpath, "Js Helpers.ts")
+	feh = ioutil.WriteFile(path_, jshelpers, 0o666)
+	if feh != nil {
+		return feh
+	}
+	return nil
 }
 
 func zuIdent(s string) string {
@@ -166,6 +178,59 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 		genExpr(f, e.Wert, aktuellePaket)
 		f.AddK(`)`)
 		f.AddNL()
+	case getypisiertast.ValBinaryOperator:
+		f.AddK(`(`)
+		genExpr(f, e.Links, aktuellePaket)
+
+		switch e.Art {
+		case getypisiertast.BinOpAdd:
+			f.AddK(` + `)
+		case getypisiertast.BinOpSub:
+			f.AddK(` - `)
+		case getypisiertast.BinOpMul:
+			f.AddK(` * `)
+		case getypisiertast.BinOpDiv:
+			f.AddK(` / `)
+		case getypisiertast.BinOpPow:
+			f.AddK(` ** `)
+		case getypisiertast.BinOpMod:
+			f.AddK(` % `)
+		default:
+			panic("e")
+		}
+
+		genExpr(f, e.Rechts, aktuellePaket)
+		f.AddK(`)`)
+	case getypisiertast.LogikBinaryOperator:
+		if e.Art == getypisiertast.BinOpGleich || e.Art == getypisiertast.BinOpNichtGleich {
+			if e.Art == getypisiertast.BinOpNichtGleich {
+				f.AddK(`!`)
+			}
+			f.AddK(`$JsHelpers.eq(`)
+			genExpr(f, e.Links, aktuellePaket)
+			f.AddK(`,`)
+			genExpr(f, e.Rechts, aktuellePaket)
+			f.AddK(`)`)
+			return
+		}
+		f.AddK(`(`)
+		genExpr(f, e.Links, aktuellePaket)
+
+		switch e.Art {
+		case getypisiertast.BinOpWeniger:
+			f.AddK(` < `)
+		case getypisiertast.BinOpWenigerGleich:
+			f.AddK(` <= `)
+		case getypisiertast.BinOpGrößer:
+			f.AddK(` > `)
+		case getypisiertast.BinOpGrößerGleich:
+			f.AddK(` >= `)
+		default:
+			panic("e")
+		}
+
+		genExpr(f, e.Rechts, aktuellePaket)
+		f.AddK(`)`)
 	default:
 		panic("e " + repr.String(e))
 	}
@@ -181,6 +246,7 @@ func generischeString(s []string) string {
 func (t typescriptUnterbau) CodegenModul(o codegenierung.Optionen, m getypisiertast.Modul) error {
 	f := codegenierung.Filebuilder{}
 
+	f.Add(`import * as $JsHelpers from "Js Helpers"`)
 	for _, it := range m.Dependencies {
 		f.Add(`import * as %s from "%s"`, zuIdent(it), it)
 	}

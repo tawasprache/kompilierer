@@ -190,9 +190,24 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		if feh != nil {
 			return nil, feh
 		}
+
 		if !gleich(links.Typ(), rechts.Typ()) {
 			return nil, gleichErr(e.Pos(), "vergleich", links.Typ(), rechts.Typ())
 		}
+
+		switch e.Art {
+		case getypisiertast.BinOpWeniger:
+			fallthrough
+		case getypisiertast.BinOpWenigerGleich:
+			fallthrough
+		case getypisiertast.BinOpGrößer:
+			fallthrough
+		case getypisiertast.BinOpGrößerGleich:
+			if !gleich(links.Typ(), getypisiertast.TypGanz) {
+				return nil, gleichErr(e.Pos(), "vergleich", links.Typ(), getypisiertast.TypGanz)
+			}
+		}
+
 		return getypisiertast.LogikBinaryOperator{
 			Links:  links,
 			Rechts: rechts,
