@@ -77,6 +77,9 @@ func main() {
 						Name:     "backend",
 						Required: true,
 					},
+					&cli.StringFlag{
+						Name: "js-out",
+					},
 				},
 				Action: func(c *cli.Context) error {
 					fi, err := os.Open(c.Args().First())
@@ -109,7 +112,9 @@ func main() {
 					unterbau := codegenierung.GetUnterbau(c.String("backend"))
 
 					o := codegenierung.Optionen{
-						Outpath: c.Args().Get(1),
+						Outpath:   c.Args().Get(1),
+						JSOutfile: c.String("js-out"),
+						Entry:     getypt.Name,
 					}
 
 					feh := unterbau.Pregen(o)
@@ -122,6 +127,11 @@ func main() {
 						if feh != nil {
 							return feh
 						}
+					}
+
+					feh = unterbau.Postgen(o)
+					if feh != nil {
+						return feh
 					}
 
 					return nil

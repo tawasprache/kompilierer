@@ -7,12 +7,15 @@ import (
 )
 
 type Optionen struct {
-	Outpath string
+	Outpath   string
+	JSOutfile string
+	Entry     string
 }
 
 type Unterbau interface {
 	Pregen(o Optionen) error
 	CodegenModul(o Optionen, m getypisiertast.Modul) error
+	Postgen(o Optionen) error
 }
 
 var unterbauen = map[string]Unterbau{}

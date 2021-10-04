@@ -137,8 +137,6 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 					kind = expr.Typ()
 				} else {
 					if !gleich(kind, expr.Typ()) {
-						repr.Println(kind)
-						repr.Println(expr.Typ())
 						return nil, neuFehler(e.Pos(), "arme sind nicht gleich, erwartete %s und sah %s", kind, expr.Typ())
 					}
 				}

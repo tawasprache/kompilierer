@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/alecthomas/repr"
+	"github.com/evanw/esbuild/pkg/api"
 )
 
 func init() {
@@ -35,6 +36,28 @@ func (t typescriptUnterbau) Pregen(o codegenierung.Optionen) error {
 	feh = ioutil.WriteFile(path_, jshelpers, 0o666)
 	if feh != nil {
 		return feh
+	}
+	return nil
+}
+
+func (t typescriptUnterbau) Postgen(o codegenierung.Optionen) error {
+	if len(o.JSOutfile) == 0 {
+		return nil
+	}
+
+	result := api.Build(api.BuildOptions{
+		EntryPoints:       []string{path.Join(o.Outpath, o.Entry+".ts")},
+		Outfile:           o.JSOutfile,
+		Tsconfig:          path.Join(o.Outpath, "tsconfig.json"),
+		TreeShaking:       api.TreeShakingTrue,
+		Bundle:            true,
+		MinifyWhitespace:  true,
+		MinifyIdentifiers: true,
+		MinifySyntax:      true,
+		Write:             true,
+	})
+	if len(result.Errors) > 0 {
+		return fmt.Errorf("%s", repr.String(result))
 	}
 	return nil
 }
@@ -302,9 +325,6 @@ func (t typescriptUnterbau) CodegenModul(o codegenierung.Optionen, m getypisiert
 	// AUSGABE
 
 	target := path.Join(o.Outpath, m.Name+".ts")
-	repr.Println(m)
-	println(target)
-
 	fehler := os.MkdirAll(path.Dir(target), 0o777)
 	if fehler != nil {
 		return fehler
