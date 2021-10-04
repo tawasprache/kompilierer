@@ -1,20 +1,37 @@
 package ast
 
 import (
+	"strings"
+
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
 type Modul struct {
 	Package        string         `"paket" @Ident`
+	Zeigen         Zeigen         `@@`
 	Importierungen []Importierung `@@*`
 	Deklarationen  []Deklaration  `@@*`
+}
+
+type Zeigen struct {
+	Symbolen *[]string `  "zeigt" "(" (@Ident)* ")"`
+	Alles    *string   `| "zeigt" @"alles"`
 }
 
 type Importierung struct {
 	Pos lexer.Position
 
-	Import string `"import" @String`
+	Import Symbolkette  `"import" @@`
+	Als    *Symbolkette `("als" @@)?`
+}
+
+type Symbolkette struct {
+	Symbolen []string `@Ident ( ":" @Ident )*`
+}
+
+func (s Symbolkette) String() string {
+	return strings.Join(s.Symbolen, ":")
 }
 
 type Deklaration struct {
@@ -61,8 +78,8 @@ type Typ struct {
 
 type Typvariable string
 type Typkonstruktor struct {
-	Name                 string `@Ident`
-	Generischeargumenten []Typ  `("[" ( @@ ( "," @@ )* )? "]")?`
+	Name                 Symbolkette `@@`
+	Generischeargumenten []Typ       `("[" ( @@ ( "," @@ )* )? "]")?`
 }
 
 var (

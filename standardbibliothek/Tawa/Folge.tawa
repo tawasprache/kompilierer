@@ -1,0 +1,12 @@
+paket Folge zeigt (Folge oder)
+
+typ Folge[T, Fehler] ist
+    | Okay (wert: §T)
+    | Fehler (fehler: §Fehler)
+beende
+
+funk oder[T, Fehler](wert: Folge[§T, §Fehler], defaultWert: §T): §T
+    passt wert zu
+        #Okay(erfolge) => erfolge.
+        #Fehler(_) => defaultWert.
+    beende

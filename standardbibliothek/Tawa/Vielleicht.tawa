@@ -1,0 +1,12 @@
+paket Vielleicht zeigt (Vielleicht oder)
+
+typ Vielleicht[A] ist
+    | Nur (wert: §A)
+    | Nichts
+beende
+
+funk oder[T](wert: Vielleicht[§T], defaultWert: §T): §T
+    passt wert zu
+        #Nur(erfolge) => erfolge.
+        #Nichts => defaultWert.
+    beende

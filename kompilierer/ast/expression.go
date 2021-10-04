@@ -26,12 +26,12 @@ type Terminal struct {
 }
 
 type Funktionsaufruf struct {
-	Name      string       `@Ident`
+	Name      Symbolkette  `@@`
 	Argumente []Expression `"(" ( @@ ( "," @@ )* )? ")"`
 }
 
 type Variantaufruf struct {
-	Name      string       `"#" @Ident`
+	Name      Symbolkette  `"#" @@`
 	Argumente []Expression `("(" ( @@ ( "," @@ )* )? ")")?`
 }
 
@@ -48,6 +48,6 @@ type Muster struct {
 type Pattern struct {
 	Pos lexer.Position
 
-	Name      string   `"#" @Ident`
-	Variabeln []string `("(" ( @Ident ( "," @Ident )* )? ")")?`
+	Name      Symbolkette `"#" @@`
+	Variabeln []string    `("(" ( @Ident ( "," @Ident )* )? ")")?`
 }

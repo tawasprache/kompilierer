@@ -41,6 +41,8 @@ func NeuKontext() *Kontext {
 	k.Module = map[string]getypisiertast.Modul{}
 
 	ladeEingebaute(k, "Tawa/Eingebaut")
+	ladeEingebaute(k, "Tawa/Folge")
+	ladeEingebaute(k, "Tawa/Vielleicht")
 
 	return k
 }

@@ -3,6 +3,7 @@ package typisierung
 import (
 	"Tawa/kompilierer/ast"
 	"Tawa/kompilierer/getypisiertast"
+	"strings"
 
 	"github.com/alecthomas/participle/v2/lexer"
 )
@@ -40,7 +41,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 
 				muster := getypisiertast.Muster{
 					Variante:    sym,
-					Konstruktor: it.Pattern.Name,
+					Konstruktor: it.Pattern.Name.Symbolen[len(it.Pattern.Name.Symbolen)-1],
 				}
 
 				s.neuScope()
@@ -50,7 +51,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 					s.head().vars[musterVari] = getypisiertast.Nichtunifiziert{}
 					muster.Variablen = append(muster.Variablen, getypisiertast.Mustervariable{
 						Variante:    sym,
-						Konstruktor: it.Pattern.Name,
+						Konstruktor: it.Pattern.Name.Symbolen[len(it.Pattern.Name.Symbolen)-1],
 						VonFeld:     idx,
 						Name:        musterVari,
 					})
@@ -76,7 +77,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 		} else if terminal.Variantaufruf != nil {
 			var (
 				variant     getypisiertast.SymbolURL
-				konstruktor string = terminal.Variantaufruf.Name
+				konstruktor string = terminal.Variantaufruf.Name.Symbolen[len(terminal.Variantaufruf.Name.Symbolen)-1]
 				argumenten  []getypisiertast.Expression
 				varianttyp  getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
 
@@ -359,6 +360,23 @@ func funkZuSignatur(l *lokalekontext, t ast.Funktiondeklaration) (getypisiertast
 	return r, nil
 }
 
+var defaultDependencies = []getypisiertast.Dependency{
+	{
+		Paket:      "Tawa/Eingebaut",
+		ZeigeAlles: true,
+	},
+	{
+		Paket:  "Tawa/Folge",
+		Als:    "Folge",
+		Zeigen: []string{"Folge"},
+	},
+	{
+		Paket:  "Tawa/Vielleicht",
+		Als:    "Vielleicht",
+		Zeigen: []string{"Vielleicht"},
+	},
+}
+
 func Auflösenamen(k *Kontext, m ast.Modul, modulePrefix string) (getypisiertast.Modul, error) {
 	modul := getypisiertast.Modul{}
 	l := &lokalekontext{
@@ -366,17 +384,32 @@ func Auflösenamen(k *Kontext, m ast.Modul, modulePrefix string) (getypisiertast
 		modul:            &modul,
 		inModul:          modulePrefix + "/" + m.Package,
 		lokaleFunktionen: map[string]getypisiertast.Funktionssignatur{},
-		importieren:      []string{"Tawa/Eingebaut"},
+		importieren:      defaultDependencies,
 	}
 	modul.Name = modulePrefix + "/" + m.Package
 	if modul.Name == "Tawa/Eingebaut" {
-		l.importieren = []string{}
+		l.importieren = []getypisiertast.Dependency{}
 	}
 	for _, it := range m.Importierungen {
-		l.importieren = append(l.importieren, it.Import)
+		dep := getypisiertast.Dependency{
+			Paket: strings.Join(it.Import.Symbolen, "/"),
+		}
+		if it.Als != nil {
+			dep.Als = strings.Join(it.Als.Symbolen, "/")
+		}
+		l.importieren = append(l.importieren, dep)
 		// TODO: geimportierte paket zum kontext hinzufuegen
 	}
+	modul.Zeigen = map[string]struct{}{}
 	modul.Dependencies = append(modul.Dependencies, l.importieren...)
+	if m.Zeigen.Alles != nil {
+		modul.ZeigeAlles = true
+	}
+	if m.Zeigen.Symbolen != nil {
+		for _, it := range *m.Zeigen.Symbolen {
+			modul.Zeigen[it] = struct{}{}
+		}
+	}
 
 	for _, it := range m.Deklarationen {
 		if it.Typdeklarationen != nil {

@@ -122,7 +122,12 @@ func main() {
 						return feh
 					}
 
-					for _, it := range append(getypt.Dependencies, getypt.Name) {
+					var modulen = []string{}
+					for _, it := range getypt.Dependencies {
+						modulen = append(modulen, it.Paket)
+					}
+
+					for _, it := range append(modulen, getypt.Name) {
 						feh := unterbau.CodegenModul(o, ktx.Module[it])
 						if feh != nil {
 							return feh

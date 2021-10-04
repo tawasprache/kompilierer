@@ -1,14 +1,25 @@
 package getypisiertast
 
 import (
+	"strings"
+
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
 type Modul struct {
 	Name         string
-	Dependencies []string
+	ZeigeAlles   bool
+	Zeigen       map[string]struct{}
+	Dependencies []Dependency
 	Typen        []Typ
 	Funktionen   []Funktion
+}
+
+type Dependency struct {
+	Paket      string
+	Als        string
+	ZeigeAlles bool
+	Zeigen     []string
 }
 
 type Funktion struct {
@@ -53,6 +64,10 @@ func (t Nichtunifiziert) istTyp() {}
 type SymbolURL struct {
 	Paket string
 	Name  string
+}
+
+func (s SymbolURL) String() string {
+	return strings.ReplaceAll(s.Paket, "/", ":") + ":" + s.Name
 }
 
 type Typ struct {

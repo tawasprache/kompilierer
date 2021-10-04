@@ -1,4 +1,4 @@
-paket Main
+paket Main zeigt alles
 
 funk Oder[A, B](wert: §B, defaultWert: §A): §A
     passt wert zu

@@ -297,7 +297,7 @@ func (t typescriptUnterbau) CodegenModul(o codegenierung.Optionen, m getypisiert
 
 	f.Add(`import * as $JsHelpers from "Js Helpers"`)
 	for _, it := range m.Dependencies {
-		f.Add(`import * as %s from "%s"`, zuIdent(it), it)
+		f.Add(`import * as %s from "%s"`, zuIdent(it.Paket), it.Paket)
 	}
 
 	for _, it := range m.Typen {

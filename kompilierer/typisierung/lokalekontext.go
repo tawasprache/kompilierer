@@ -1,6 +1,7 @@
 package typisierung
 
 import (
+	"Tawa/kompilierer/ast"
 	"Tawa/kompilierer/getypisiertast"
 
 	"github.com/alecthomas/participle/v2/lexer"
@@ -11,7 +12,7 @@ type lokalekontext struct {
 
 	modul            *getypisiertast.Modul
 	inModul          string
-	importieren      []string
+	importieren      []getypisiertast.Dependency
 	lokaleFunktionen map[string]getypisiertast.Funktionssignatur
 }
 
@@ -48,26 +49,22 @@ type scope struct {
 	vars map[string]getypisiertast.ITyp
 }
 
-func (l *lokalekontext) auflöseTyp(n string, pos lexer.Position) (getypisiertast.SymbolURL, error) {
-	for _, it := range l.modul.Typen {
-		if it.SymbolURL.Name == n {
-			return it.SymbolURL, nil
-		}
+func (l *lokalekontext) auflöseTyp(n ast.Symbolkette, pos lexer.Position) (getypisiertast.SymbolURL, error) {
+	switch art := l.tabelleErstellen().namen[n.String()].(type) {
+	case typEintrag:
+		return art.SymURL, nil
+	case error:
+		return getypisiertast.SymbolURL{}, neuFehler(pos, "%s", art.Error())
+	default:
+		return getypisiertast.SymbolURL{}, neuFehler(pos, "typ »%s« nicht gefunden", n)
 	}
-	for _, it := range l.importieren {
-		modul := l.k.Module[it]
-		for _, it := range modul.Typen {
-			if it.SymbolURL.Name == n {
-				return it.SymbolURL, nil
-			}
-		}
-	}
-	return getypisiertast.SymbolURL{}, neuFehler(pos, "typ »%s« nicht gefunden", n)
 }
 
 func (l *lokalekontext) typDekl(url getypisiertast.SymbolURL, pos lexer.Position) (t getypisiertast.Typ, e error) {
 	defer func() {
-		t = copy(t).(getypisiertast.Typ)
+		if e == nil {
+			t = copy(t).(getypisiertast.Typ)
+		}
 	}()
 	for _, it := range l.modul.Typen {
 		if it.SymbolURL == url {
@@ -75,7 +72,7 @@ func (l *lokalekontext) typDekl(url getypisiertast.SymbolURL, pos lexer.Position
 		}
 	}
 	for _, it := range l.importieren {
-		modul := l.k.Module[it]
+		modul := l.k.Module[it.Paket]
 		for _, it := range modul.Typen {
 			if it.SymbolURL == url {
 				return it, nil
@@ -85,58 +82,47 @@ func (l *lokalekontext) typDekl(url getypisiertast.SymbolURL, pos lexer.Position
 	return getypisiertast.Typ{}, neuFehler(pos, "typ »%s« nicht gefunden", url)
 }
 
-func (l *lokalekontext) auflöseVariant(n string, pos lexer.Position) (t getypisiertast.Typ, v getypisiertast.Variant, s getypisiertast.SymbolURL, e error) {
+func (l *lokalekontext) auflöseVariant(n ast.Symbolkette, pos lexer.Position) (t getypisiertast.Typ, v getypisiertast.Variant, s getypisiertast.SymbolURL, e error) {
 	defer func() {
-		t = copy(t).(getypisiertast.Typ)
-		v = copy(v).(getypisiertast.Variant)
+		if e == nil {
+			t = copy(t).(getypisiertast.Typ)
+			v = copy(v).(getypisiertast.Variant)
+		}
 	}()
-	for _, typ := range l.modul.Typen {
-		for _, vari := range typ.Varianten {
-			if vari.Name == n {
-				return typ, vari, typ.SymbolURL, nil
-			}
-		}
+
+	switch art := l.tabelleErstellen().namen[n.String()].(type) {
+	case variantEintrag:
+		return art.Typ, art.Variant, art.SymURL, nil
+	case error:
+		return getypisiertast.Typ{}, getypisiertast.Variant{}, getypisiertast.SymbolURL{}, neuFehler(pos, "%s", art.Error())
+	default:
+		return getypisiertast.Typ{}, getypisiertast.Variant{}, getypisiertast.SymbolURL{}, neuFehler(pos, "variant »%s« nicht gefunden", n)
 	}
-	for _, it := range l.importieren {
-		modul := l.k.Module[it]
-		for _, typ := range modul.Typen {
-			for _, vari := range typ.Varianten {
-				if vari.Name == n {
-					return typ, vari, typ.SymbolURL, nil
-				}
-			}
-		}
-	}
-	return getypisiertast.Typ{}, getypisiertast.Variant{}, getypisiertast.SymbolURL{}, neuFehler(pos, "variant »%s« nicht gefunden", n)
 }
 
-func (l *lokalekontext) auflöseFunkSig(n string, pos lexer.Position) (s getypisiertast.Funktionssignatur, sym getypisiertast.SymbolURL, e error) {
+func (l *lokalekontext) auflöseFunkSig(n ast.Symbolkette, pos lexer.Position) (s getypisiertast.Funktionssignatur, sym getypisiertast.SymbolURL, e error) {
 	defer func() {
-		s = copy(s).(getypisiertast.Funktionssignatur)
-		sym = copy(sym).(getypisiertast.SymbolURL)
+		if e == nil {
+			s = copy(s).(getypisiertast.Funktionssignatur)
+			sym = copy(sym).(getypisiertast.SymbolURL)
+		}
 	}()
-	for name, fn := range l.lokaleFunktionen {
-		if name == n {
-			return fn, getypisiertast.SymbolURL{
-				Paket: l.inModul,
-				Name:  name,
-			}, nil
-		}
+
+	switch art := l.tabelleErstellen().namen[n.String()].(type) {
+	case funktionEintrag:
+		return art.Sig, art.SymURL, nil
+	case error:
+		return getypisiertast.Funktionssignatur{}, getypisiertast.SymbolURL{}, neuFehler(pos, "%s", art.Error())
+	default:
+		return getypisiertast.Funktionssignatur{}, getypisiertast.SymbolURL{}, neuFehler(pos, "funktion »%s« nicht gefunden", n)
 	}
-	for _, it := range l.importieren {
-		modul := l.k.Module[it]
-		for _, it := range modul.Funktionen {
-			if it.SymbolURL.Name == n {
-				return it.Funktionssignatur, it.SymbolURL, nil
-			}
-		}
-	}
-	return getypisiertast.Funktionssignatur{}, getypisiertast.SymbolURL{}, neuFehler(pos, "funktion »%s« nicht gefunden", n)
 }
 
 func (l *lokalekontext) funktionsrumpf(url getypisiertast.SymbolURL, pos lexer.Position) (f getypisiertast.Funktion, e error) {
 	defer func() {
-		f = copy(f).(getypisiertast.Funktion)
+		if e == nil {
+			f = copy(f).(getypisiertast.Funktion)
+		}
 	}()
 	for _, it := range l.modul.Funktionen {
 		if it.SymbolURL == url {
@@ -144,7 +130,7 @@ func (l *lokalekontext) funktionsrumpf(url getypisiertast.SymbolURL, pos lexer.P
 		}
 	}
 	for _, it := range l.importieren {
-		modul := l.k.Module[it]
+		modul := l.k.Module[it.Paket]
 		for _, it := range modul.Funktionen {
 			if it.SymbolURL == url {
 				return it, nil
