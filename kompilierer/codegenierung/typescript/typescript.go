@@ -3,6 +3,7 @@ package typescript
 import (
 	"Tawa/kompilierer/codegenierung"
 	"Tawa/kompilierer/getypisiertast"
+	"Tawa/kompilierer/typisierung"
 	_ "embed"
 	"fmt"
 	"io/ioutil"
@@ -60,6 +61,19 @@ func (t typescriptUnterbau) Postgen(o codegenierung.Optionen) error {
 		return fmt.Errorf("%s", repr.String(result))
 	}
 	return nil
+}
+
+func typEinfach(b getypisiertast.ITyp) bool {
+	if typisierung.TypGleich(b, getypisiertast.TypGanz) {
+		return true
+	}
+	if typisierung.TypGleich(b, getypisiertast.TypZeichenkette) {
+		return true
+	}
+	if typisierung.TypGleich(b, getypisiertast.TypLogik) {
+		return true
+	}
+	return false
 }
 
 func zuIdent(s string) string {
@@ -226,6 +240,18 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 		f.AddK(`)`)
 	case getypisiertast.LogikBinaryOperator:
 		if e.Art == getypisiertast.BinOpGleich || e.Art == getypisiertast.BinOpNichtGleich {
+			if typEinfach(e.Links.Typ()) {
+				f.AddK(`(`)
+				genExpr(f, e.Links, aktuellePaket)
+				if e.Art == getypisiertast.BinOpNichtGleich {
+					f.AddK(` != `)
+				} else {
+					f.AddK(` == `)
+				}
+				genExpr(f, e.Rechts, aktuellePaket)
+				f.AddK(`)`)
+				return
+			}
 			if e.Art == getypisiertast.BinOpNichtGleich {
 				f.AddK(`!`)
 			}

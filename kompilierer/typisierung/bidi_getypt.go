@@ -14,7 +14,7 @@ func checkGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		return nil, err
 	}
 
-	if !gleich(ruck.Typ(), gegenTyp) {
+	if !TypGleich(ruck.Typ(), gegenTyp) {
 		return nil, gleichErr(expr.Pos(), "check", ruck.Typ(), gegenTyp)
 	}
 
@@ -136,7 +136,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 				if kind == nil {
 					kind = expr.Typ()
 				} else {
-					if !gleich(kind, expr.Typ()) {
+					if !TypGleich(kind, expr.Typ()) {
 						return nil, neuFehler(e.Pos(), "arme sind nicht gleich, erwartete %s und sah %s", kind, expr.Typ())
 					}
 				}
@@ -162,8 +162,8 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			return nil, feh
 		}
 
-		linksIstGanz := gleich(links.Typ(), getypisiertast.TypGanz)
-		rechtsIstGanz := gleich(rechts.Typ(), getypisiertast.TypGanz)
+		linksIstGanz := TypGleich(links.Typ(), getypisiertast.TypGanz)
+		rechtsIstGanz := TypGleich(rechts.Typ(), getypisiertast.TypGanz)
 
 		if !linksIstGanz {
 			return nil, gleichErr(links.Pos(), "term", links.Typ(), getypisiertast.TypGanz)
@@ -189,7 +189,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			return nil, feh
 		}
 
-		if !gleich(links.Typ(), rechts.Typ()) {
+		if !TypGleich(links.Typ(), rechts.Typ()) {
 			return nil, gleichErr(e.Pos(), "vergleich", links.Typ(), rechts.Typ())
 		}
 
@@ -201,7 +201,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		case getypisiertast.BinOpGrößer:
 			fallthrough
 		case getypisiertast.BinOpGrößerGleich:
-			if !gleich(links.Typ(), getypisiertast.TypGanz) {
+			if !TypGleich(links.Typ(), getypisiertast.TypGanz) {
 				return nil, gleichErr(e.Pos(), "vergleich", links.Typ(), getypisiertast.TypGanz)
 			}
 		}
@@ -221,7 +221,7 @@ func substituteVars(pos lexer.Position, vars map[string]getypisiertast.ITyp, sub
 		if _, ok := vars[k]; !ok {
 			vars[k] = v
 		} else {
-			if gleich(vars[k], v) {
+			if TypGleich(vars[k], v) {
 				return nil
 			}
 			return neuFehler(pos, "this wants %s to be %s, but %s is already %s", k, v, k, vars[k])
@@ -281,7 +281,7 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 			a = substitute(a, getypisiertast.Typvariable{Name: k}, v)
 		}
 
-		if !gleich(a, b.Typ()) {
+		if !TypGleich(a, b.Typ()) {
 			return nil, gleichErr(aufruf.Pos(), "variante", a, b.Typ())
 		}
 
@@ -350,7 +350,7 @@ func synthGetypisiertApplication(l *lokalekontext, s *scopes, funktion getypisie
 			a = substitute(a, getypisiertast.Typvariable{Name: k}, v)
 		}
 
-		if !gleich(a, b.Typ()) {
+		if !TypGleich(a, b.Typ()) {
 			return nil, gleichErr(eingabe.Pos(), "funktionsaufruf", a, b.Typ())
 		}
 

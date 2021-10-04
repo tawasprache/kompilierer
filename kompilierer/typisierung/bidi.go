@@ -8,7 +8,7 @@ import (
 	"github.com/alecthomas/repr"
 )
 
-func gleich(a getypisiertast.ITyp, b getypisiertast.ITyp) bool {
+func TypGleich(a getypisiertast.ITyp, b getypisiertast.ITyp) bool {
 	lhv, lhsIstTypvar := a.(getypisiertast.Typvariable)
 	rhv, rhsIstTypvar := b.(getypisiertast.Typvariable)
 
@@ -35,7 +35,7 @@ func gleich(a getypisiertast.ITyp, b getypisiertast.ITyp) bool {
 		lh := nlhv.Generischeargumenten[idx]
 		rh := nrhv.Generischeargumenten[idx]
 
-		if !gleich(lh, rh) {
+		if !TypGleich(lh, rh) {
 			return false
 		}
 	}
@@ -119,7 +119,7 @@ func substituteTypdekl(typ getypisiertast.Typ, suche getypisiertast.ITyp, ersetz
 func substitute(typ getypisiertast.ITyp, suche getypisiertast.ITyp, ersetzen getypisiertast.ITyp) getypisiertast.ITyp {
 	switch v := typ.(type) {
 	case getypisiertast.Typvariable:
-		if gleich(v, suche) {
+		if TypGleich(v, suche) {
 			return ersetzen
 		}
 		return v
