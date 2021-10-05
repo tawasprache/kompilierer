@@ -17,6 +17,7 @@ type Modul struct {
 type Zeigen struct {
 	Symbolen *[]string `  "zeigt" "(" (@Ident)* ")"`
 	Alles    *string   `| "zeigt" @"alles"`
+	Nichts   *string   `| "zeigt" @"nichts"`
 }
 
 type Importierung struct {

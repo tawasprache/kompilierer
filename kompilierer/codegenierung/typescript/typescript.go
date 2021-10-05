@@ -151,18 +151,25 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 			}
 			return
 		}
-		if len(e.Argumenten) == 0 {
-			f.AddK(`{__variant: {__tag: '%s'}}`, e.Konstruktor)
-		} else {
-			f.AddK(`{__variant: {__tag: '%s', __data: [`, e.Konstruktor)
-			for idx, it := range e.Argumenten {
-				genExpr(f, it, aktuellePaket)
-				if idx != len(e.Argumenten)-1 {
+		f.AddI(`{`)
+		if e.Konstruktor != "" {
+			f.Add(`__variant: {__tag: '%s'},`)
+			if len(e.Argumenten) > 0 {
+				f.AddI(`__data: [`)
+				for _, it := range e.Argumenten {
+					genExpr(f, it, aktuellePaket)
 					f.AddK(`, `)
 				}
+				f.AddD(`]`)
 			}
-			f.AddK(`] }}`)
 		}
+		for _, it := range e.Strukturfelden {
+			f.AddE(`%s:`, it.Name)
+			genExpr(f, it.Wert, aktuellePaket)
+			f.AddK(`,`)
+			f.AddNL()
+		}
+		f.AddD(`}`)
 	case getypisiertast.Funktionsaufruf:
 		f.AddK(`%s(`, symZuIdent(e.Funktion, aktuellePaket))
 		for idx, it := range e.Argumenten {
@@ -280,6 +287,24 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 
 		genExpr(f, e.Rechts, aktuellePaket)
 		f.AddK(`)`)
+	case getypisiertast.Strukturaktualisierung:
+		f.AddK(`$JsHelpers.update(`)
+		genExpr(f, e.Wert, aktuellePaket)
+		f.AddK(`, `)
+		f.AddK(`{`)
+		for idx, feld := range e.Felden {
+			f.AddK(`%s: `, feld.Name)
+			genExpr(f, feld.Wert, aktuellePaket)
+			if idx != len(e.Felden)-1 {
+				f.AddK(`,`)
+			}
+		}
+		f.AddK(`}`)
+		f.AddK(`)`)
+	case getypisiertast.Feldzugriff:
+		f.AddK(`(`)
+		genExpr(f, e.Links, aktuellePaket)
+		f.AddK(`).%s`, e.Feld)
 	default:
 		panic("e " + repr.String(e))
 	}
@@ -302,6 +327,10 @@ func (t typescriptUnterbau) CodegenModul(o codegenierung.Optionen, m getypisiert
 
 	for _, it := range m.Typen {
 		f.AddI(`export interface %s%s {`, it.SymbolURL.Name, generischeString(it.Generischeargumenten))
+
+		for _, it := range it.Datenfelden {
+			f.Add(`%s: %s`, it.Name, typZuIdent(it.Typ, m.Name))
+		}
 
 		if len(it.Varianten) > 0 {
 			f.AddI(`__variant:`)

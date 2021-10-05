@@ -7,6 +7,9 @@ beende
 
 funk oder[T, Fehler](wert: Folge[§T, §Fehler], defaultWert: §T): §T
     passt wert zu
-        #Okay(erfolge) => erfolge.
-        #Fehler(_) => defaultWert.
+        #Okay(erfolge) =>
+            erfolge
+
+        #Fehler(_) =>
+            defaultWert
     beende

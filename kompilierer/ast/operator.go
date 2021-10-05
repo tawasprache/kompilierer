@@ -17,6 +17,8 @@ const (
 	BinOpWenigerGleich
 	BinOpGrößer
 	BinOpGrößerGleich
+
+	BinOpFeld
 )
 
 type opInfo struct {
@@ -26,7 +28,9 @@ type opInfo struct {
 	Priority         int
 }
 
-var info = map[string]opInfo{
+var info = map[string]*opInfo{
+	".": {Enum: BinOpFeld, Priority: 10},
+
 	"^": {Enum: BinOpPow, Priority: 8, RightAssociative: true},
 
 	"*": {Enum: BinOpMul, Priority: 7},

@@ -105,6 +105,7 @@ var puncts = map[rune]struct{}{
 	'&': {},
 	'|': {},
 	':': {},
+	'.': {},
 }
 
 func isPunct(s rune) bool {

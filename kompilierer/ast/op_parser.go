@@ -1,30 +1,32 @@
 package ast
 
 import (
+	"errors"
+
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
 func (e *Expression) Parse(lex *lexer.PeekingLexer) (err error) {
-	defer func() {
-		switch k := recover().(type) {
-		case error:
-			err = k
-		case nil:
-			return
-		default:
-			panic(k)
-		}
-	}()
-	*e = *parseExpr(lex, 0)
+	expr, err := parseExpr(lex, 0)
+	if err != nil {
+		return err
+	}
+	*e = *expr
 	return nil
 }
 
-func parseExpr(lex *lexer.PeekingLexer, minPrec int) *Expression {
-	lhs := parseAtom(lex)
+func parseExpr(lex *lexer.PeekingLexer, minPrec int) (*Expression, error) {
+	lhs, feh := parseAtom(lex)
+	if feh != nil {
+		return nil, feh
+	}
 	for {
-		tok := peek(lex)
-		if tok.EOF() || !isOp(tok) || info[tok.Value].Priority < minPrec {
+		tok, feh := peek(lex)
+		if feh != nil {
+			return nil, feh
+		}
+		if tok.EOF() || !isOp(tok) || info[tok.Value] == nil || info[tok.Value].Priority < minPrec {
 			break
 		}
 		op := tok.Value
@@ -33,50 +35,66 @@ func parseExpr(lex *lexer.PeekingLexer, minPrec int) *Expression {
 			nextMinPrec++
 		}
 		lex.Next()
-		rhs := parseExpr(lex, nextMinPrec)
+		rhs, feh := parseExpr(lex, nextMinPrec)
+		if feh != nil {
+			return nil, feh
+		}
 		lhs = parseOp(op, lhs, rhs)
 
-		tok2 := peek(lex)
-		if isOp(tok2) && (info[op].NonAssociative || info[tok2.Value].NonAssociative) {
-			panic(errorf(tok.Pos, "Ich weiß nicht wie man (%s) und (%s) gruppiert. Fügen Sie runde Klammern hinzu!", tok.Value, tok2.Value))
+		tok2, feh := peek(lex)
+		if feh != nil {
+			return nil, feh
+		}
+		if isOp(tok2) && info[op] != nil && info[tok2.Value] != nil && (info[op].NonAssociative || info[tok2.Value].NonAssociative) {
+			return nil, errorf(tok.Pos, "Ich weiß nicht wie man (%s) und (%s) gruppiert. Fügen Sie runde Klammern hinzu!", tok.Value, tok2.Value)
 		}
 	}
-	return lhs
+	return lhs, nil
 }
 
-func parseAtom(lex *lexer.PeekingLexer) *Expression {
-	tok := peek(lex)
+func parseAtom(lex *lexer.PeekingLexer) (*Expression, error) {
+	tok, feh := peek(lex)
+	if feh != nil {
+		return nil, feh
+	}
 	if tok.Type == '(' {
 		lex.Next()
-		val := parseExpr(lex, 1)
-		if peek(lex).Value != ")" {
-			panic("unmatched (")
+		val, feh := parseExpr(lex, 1)
+		if feh != nil {
+			return nil, feh
+		}
+		peeked, feh := peek(lex)
+		if feh != nil {
+			return nil, feh
+		}
+		if peeked.Value != ")" {
+			return nil, errors.New("unmatched (")
 		}
 		lex.Next()
-		return val
+		return val, nil
 	} else if tok.EOF() {
-		panic("unexpected EOF")
+		return nil, errors.New("unexpected EOF")
 	} else if isOp(tok) {
-		panic("expected a terminal not " + tok.String())
+		return nil, errors.New("expected a terminal not " + tok.String())
 	} else {
 		v := Terminal{}
 		err := terminal.ParseFromLexer(lex, &v, participle.AllowTrailing(true))
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
-		return &Expression{Terminal: &v}
+		return &Expression{Terminal: &v}, nil
 	}
 }
 func isOp(t lexer.Token) bool {
 	return t.Type == operator
 }
 
-func peek(lex *lexer.PeekingLexer) lexer.Token {
+func peek(lex *lexer.PeekingLexer) (lexer.Token, error) {
 	tok, err := lex.Peek(0)
 	if err != nil {
-		panic("??")
+		return lexer.Token{}, err
 	}
-	return tok
+	return tok, nil
 }
 
 func parseOp(op string, lhs *Expression, rhs *Expression) *Expression {

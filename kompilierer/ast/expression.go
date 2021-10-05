@@ -17,12 +17,13 @@ type Expression struct {
 type Terminal struct {
 	Pos lexer.Position
 
-	Ganzzahl        *int             `  @Int`
-	Zeichenkette    *string          `| @String`
-	Passt           *Passt           `| @@`
-	Variantaufruf   *Variantaufruf   `| @@`
-	Funktionsaufruf *Funktionsaufruf `| @@`
-	Variable        *string          `| @Ident`
+	Ganzzahl               *int                   `  @Int`
+	Zeichenkette           *string                `| @String`
+	Passt                  *Passt                 `| @@`
+	Variantaufruf          *Variantaufruf         `| @@`
+	Funktionsaufruf        *Funktionsaufruf       `| @@`
+	Strukturaktualisierung *Stukturaktualisierung `| @@`
+	Variable               *string                `| @Ident`
 }
 
 type Funktionsaufruf struct {
@@ -31,8 +32,19 @@ type Funktionsaufruf struct {
 }
 
 type Variantaufruf struct {
-	Name      Symbolkette  `"#" @@`
-	Argumente []Expression `("(" ( @@ ( "," @@ )* )? ")")?`
+	Name           Symbolkette    `"#" @@`
+	Argumente      []Expression   `("(" ( @@ ( "," @@ )* )? ")")?`
+	Strukturfelden []Strukturfeld `("{" ( @@ ( "," @@ )* )? "}")?`
+}
+
+type Stukturaktualisierung struct {
+	Struktur Expression     `"{" @@ "|"`
+	Felden   []Strukturfeld `( @@ ( "," @@ )* ) "}"`
+}
+
+type Strukturfeld struct {
+	Name string     `@Ident`
+	Wert Expression `"=" @@`
 }
 
 type Passt struct {
@@ -42,7 +54,7 @@ type Passt struct {
 
 type Muster struct {
 	Pattern    Pattern    `@@`
-	Expression Expression `"=>" @@ "."`
+	Expression Expression `"=>" @@`
 }
 
 type Pattern struct {

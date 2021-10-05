@@ -1,6 +1,7 @@
 package getypisiertast
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/alecthomas/participle/v2/lexer"
@@ -55,6 +56,17 @@ type Typnutzung struct {
 }
 
 func (t Typnutzung) istTyp() {}
+func (t Typnutzung) String() string {
+	var s []string
+	for _, it := range t.Generischeargumenten {
+		s = append(s, fmt.Sprint(it))
+	}
+	if len(t.Generischeargumenten) > 0 {
+		return fmt.Sprintf("%s[%s]", t.SymbolURL.String(), strings.Join(s, ","))
+	} else {
+		return t.SymbolURL.String()
+	}
+}
 
 type Nichtunifiziert struct {
 }
@@ -157,10 +169,11 @@ func (v Funktionsaufruf) Typ() ITyp           { return v.Rückgabetyp }
 func (v Funktionsaufruf) Pos() lexer.Position { return v.LPos }
 
 type Variantaufruf struct {
-	Variant     SymbolURL
-	Konstruktor string
-	Argumenten  []Expression
-	Varianttyp  ITyp
+	Variant        SymbolURL
+	Konstruktor    string
+	Argumenten     []Expression
+	Strukturfelden []Strukturfeld
+	Varianttyp     ITyp
 
 	LPos lexer.Position
 }
@@ -168,6 +181,22 @@ type Variantaufruf struct {
 func (v Variantaufruf) istExpression()      {}
 func (v Variantaufruf) Typ() ITyp           { return v.Varianttyp }
 func (v Variantaufruf) Pos() lexer.Position { return v.LPos }
+
+type Strukturaktualisierung struct {
+	Wert   Expression
+	Felden []Strukturaktualisierungsfeld
+
+	LPos lexer.Position
+}
+
+func (s Strukturaktualisierung) istExpression()      {}
+func (v Strukturaktualisierung) Typ() ITyp           { return v.Wert.Typ() }
+func (s Strukturaktualisierung) Pos() lexer.Position { return s.LPos }
+
+type Strukturaktualisierungsfeld struct {
+	Name string
+	Wert Expression
+}
 
 type Pattern struct {
 	Wert    Expression
@@ -247,4 +276,21 @@ func (v LogikBinaryOperator) istExpression()      {}
 func (v LogikBinaryOperator) Pos() lexer.Position { return v.LPos }
 func (v LogikBinaryOperator) Typ() ITyp {
 	return TypLogik
+}
+
+type Feldzugriff struct {
+	Links Expression
+	Feld  string
+
+	LTyp ITyp
+	LPos lexer.Position
+}
+
+func (f Feldzugriff) istExpression()      {}
+func (f Feldzugriff) Typ() ITyp           { return f.LTyp }
+func (f Feldzugriff) Pos() lexer.Position { return f.LPos }
+
+type Strukturfeld struct {
+	Name string
+	Wert Expression
 }

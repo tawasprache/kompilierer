@@ -49,14 +49,14 @@ type scope struct {
 	vars map[string]getypisiertast.ITyp
 }
 
-func (l *lokalekontext) auflöseTyp(n ast.Symbolkette, pos lexer.Position) (getypisiertast.SymbolURL, error) {
+func (l *lokalekontext) auflöseTyp(n ast.Symbolkette, pos lexer.Position) (getypisiertast.Typ, getypisiertast.SymbolURL, error) {
 	switch art := l.tabelleErstellen().namen[n.String()].(type) {
 	case typEintrag:
-		return art.SymURL, nil
+		return art.Typ, art.SymURL, nil
 	case error:
-		return getypisiertast.SymbolURL{}, neuFehler(pos, "%s", art.Error())
+		return getypisiertast.Typ{}, getypisiertast.SymbolURL{}, neuFehler(pos, "%s", art.Error())
 	default:
-		return getypisiertast.SymbolURL{}, neuFehler(pos, "typ »%s« nicht gefunden", n)
+		return getypisiertast.Typ{}, getypisiertast.SymbolURL{}, neuFehler(pos, "typ »%s« nicht gefunden", n)
 	}
 }
 

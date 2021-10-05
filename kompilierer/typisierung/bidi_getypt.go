@@ -212,6 +212,90 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			Art:    e.Art,
 			LPos:   e.Pos(),
 		}, nil
+	case getypisiertast.Strukturaktualisierung:
+		links, feh := synthGetypisiertExpression(l, s, e.Wert)
+		if feh != nil {
+			return nil, feh
+		}
+		var felden []getypisiertast.Strukturaktualisierungsfeld
+		switch k := links.Typ().(type) {
+		case getypisiertast.Typnutzung:
+			typ, feh := l.typDekl(k.SymbolURL, e.Pos())
+			if feh != nil {
+				panic(feh)
+			}
+			for idx := range k.Generischeargumenten {
+				typ = substituteTypdekl(typ, getypisiertast.Typvariable{Name: typ.Generischeargumenten[idx]}, k.Generischeargumenten[idx])
+			}
+			if len(typ.Datenfelden) == 0 {
+				return nil, neuFehler(e.Pos(), "%s ist kein struktur", typ.SymbolURL)
+			}
+		äußere:
+			for _, usrFeld := range e.Felden {
+				for _, typFeld := range typ.Datenfelden {
+					if usrFeld.Name != typFeld.Name {
+						continue
+					}
+
+					b, f := synthGetypisiertExpression(l, s, usrFeld.Wert)
+					if f != nil {
+						return nil, f
+					}
+
+					if !TypGleich(typFeld.Typ, b.Typ()) {
+						return nil, gleichErr(usrFeld.Wert.Pos(), "strukturfeld", typFeld.Typ, b.Typ())
+					}
+
+					felden = append(felden, getypisiertast.Strukturaktualisierungsfeld{
+						Name: usrFeld.Name,
+						Wert: b,
+					})
+
+					continue äußere
+				}
+				return nil, neuFehler(usrFeld.Wert.Pos(), "%s ist kein feld von %s", usrFeld.Name, typ.SymbolURL)
+			}
+			return getypisiertast.Strukturaktualisierung{
+				Wert:   links,
+				Felden: felden,
+				LPos:   e.LPos,
+			}, nil
+		case getypisiertast.Typvariable:
+			panic("idk")
+		}
+	case getypisiertast.Feldzugriff:
+		links, feh := synthGetypisiertExpression(l, s, e.Links)
+		if feh != nil {
+			return nil, feh
+		}
+		switch k := links.Typ().(type) {
+		case getypisiertast.Typnutzung:
+			typ, feh := l.typDekl(k.SymbolURL, e.Pos())
+			if feh != nil {
+				panic(feh)
+			}
+			for idx := range k.Generischeargumenten {
+				typ = substituteTypdekl(typ, getypisiertast.Typvariable{Name: typ.Generischeargumenten[idx]}, k.Generischeargumenten[idx])
+			}
+
+			for _, feld := range typ.Datenfelden {
+				if feld.Name != e.Feld {
+					continue
+				}
+				return getypisiertast.Feldzugriff{
+					Links: links,
+					Feld:  e.Feld,
+
+					LTyp: feld.Typ,
+					LPos: e.Pos(),
+				}, nil
+			}
+
+			return nil, neuFehler(e.Pos(), "%s ist kein feld von %s", e.Feld, typ.SymbolURL)
+		case getypisiertast.Typvariable:
+			panic("idk")
+		}
+
 	}
 	panic("unreachable " + repr.String(expr))
 }
@@ -246,8 +330,11 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 			break
 		}
 	}
-	if !ok {
+	if !ok && len(typDekl.Datenfelden) == 0 {
 		panic("!ok")
+	}
+	if len(typDekl.Datenfelden) > len(aufruf.Strukturfelden) {
+		return nil, neuFehler(aufruf.Pos(), "nicht genug felden")
 	}
 
 	aufruf = copy(aufruf).(getypisiertast.Variantaufruf)
@@ -257,6 +344,59 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 	}
 
 	vars := map[string]getypisiertast.ITyp{}
+
+	var felden []getypisiertast.Strukturfeld
+
+äußere:
+	for _, typFeld := range typDekl.Datenfelden {
+		for _, usrFeld := range aufruf.Strukturfelden {
+			if usrFeld.Name != typFeld.Name {
+				continue
+			}
+
+			b, f := synthGetypisiertExpression(l, s, usrFeld.Wert)
+			if f != nil {
+				return nil, f
+			}
+
+			a := typFeld.Typ
+
+			es, feh := unify(b.Typ(), a)
+			if feh != nil {
+				return nil, feh
+			}
+			feh = substituteVars(b.Pos(), vars, es)
+			if feh != nil {
+				return nil, feh
+			}
+			for k, v := range vars {
+				a = substitute(a, getypisiertast.Typvariable{Name: k}, v)
+			}
+
+			if !TypGleich(a, b.Typ()) {
+				return nil, gleichErr(aufruf.Pos(), "variante", a, b.Typ())
+			}
+
+			felden = append(felden, getypisiertast.Strukturfeld{
+				Name: usrFeld.Name,
+				Wert: b,
+			})
+
+			continue äußere
+		}
+		return nil, neuFehler(aufruf.LPos, "du hast %s vergessen", typFeld.Name)
+	}
+
+äußere2:
+	for _, usrFeld := range aufruf.Strukturfelden {
+		for _, typFeld := range typDekl.Datenfelden {
+			if usrFeld.Name == typFeld.Name {
+				continue äußere2
+			}
+		}
+		return nil, neuFehler(aufruf.LPos, "%s ist kein feld von %s", usrFeld.Name, typDekl.SymbolURL)
+	}
+
 	var bs []getypisiertast.Expression
 
 	for idx := range typ.Datenfelden {
@@ -305,10 +445,11 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 	}
 
 	return getypisiertast.Variantaufruf{
-		Variant:     typDekl.SymbolURL,
-		Konstruktor: typ.Name,
-		Argumenten:  bs,
-		Varianttyp:  es,
+		Variant:        typDekl.SymbolURL,
+		Konstruktor:    typ.Name,
+		Argumenten:     bs,
+		Strukturfelden: felden,
+		Varianttyp:     es,
 
 		LPos: aufruf.Pos(),
 	}, nil

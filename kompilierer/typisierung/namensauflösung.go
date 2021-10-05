@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/alecthomas/participle/v2/lexer"
+	"github.com/alecthomas/repr"
 )
 
 func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.Expression) (getypisiertast.Expression, error) {
@@ -76,16 +77,22 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			}, nil
 		} else if terminal.Variantaufruf != nil {
 			var (
-				variant     getypisiertast.SymbolURL
-				konstruktor string = terminal.Variantaufruf.Name.Symbolen[len(terminal.Variantaufruf.Name.Symbolen)-1]
-				argumenten  []getypisiertast.Expression
-				varianttyp  getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
+				variant        getypisiertast.SymbolURL
+				konstruktor    string = terminal.Variantaufruf.Name.Symbolen[len(terminal.Variantaufruf.Name.Symbolen)-1]
+				argumenten     []getypisiertast.Expression
+				strukturfelden []getypisiertast.Strukturfeld
+				varianttyp     getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
 
 				lPos lexer.Position = terminal.Pos
 			)
 
 			_, _, variant, feh := l.auflöseVariant(terminal.Variantaufruf.Name, terminal.Pos)
-			if feh != nil {
+			if feh != nil && len(terminal.Variantaufruf.Argumente) == 0 && len(terminal.Variantaufruf.Strukturfelden) > 0 {
+				_, variant, feh = l.auflöseTyp(terminal.Variantaufruf.Name, terminal.Pos)
+				if feh != nil {
+					return nil, feh
+				}
+			} else if feh != nil {
 				return nil, feh
 			}
 
@@ -97,11 +104,23 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				argumenten = append(argumenten, variExpr)
 			}
 
+			for _, it := range terminal.Variantaufruf.Strukturfelden {
+				variExpr, feh := exprNamensauflösung(k, s, l, it.Wert)
+				if feh != nil {
+					return nil, feh
+				}
+				strukturfelden = append(strukturfelden, getypisiertast.Strukturfeld{
+					Name: it.Name,
+					Wert: variExpr,
+				})
+			}
+
 			return getypisiertast.Variantaufruf{
-				Variant:     variant,
-				Konstruktor: konstruktor,
-				Argumenten:  argumenten,
-				Varianttyp:  varianttyp,
+				Variant:        variant,
+				Konstruktor:    konstruktor,
+				Argumenten:     argumenten,
+				Strukturfelden: strukturfelden,
+				Varianttyp:     varianttyp,
 
 				LPos: lPos,
 			}, nil
@@ -148,6 +167,34 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			return getypisiertast.Zeichenkette{
 				Wert: *terminal.Zeichenkette,
 				LPos: terminal.Pos,
+			}, nil
+		} else if terminal.Strukturaktualisierung != nil {
+			var (
+				wert   getypisiertast.Expression
+				felden []getypisiertast.Strukturaktualisierungsfeld
+				lpos   lexer.Position = terminal.Pos
+			)
+
+			wert, feh = exprNamensauflösung(k, s, l, terminal.Strukturaktualisierung.Struktur)
+			if feh != nil {
+				return nil, feh
+			}
+
+			for _, it := range terminal.Strukturaktualisierung.Felden {
+				feldwert, feh := exprNamensauflösung(k, s, l, it.Wert)
+				if feh != nil {
+					return nil, feh
+				}
+				felden = append(felden, getypisiertast.Strukturaktualisierungsfeld{
+					Name: it.Name,
+					Wert: feldwert,
+				})
+			}
+
+			return getypisiertast.Strukturaktualisierung{
+				Wert:   wert,
+				Felden: felden,
+				LPos:   lpos,
 			}, nil
 		}
 	} else {
@@ -250,10 +297,22 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				Art:    getypisiertast.BinOpGrößerGleich,
 				LPos:   astExpr.Pos,
 			}, nil
+		case ast.BinOpFeld:
+			var v getypisiertast.Variable
+			var ok bool
+			if v, ok = rechts.(getypisiertast.Variable); !ok {
+				return nil, neuFehler(rechts.Pos(), "ist kein feld")
+			}
+			return getypisiertast.Feldzugriff{
+				Links: links,
+				Feld:  v.Name,
+				LTyp:  getypisiertast.Nichtunifiziert{},
+				LPos:  rechts.Pos(),
+			}, nil
 		}
 	}
 
-	panic("unhandled case")
+	panic("unhandled case " + repr.String(astExpr))
 }
 
 func typNamensauflösung(k *Kontext, l *lokalekontext, t ast.Typdeklarationen) (getypisiertast.Typ, error) {
@@ -297,7 +356,7 @@ func typNamensauflösung(k *Kontext, l *lokalekontext, t ast.Typdeklarationen) (
 
 func typ(l *lokalekontext, t ast.Typ, generischeargumenten []string) (getypisiertast.ITyp, error) {
 	if t.Typkonstruktor != nil {
-		haupt, err := l.auflöseTyp(t.Typkonstruktor.Name, t.Pos)
+		_, haupt, err := l.auflöseTyp(t.Typkonstruktor.Name, t.Pos)
 		if err != nil {
 			return nil, err
 		}

@@ -105,7 +105,7 @@ func (t *tabelle) hinzufügen(name string, neuEintrag nametabelleEintrag) {
 			t.namen[name] = alteArt
 		default:
 			t.namen[name] = konfliktEintrag{
-				von: []getypisiertast.SymbolURL{symURL(neuEintrag)},
+				von: []getypisiertast.SymbolURL{symURL(neuEintrag), symURL(altWert)},
 			}
 		}
 		return
@@ -131,9 +131,9 @@ func (l *lokalekontext) tabelleErstellen() tabelle {
 		})
 	}
 
-	hinzufügen := func(l *getypisiertast.Modul, symFunc func(getypisiertast.SymbolURL) string, varFunc func(string) string) {
+	hinzufügen := func(l *getypisiertast.Modul, alles bool, symFunc func(getypisiertast.SymbolURL) string, varFunc func(string) string) {
 		for _, funktion := range l.Funktionen {
-			if l.ZeigeAlles || hat(l.Zeigen, funktion.SymbolURL.Name) {
+			if alles || l.ZeigeAlles || hat(l.Zeigen, funktion.SymbolURL.Name) {
 				tabelle.hinzufügen(symFunc(funktion.SymbolURL), funktionEintrag{
 					SymURL:   funktion.SymbolURL,
 					Sig:      funktion.Funktionssignatur,
@@ -145,7 +145,7 @@ func (l *lokalekontext) tabelleErstellen() tabelle {
 			}
 		}
 		for _, t := range l.Typen {
-			if l.ZeigeAlles || hat(l.Zeigen, t.SymbolURL.Name) {
+			if alles || l.ZeigeAlles || hat(l.Zeigen, t.SymbolURL.Name) {
 				tabelle.hinzufügen(symFunc(t.SymbolURL), typEintrag{
 					SymURL: t.SymbolURL,
 					Typ:    t,
@@ -166,7 +166,7 @@ func (l *lokalekontext) tabelleErstellen() tabelle {
 		}
 	}
 
-	hinzufügen(l.modul, func(su getypisiertast.SymbolURL) string {
+	hinzufügen(l.modul, true, func(su getypisiertast.SymbolURL) string {
 		return su.Name
 	}, func(s string) string {
 		return s
@@ -175,19 +175,19 @@ func (l *lokalekontext) tabelleErstellen() tabelle {
 	for _, it := range l.importieren {
 		modul := l.k.Module[it.Paket]
 		if it.ZeigeAlles {
-			hinzufügen(&modul, func(su getypisiertast.SymbolURL) string {
+			hinzufügen(&modul, false, func(su getypisiertast.SymbolURL) string {
 				return su.Name
 			}, func(s string) string {
 				return s
 			})
 		} else if it.Als != "" {
-			hinzufügen(&modul, func(su getypisiertast.SymbolURL) string {
+			hinzufügen(&modul, false, func(su getypisiertast.SymbolURL) string {
 				return it.Als + ":" + su.Name
 			}, func(s string) string {
 				return it.Als + ":" + s
 			})
 		} else {
-			hinzufügen(&modul, func(su getypisiertast.SymbolURL) string {
+			hinzufügen(&modul, false, func(su getypisiertast.SymbolURL) string {
 				return strings.ReplaceAll(su.Paket, "/", ":") + ":" + su.Name
 			}, func(s string) string {
 				return strings.ReplaceAll(it.Paket, "/", ":") + ":" + s
