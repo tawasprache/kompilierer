@@ -493,6 +493,10 @@ func Auflösenamen(k *Kontext, m ast.Modul, modulePrefix string) (getypisiertast
 		if it.Als != nil {
 			dep.Als = strings.Join(it.Als.Symbolen, "/")
 		}
+		dep.Zeigen = it.Zeigen
+		if it.ZeigenAlles != nil {
+			dep.ZeigeAlles = true
+		}
 		if _, ok := k.Module[dep.Paket]; !ok {
 			feh := Lade(k, dep.Paket)
 			if feh != nil {

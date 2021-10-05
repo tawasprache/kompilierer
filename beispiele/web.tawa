@@ -1,6 +1,6 @@
 paket Haupt zeigt nichts
 
-import Tawa:DOM
+import Tawa:DOM zeigende alles
 
 funk Haupt()
-    Tawa:DOM:DocumentWrite("Hallo welt!")
+    DocumentWrite("Hallo welt!")

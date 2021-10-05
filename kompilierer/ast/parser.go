@@ -23,8 +23,10 @@ type Zeigen struct {
 type Importierung struct {
 	Pos lexer.Position
 
-	Import Symbolkette  `"import" @@`
-	Als    *Symbolkette `("als" @@)?`
+	Import      Symbolkette  `"import" @@`
+	Als         *Symbolkette `("als" @@)?`
+	Zeigen      []string     `(("zeigende" "(" @Ident* ")" )`
+	ZeigenAlles *string      `| ("zeigende" @"alles"))`
 }
 
 type Symbolkette struct {
