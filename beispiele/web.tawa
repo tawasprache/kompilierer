@@ -1,0 +1,6 @@
+paket Haupt zeigt nichts
+
+import Tawa:DOM
+
+funk Haupt()
+    Tawa:DOM:DocumentWrite("Hallo welt!")

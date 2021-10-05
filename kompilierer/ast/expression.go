@@ -19,11 +19,22 @@ type Terminal struct {
 
 	Ganzzahl               *int                   `  @Int`
 	Zeichenkette           *string                `| @String`
+	Nativ                  *Nativ                 `| @@`
 	Passt                  *Passt                 `| @@`
 	Variantaufruf          *Variantaufruf         `| @@`
 	Funktionsaufruf        *Funktionsaufruf       `| @@`
 	Strukturaktualisierung *Stukturaktualisierung `| @@`
 	Variable               *string                `| @Ident`
+}
+
+type Nativ struct {
+	Typ  Typ           `"¤" @@`
+	Code []Nativencode `@@*`
+}
+
+type Nativencode struct {
+	Language string `"|" @Ident ":"`
+	Code     string `(@String | @RawString)`
 }
 
 type Funktionsaufruf struct {

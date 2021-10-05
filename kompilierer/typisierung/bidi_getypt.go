@@ -295,7 +295,8 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		case getypisiertast.Typvariable:
 			panic("idk")
 		}
-
+	case getypisiertast.Nativ:
+		return e, nil
 	}
 	panic("unreachable " + repr.String(expr))
 }

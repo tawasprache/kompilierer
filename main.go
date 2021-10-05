@@ -80,6 +80,9 @@ func main() {
 					&cli.StringFlag{
 						Name: "js-out",
 					},
+					&cli.StringFlag{
+						Name: "html-out",
+					},
 				},
 				Action: func(c *cli.Context) error {
 					fi, err := os.Open(c.Args().First())
@@ -112,9 +115,10 @@ func main() {
 					unterbau := codegenierung.GetUnterbau(c.String("backend"))
 
 					o := codegenierung.Optionen{
-						Outpath:   c.Args().Get(1),
-						JSOutfile: c.String("js-out"),
-						Entry:     getypt.Name,
+						Outpath:     c.Args().Get(1),
+						JSOutfile:   c.String("js-out"),
+						HTMLOutfile: c.String("html-out"),
+						Entry:       getypt.Name,
 					}
 
 					feh := unterbau.Pregen(o)

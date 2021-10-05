@@ -6,6 +6,7 @@ import (
 	"Tawa/kompilierer/typisierung"
 	_ "embed"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"os"
 	"path"
@@ -27,6 +28,15 @@ var tsc []byte
 //go:embed "Js Helpers.ts"
 var jshelpers []byte
 
+//go:embed index.html.tmpl
+var html string
+
+var tmpl = template.Must(template.New("s").Parse(html))
+
+type tmplData struct {
+	Script template.JS
+}
+
 func (t typescriptUnterbau) Pregen(o codegenierung.Optionen) error {
 	path_ := path.Join(o.Outpath, "tsconfig.json")
 	feh := ioutil.WriteFile(path_, tsc, 0o666)
@@ -42,11 +52,7 @@ func (t typescriptUnterbau) Pregen(o codegenierung.Optionen) error {
 }
 
 func (t typescriptUnterbau) Postgen(o codegenierung.Optionen) error {
-	if len(o.JSOutfile) == 0 {
-		return nil
-	}
-
-	result := api.Build(api.BuildOptions{
+	opts := api.BuildOptions{
 		EntryPoints:       []string{path.Join(o.Outpath, o.Entry+".ts")},
 		Outfile:           o.JSOutfile,
 		Tsconfig:          path.Join(o.Outpath, "tsconfig.json"),
@@ -56,10 +62,33 @@ func (t typescriptUnterbau) Postgen(o codegenierung.Optionen) error {
 		MinifyIdentifiers: true,
 		MinifySyntax:      true,
 		Write:             true,
-	})
-	if len(result.Errors) > 0 {
-		return fmt.Errorf("%s", repr.String(result))
 	}
+	if o.JSOutfile != "" {
+		result := api.Build(opts)
+		if len(result.Errors) > 0 {
+			return fmt.Errorf("%s", repr.String(result))
+		}
+	}
+	if o.HTMLOutfile != "" {
+		opts.Write = false
+		opts.Outfile = "/out.js"
+		result := api.Build(opts)
+		if len(result.Errors) > 0 {
+			return fmt.Errorf("%s", repr.String(result))
+		}
+		var s strings.Builder
+		fehler := tmpl.Execute(&s, tmplData{
+			Script: template.JS(result.OutputFiles[0].Contents),
+		})
+		if fehler != nil {
+			return fehler
+		}
+		fehler = ioutil.WriteFile(o.HTMLOutfile, []byte(s.String()), 0o666)
+		if fehler != nil {
+			return fehler
+		}
+	}
+
 	return nil
 }
 
@@ -305,6 +334,15 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 		f.AddK(`(`)
 		genExpr(f, e.Links, aktuellePaket)
 		f.AddK(`).%s`, e.Feld)
+	case getypisiertast.Nativ:
+		var (
+			v  string
+			ok bool
+		)
+		if v, ok = e.Code["typescript"]; !ok {
+			panic("kein nativ fur typescript")
+		}
+		f.AddK(v)
 	default:
 		panic("e " + repr.String(e))
 	}
@@ -375,6 +413,10 @@ func (t typescriptUnterbau) CodegenModul(o codegenierung.Optionen, m getypisiert
 		f.AddNL()
 		f.AddD(`}`)
 
+	}
+
+	if m.Name == "User/Haupt" {
+		f.Add(`Haupt()`)
 	}
 
 	// AUSGABE

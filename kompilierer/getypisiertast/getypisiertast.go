@@ -50,6 +50,17 @@ type Typvariable struct {
 
 func (t Typvariable) istTyp() {}
 
+type Nativ struct {
+	Code map[string]string
+
+	LTyp ITyp
+	LPos lexer.Position
+}
+
+func (v Nativ) istExpression()      {}
+func (v Nativ) Typ() ITyp           { return v.LTyp }
+func (v Nativ) Pos() lexer.Position { return v.LPos }
+
 type Typnutzung struct {
 	SymbolURL            SymbolURL
 	Generischeargumenten []ITyp

@@ -7,9 +7,10 @@ import (
 )
 
 type Optionen struct {
-	Outpath   string
-	JSOutfile string
-	Entry     string
+	Outpath     string
+	JSOutfile   string
+	HTMLOutfile string
+	Entry       string
 }
 
 type Unterbau interface {

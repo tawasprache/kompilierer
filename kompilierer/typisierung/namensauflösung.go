@@ -3,6 +3,8 @@ package typisierung
 import (
 	"Tawa/kompilierer/ast"
 	"Tawa/kompilierer/getypisiertast"
+	"Tawa/standardbibliothek"
+	"errors"
 	"strings"
 
 	"github.com/alecthomas/participle/v2/lexer"
@@ -196,6 +198,19 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				Felden: felden,
 				LPos:   lpos,
 			}, nil
+		} else if terminal.Nativ != nil {
+			n := getypisiertast.Nativ{
+				Code: map[string]string{},
+			}
+			var feh error
+			n.LTyp, feh = typ(l, terminal.Nativ.Typ, []string{})
+			if feh != nil {
+				return nil, feh
+			}
+			for _, it := range terminal.Nativ.Code {
+				n.Code[it.Language] = it.Code[1 : len(it.Code)-1]
+			}
+			return n, nil
 		}
 	} else {
 		links, feh := exprNamensauflösung(k, s, l, *astExpr.Links)
@@ -436,6 +451,28 @@ var defaultDependencies = []getypisiertast.Dependency{
 	},
 }
 
+func Lade(k *Kontext, paket string) error {
+	if strings.HasPrefix(paket, "Tawa") {
+		modul := ast.Modul{}
+		builtin, err := standardbibliothek.StandardBibliothek.ReadFile(paket + ".tawa")
+		if err != nil {
+			return err
+		}
+		err = ast.Parser.ParseBytes(paket+".tawa", builtin, &modul)
+		if err != nil {
+			return err
+		}
+		g, err := zuGetypisierteAst(k, "Tawa", modul)
+		if err != nil {
+			return err
+		}
+		k.Module[paket] = g
+		return nil
+	}
+
+	return errors.New("nicht implementiert")
+}
+
 func Auflösenamen(k *Kontext, m ast.Modul, modulePrefix string) (getypisiertast.Modul, error) {
 	modul := getypisiertast.Modul{}
 	l := &lokalekontext{
@@ -455,6 +492,12 @@ func Auflösenamen(k *Kontext, m ast.Modul, modulePrefix string) (getypisiertast
 		}
 		if it.Als != nil {
 			dep.Als = strings.Join(it.Als.Symbolen, "/")
+		}
+		if _, ok := k.Module[dep.Paket]; !ok {
+			feh := Lade(k, dep.Paket)
+			if feh != nil {
+				return getypisiertast.Modul{}, feh
+			}
 		}
 		l.importieren = append(l.importieren, dep)
 		// TODO: geimportierte paket zum kontext hinzufuegen

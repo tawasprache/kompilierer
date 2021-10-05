@@ -1,0 +1,5 @@
+paket DOM zeigt alles
+
+funk DocumentWrite(txt: Zeichenkette)
+    ¤ Einheit
+    | typescript: `document.write(txt)`
