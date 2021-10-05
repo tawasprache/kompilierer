@@ -86,8 +86,8 @@ type Typkonstruktor struct {
 }
 
 var (
-	Parser   = participle.MustBuild(&Modul{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}))
-	terminal = participle.MustBuild(&Terminal{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}))
+	Parser         = participle.MustBuild(&Modul{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}))
+	TerminalParser = participle.MustBuild(&Terminal{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}))
 )
 
 func VonStringX(filename, content string) (r Modul) {

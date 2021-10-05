@@ -78,7 +78,7 @@ func parseAtom(lex *lexer.PeekingLexer) (*Expression, error) {
 		return nil, errors.New("expected a terminal not " + tok.String())
 	} else {
 		v := Terminal{}
-		err := terminal.ParseFromLexer(lex, &v, participle.AllowTrailing(true))
+		err := TerminalParser.ParseFromLexer(lex, &v, participle.AllowTrailing(true))
 		if err != nil {
 			return nil, err
 		}

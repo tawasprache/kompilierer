@@ -39,6 +39,14 @@ func main() {
 				},
 			},
 			{
+				Name: "grammar",
+				Action: func(c *cli.Context) error {
+					println(ast.Parser.String())
+					println(ast.TerminalParser.String())
+					return nil
+				},
+			},
+			{
 				Name:  "typecheck",
 				Usage: "typecheck a file",
 				Action: func(c *cli.Context) error {
