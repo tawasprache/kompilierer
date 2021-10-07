@@ -1,6 +1,10 @@
 paket Haupt zeigt nichts
 
 import Tawa:DOM zeigende alles
+import Tawa:VDOM als VDOM
 
 funk Haupt()
-    DocumentWrite("Hallo welt!")
+    VDOM:ElementAnwenden( #VDOM:Element { art = "h1"
+                                        , inhalt = "hello" }
+                        , VDOM:NeuVDOMAnchor(#Nichts)
+                        )

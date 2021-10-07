@@ -10,8 +10,13 @@ import (
 type Modul struct {
 	Package        string         `"paket" @Ident`
 	Zeigen         Zeigen         `@@`
+	Nativauftakt   *Nativauftakt  `@@?`
 	Importierungen []Importierung `@@*`
 	Deklarationen  []Deklaration  `@@*`
+}
+
+type Nativauftakt struct {
+	Code []Nativencode `"¤" (@@*)`
 }
 
 type Zeigen struct {
@@ -26,7 +31,7 @@ type Importierung struct {
 	Import      Symbolkette  `"import" @@`
 	Als         *Symbolkette `("als" @@)?`
 	Zeigen      []string     `(("zeigende" "(" @Ident* ")" )`
-	ZeigenAlles *string      `| ("zeigende" @"alles"))`
+	ZeigenAlles *string      `| ("zeigende" @"alles"))?`
 }
 
 type Symbolkette struct {

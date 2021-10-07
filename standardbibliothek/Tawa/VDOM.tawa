@@ -1,0 +1,52 @@
+paket VDOM zeigt (
+  Element
+
+  NeuVDOMAnchor
+
+  ElementAnwenden
+)
+
+¤ | typescript: `
+
+import { m, patch, createElement } from 'million'
+
+function $NeuVDOMAnchor(s: Tawa_Vielleicht.Vielleicht<string>): VDOMAnchor {
+  const vel = m('div')
+  const el = createElement(vel)
+  if (s.__variant.__tag == "Nur") {
+    document.querySelector(s.__variant.__data[0])!.appendChild(el);
+    return {
+      vel: vel,
+      el: el,
+    }
+  } else {
+    document.body.appendChild(el);
+    return {
+      vel: vel,
+      el: el,
+    }
+  }
+}
+
+function $doPatch(e: Element, v: any): void {
+  patch(v.el, m(e.art, undefined, [e.inhalt]), v.vel)
+}
+
+`
+
+typ VDOMAnchor ist
+
+beende
+
+typ Element ist
+  art: Zeichenkette
+  inhalt: Zeichenkette
+beende
+
+funk NeuVDOMAnchor(s: Vielleicht[Zeichenkette]): VDOMAnchor
+  ¤ VDOMAnchor
+  | typescript: "$NeuVDOMAnchor(s)"
+
+funk ElementAnwenden(e: Element, v: VDOMAnchor)
+  ¤ Einheit
+  | typescript: "$doPatch(e, v)"

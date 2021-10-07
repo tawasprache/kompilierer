@@ -4,7 +4,7 @@ import (
 	"Tawa/kompilierer/codegenierung"
 	"Tawa/kompilierer/getypisiertast"
 	"Tawa/kompilierer/typisierung"
-	_ "embed"
+	"embed"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -31,6 +31,9 @@ var jshelpers []byte
 //go:embed index.html.tmpl
 var html string
 
+//go:embed million/src
+var million embed.FS
+
 var tmpl = template.Must(template.New("s").Parse(html))
 
 type tmplData struct {
@@ -52,6 +55,31 @@ func (t typescriptUnterbau) Pregen(o codegenierung.Optionen) error {
 }
 
 func (t typescriptUnterbau) Postgen(o codegenierung.Optionen) error {
+	var files = []string{
+		"drivers/children.ts",
+		"drivers/props.ts",
+		"createElement.ts",
+		"index.ts",
+		"jsx.ts",
+		"m.ts",
+		"patch.ts",
+		"schedule.ts",
+		"types.ts",
+	}
+	feh := os.MkdirAll(path.Join(o.Outpath, "million", "drivers"), 0o777)
+	if feh != nil {
+		return feh
+	}
+	for _, it := range files {
+		data, feh := million.ReadFile(path.Join("million", "src", it))
+		if feh != nil {
+			return feh
+		}
+		feh = ioutil.WriteFile(path.Join(o.Outpath, "million", it), data, 0o666)
+		if feh != nil {
+			return feh
+		}
+	}
 	opts := api.BuildOptions{
 		EntryPoints:       []string{path.Join(o.Outpath, o.Entry+".ts")},
 		Outfile:           o.JSOutfile,
@@ -182,7 +210,7 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 		}
 		f.AddI(`{`)
 		if e.Konstruktor != "" {
-			f.Add(`__variant: {__tag: '%s'},`)
+			f.Add(`__variant: {__tag: '%s'},`, e.Konstruktor)
 			if len(e.Argumenten) > 0 {
 				f.AddI(`__data: [`)
 				for _, it := range e.Argumenten {
@@ -361,6 +389,12 @@ func (t typescriptUnterbau) CodegenModul(o codegenierung.Optionen, m getypisiert
 	f.Add(`import * as $JsHelpers from "Js Helpers"`)
 	for _, it := range m.Dependencies {
 		f.Add(`import * as %s from "%s"`, zuIdent(it.Paket), it.Paket)
+	}
+
+	if m.Nativcode != nil {
+		if v, ok := m.Nativcode["typescript"]; ok {
+			f.Add("%s", v)
+		}
 	}
 
 	for _, it := range m.Typen {

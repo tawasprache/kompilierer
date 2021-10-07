@@ -1,0 +1,3 @@
+[submodule "kompilierer/codegenierung/typescript/million"]
+	path = kompilierer/codegenierung/typescript/million
+	url = https://github.com/aidenybai/million.git

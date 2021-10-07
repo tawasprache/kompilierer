@@ -52,7 +52,7 @@ func unify(lhs getypisiertast.ITyp, rhs getypisiertast.ITyp) (map[string]getypis
 		return map[string]getypisiertast.ITyp{
 			rhv.Name: lhs,
 		}, nil
-	} else if lhv, ok := rhs.(getypisiertast.Typvariable); ok {
+	} else if lhv, ok := lhs.(getypisiertast.Typvariable); ok {
 		return map[string]getypisiertast.ITyp{
 			lhv.Name: rhs,
 		}, nil
@@ -160,6 +160,9 @@ func substituteExpression(expr getypisiertast.Expression, suche getypisiertast.I
 		for idx, muster := range v.Mustern {
 			v.Mustern[idx].Expression = substituteExpression(muster.Expression, suche, ersetzen)
 		}
+		return v
+	case getypisiertast.Nativ:
+		v.LTyp = substitute(v.LTyp, suche, ersetzen)
 		return v
 	default:
 		panic("e " + repr.String(v))

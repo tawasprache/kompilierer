@@ -10,6 +10,7 @@ import (
 type Modul struct {
 	Name         string
 	ZeigeAlles   bool
+	Nativcode    map[string]string
 	Zeigen       map[string]struct{}
 	Dependencies []Dependency
 	Typen        []Typ

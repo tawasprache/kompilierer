@@ -483,6 +483,12 @@ func Auflösenamen(k *Kontext, m ast.Modul, modulePrefix string) (getypisiertast
 		importieren:      defaultDependencies,
 	}
 	modul.Name = modulePrefix + "/" + m.Package
+	if m.Nativauftakt != nil {
+		modul.Nativcode = map[string]string{}
+		for _, it := range m.Nativauftakt.Code {
+			modul.Nativcode[it.Language] = it.Code[1 : len(it.Code)-1]
+		}
+	}
 	if modul.Name == "Tawa/Eingebaut" {
 		l.importieren = []getypisiertast.Dependency{}
 	}

@@ -81,6 +81,9 @@ func symURL(k nametabelleEintrag) getypisiertast.SymbolURL {
 }
 
 func (t *tabelle) hinzufügen(name string, neuEintrag nametabelleEintrag) {
+	if neuEintrag == nil {
+		panic("nil eintrag")
+	}
 	altWert, ok := t.namen[name]
 	if ok {
 		switch art := neuEintrag.(type) {

@@ -56,6 +56,7 @@ func (l *lokalekontext) auflöseTyp(n ast.Symbolkette, pos lexer.Position) (gety
 	case error:
 		return getypisiertast.Typ{}, getypisiertast.SymbolURL{}, neuFehler(pos, "%s", art.Error())
 	default:
+
 		return getypisiertast.Typ{}, getypisiertast.SymbolURL{}, neuFehler(pos, "typ »%s« nicht gefunden", n)
 	}
 }
