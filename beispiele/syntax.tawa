@@ -51,7 +51,10 @@ funk Haupt()
     DocumentWrite("Hallo welt!")
 
 funk Haupt()
-    VDOM:ElementAnwenden( #VDOM:Element { art = "h1"
-                                        , inhalt = "hello" }
-                        , VDOM:NeuVDOMAnchor(#Nichts)
-                        )
+    VDOM:ElementAnwenden
+    	( #VDOM:Element
+    		{ art = "h1"
+            , inhalt = "hello"
+            }
+        , VDOM:NeuVDOMAnchor(#Nichts)
+        )
