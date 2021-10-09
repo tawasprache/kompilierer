@@ -1,0 +1,57 @@
+paket Haupt zeigt nichts
+
+import Tawa:DOM zeigende alles
+import Tawa:VDOM als VDOM
+
+typ Struktur ist
+    a: Ganz
+    b: Ganz
+beende
+
+typ Ken[A] ist
+    | Lon (wert: §A)
+    | LonAla
+beende
+
+funk anu[T](wert: Ken[§T], defaultWert: §T): §T
+    passt wert zu
+        #Lon(erfolge) =>
+            erfolge
+
+        #LonAla =>
+            defaultWert
+    beende
+
+typ Farbe ist
+	a: Vielleicht[Ganz]
+
+	| RGB(r: Ganz, g: Ganz, b: Ganz)
+	| HSV(h: Ganz, s: Ganz, v: Ganz)
+beende
+
+funk ZuRGB(f: Farbe)
+	passt f zu
+		#RGB(r, g, b) =>
+			f
+
+		#HSV(h, s, v) =>
+			#RGB(h, s, v) { a = f.a }
+	beende
+
+funk NeuStruktur(): Struktur
+    #Struktur { a = 5, b = 50 }
+
+funk NeuerStruktur(): Struktur
+    { NeuStruktur() | a = 5, b = 3 }
+
+funk WasIst(a: Struktur): Ganz
+    a.a
+
+funk Haupt()
+    DocumentWrite("Hallo welt!")
+
+funk Haupt()
+    VDOM:ElementAnwenden( #VDOM:Element { art = "h1"
+                                        , inhalt = "hello" }
+                        , VDOM:NeuVDOMAnchor(#Nichts)
+                        )
