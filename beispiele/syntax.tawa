@@ -4,23 +4,23 @@ import Tawa:DOM zeigende alles
 import Tawa:VDOM als VDOM
 
 typ Struktur ist
-    a: Ganz
-    b: Ganz
+	a: Ganz
+	b: Ganz
 beende
 
 typ Ken[A] ist
-    | Lon (wert: §A)
-    | LonAla
+	| Lon (wert: §A)
+	| LonAla
 beende
 
 funk anu[T](wert: Ken[§T], defaultWert: §T): §T
-    passt wert zu
-        #Lon(erfolge) =>
-            erfolge
+	passt wert zu
+		#Lon(erfolge) =>
+			erfolge
 
-        #LonAla =>
-            defaultWert
-    beende
+		#LonAla =>
+			defaultWert
+	beende
 
 typ Farbe ist
 	a: Vielleicht[Ganz]
@@ -39,22 +39,22 @@ funk ZuRGB(f: Farbe)
 	beende
 
 funk NeuStruktur(): Struktur
-    #Struktur { a = 5, b = 50 }
+	#Struktur { a = 5, b = 50 }
 
 funk NeuerStruktur(): Struktur
-    { NeuStruktur() | a = 5, b = 3 }
+	{ NeuStruktur() | a = 5, b = 3 }
 
 funk WasIst(a: Struktur): Ganz
-    a.a
+	a.a
 
 funk Haupt()
-    DocumentWrite("Hallo welt!")
+	DocumentWrite("Hallo welt!")
 
 funk Haupt()
-    VDOM:ElementAnwenden
-    	( #VDOM:Element
-    		{ art = "h1"
-            , inhalt = "hello"
-            }
-        , VDOM:NeuVDOMAnchor(#Nichts)
-        )
+	VDOM:ElementAnwenden
+		( #VDOM:Element
+			{ art = "h1"
+			, inhalt = "hello"
+			}
+		, VDOM:NeuVDOMAnchor(#Nichts)
+		)

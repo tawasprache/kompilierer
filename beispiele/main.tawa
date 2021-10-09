@@ -1,22 +1,22 @@
 paket Main zeigt alles
 
 funk Oder[A, B](wert: §B, defaultWert: §A): §A
-    passt wert zu
-        #Nur(a) =>
-            a.
+	passt wert zu
+		#Nur(a) =>
+			a.
 
-        #Nichts =>
-            defaultWert.
-    beende
+		#Nichts =>
+			defaultWert.
+	beende
 
 funk OderLogik(wert: Vielleicht[Logik], defaultWert: Logik): Logik
-    Oder(wert, defaultWert)
+	Oder(wert, defaultWert)
 
 funk Haupt(): Zeichenkette
-    "Hallo welt!"
+	"Hallo welt!"
 
 funk Nicht(wert: Logik): Logik
-    passt wert zu
-        #Wahr => #Falsch.
-        #Falsch => #Wahr.
-    beende
+	passt wert zu
+		#Wahr => #Falsch.
+		#Falsch => #Wahr.
+	beende
