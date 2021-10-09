@@ -1,0 +1,7 @@
+paket Main zeigt alles
+
+funk Maths1()
+	1 * "hi"
+
+funk Maths2()
+	"hi" * 1

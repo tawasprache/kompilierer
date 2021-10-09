@@ -4,7 +4,6 @@ import (
 	"Tawa/kompilierer/getypisiertast"
 	"fmt"
 
-	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/alecthomas/repr"
 )
 
@@ -41,10 +40,6 @@ func TypGleich(a getypisiertast.ITyp, b getypisiertast.ITyp) bool {
 	}
 
 	return true
-}
-
-func gleichErr(p lexer.Position, art string, a getypisiertast.ITyp, b getypisiertast.ITyp) error {
-	return neuFehler(p, "%s nicht gleich: »%s« »%s«", art, a, b)
 }
 
 func unify(lhs getypisiertast.ITyp, rhs getypisiertast.ITyp) (map[string]getypisiertast.ITyp, error) {

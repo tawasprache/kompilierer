@@ -169,7 +169,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			return nil, gleichErr(links.Pos(), "term", links.Typ(), getypisiertast.TypGanz)
 		}
 		if !rechtsIstGanz {
-			return nil, gleichErr(rechts.Pos(), "term", links.Typ(), getypisiertast.TypGanz)
+			return nil, gleichErr(rechts.Pos(), "term", rechts.Typ(), getypisiertast.TypGanz)
 		}
 
 		return getypisiertast.ValBinaryOperator{

@@ -17,6 +17,8 @@ func Typiere(k *Kontext, m getypisiertast.Modul, modulePrefix string) (getypisie
 		l.lokaleFunktionen[it.SymbolURL.Name] = it.Funktionssignatur
 	}
 
+	var serr error
+
 	for idx, it := range m.Funktionen {
 		s := scopes{}
 		s.neuScope()
@@ -36,18 +38,13 @@ func Typiere(k *Kontext, m getypisiertast.Modul, modulePrefix string) (getypisie
 
 		if istEinheit {
 			rückgabe, err = synthGetypisiertExpression(l, &s, it.Expression)
-			if err != nil {
-				return getypisiertast.Modul{}, err
-			}
 		} else {
 			rückgabe, err = checkGetypisiertExpression(l, &s, it.Expression, it.Funktionssignatur.Rückgabetyp)
-			if err != nil {
-				return getypisiertast.Modul{}, err
-			}
 		}
 
+		serr = fehlerVerketten(serr, err)
 		m.Funktionen[idx].Expression = rückgabe
 	}
 
-	return m, nil
+	return m, serr
 }
