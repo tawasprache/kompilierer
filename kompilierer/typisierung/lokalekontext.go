@@ -2,9 +2,8 @@ package typisierung
 
 import (
 	"Tawa/kompilierer/ast"
+	"Tawa/kompilierer/fehlerberichtung"
 	"Tawa/kompilierer/getypisiertast"
-
-	"github.com/alecthomas/participle/v2/lexer"
 )
 
 type lokalekontext struct {
@@ -49,19 +48,19 @@ type scope struct {
 	vars map[string]getypisiertast.ITyp
 }
 
-func (l *lokalekontext) auflöseTyp(n ast.Symbolkette, pos lexer.Position) (getypisiertast.Typ, getypisiertast.SymbolURL, error) {
+func (l *lokalekontext) auflöseTyp(n ast.Symbolkette, pos getypisiertast.Span) (getypisiertast.Typ, getypisiertast.SymbolURL, error) {
 	switch art := l.tabelleErstellen().namen[n.String()].(type) {
 	case typEintrag:
 		return art.Typ, art.SymURL, nil
 	case error:
-		return getypisiertast.Typ{}, getypisiertast.SymbolURL{}, neuFehler(pos, "%s", art.Error())
+		return getypisiertast.Typ{}, getypisiertast.SymbolURL{}, fehlerberichtung.NeuFehler(pos, "%s", art.Error())
 	default:
 
-		return getypisiertast.Typ{}, getypisiertast.SymbolURL{}, neuFehler(pos, "typ »%s« nicht gefunden", n)
+		return getypisiertast.Typ{}, getypisiertast.SymbolURL{}, fehlerberichtung.NeuFehler(pos, "typ »%s« nicht gefunden", n)
 	}
 }
 
-func (l *lokalekontext) typDekl(url getypisiertast.SymbolURL, pos lexer.Position) (t getypisiertast.Typ, e error) {
+func (l *lokalekontext) typDekl(url getypisiertast.SymbolURL, pos getypisiertast.Span) (t getypisiertast.Typ, e error) {
 	defer func() {
 		if e == nil {
 			t = copy(t).(getypisiertast.Typ)
@@ -80,10 +79,10 @@ func (l *lokalekontext) typDekl(url getypisiertast.SymbolURL, pos lexer.Position
 			}
 		}
 	}
-	return getypisiertast.Typ{}, neuFehler(pos, "typ »%s« nicht gefunden", url)
+	return getypisiertast.Typ{}, fehlerberichtung.NeuFehler(pos, "typ »%s« nicht gefunden", url)
 }
 
-func (l *lokalekontext) auflöseVariant(n ast.Symbolkette, pos lexer.Position) (t getypisiertast.Typ, v getypisiertast.Variant, s getypisiertast.SymbolURL, e error) {
+func (l *lokalekontext) auflöseVariant(n ast.Symbolkette, pos getypisiertast.Span) (t getypisiertast.Typ, v getypisiertast.Variant, s getypisiertast.SymbolURL, e error) {
 	defer func() {
 		if e == nil {
 			t = copy(t).(getypisiertast.Typ)
@@ -95,13 +94,13 @@ func (l *lokalekontext) auflöseVariant(n ast.Symbolkette, pos lexer.Position) (
 	case variantEintrag:
 		return art.Typ, art.Variant, art.SymURL, nil
 	case error:
-		return getypisiertast.Typ{}, getypisiertast.Variant{}, getypisiertast.SymbolURL{}, neuFehler(pos, "%s", art.Error())
+		return getypisiertast.Typ{}, getypisiertast.Variant{}, getypisiertast.SymbolURL{}, fehlerberichtung.NeuFehler(pos, "%s", art.Error())
 	default:
-		return getypisiertast.Typ{}, getypisiertast.Variant{}, getypisiertast.SymbolURL{}, neuFehler(pos, "variant »%s« nicht gefunden", n)
+		return getypisiertast.Typ{}, getypisiertast.Variant{}, getypisiertast.SymbolURL{}, fehlerberichtung.NeuFehler(pos, "variant »%s« nicht gefunden", n)
 	}
 }
 
-func (l *lokalekontext) auflöseFunkSig(n ast.Symbolkette, pos lexer.Position) (s getypisiertast.Funktionssignatur, sym getypisiertast.SymbolURL, e error) {
+func (l *lokalekontext) auflöseFunkSig(n ast.Symbolkette, pos getypisiertast.Span) (s getypisiertast.Funktionssignatur, sym getypisiertast.SymbolURL, e error) {
 	defer func() {
 		if e == nil {
 			s = copy(s).(getypisiertast.Funktionssignatur)
@@ -113,13 +112,13 @@ func (l *lokalekontext) auflöseFunkSig(n ast.Symbolkette, pos lexer.Position) (
 	case funktionEintrag:
 		return art.Sig, art.SymURL, nil
 	case error:
-		return getypisiertast.Funktionssignatur{}, getypisiertast.SymbolURL{}, neuFehler(pos, "%s", art.Error())
+		return getypisiertast.Funktionssignatur{}, getypisiertast.SymbolURL{}, fehlerberichtung.NeuFehler(pos, "%s", art.Error())
 	default:
-		return getypisiertast.Funktionssignatur{}, getypisiertast.SymbolURL{}, neuFehler(pos, "funktion »%s« nicht gefunden", n)
+		return getypisiertast.Funktionssignatur{}, getypisiertast.SymbolURL{}, fehlerberichtung.NeuFehler(pos, "funktion »%s« nicht gefunden", n)
 	}
 }
 
-func (l *lokalekontext) funktionsrumpf(url getypisiertast.SymbolURL, pos lexer.Position) (f getypisiertast.Funktion, e error) {
+func (l *lokalekontext) funktionsrumpf(url getypisiertast.SymbolURL, pos getypisiertast.Span) (f getypisiertast.Funktion, e error) {
 	defer func() {
 		if e == nil {
 			f = copy(f).(getypisiertast.Funktion)
@@ -138,5 +137,5 @@ func (l *lokalekontext) funktionsrumpf(url getypisiertast.SymbolURL, pos lexer.P
 			}
 		}
 	}
-	return getypisiertast.Funktion{}, neuFehler(pos, "funktion »%s« muss definiert sein vor nutzung", url.Name)
+	return getypisiertast.Funktion{}, fehlerberichtung.NeuFehler(pos, "funktion »%s« muss definiert sein vor nutzung", url.Name)
 }

@@ -3,7 +3,8 @@ package ast
 import "github.com/alecthomas/participle/v2/lexer"
 
 type Expression struct {
-	Pos lexer.Position
+	Pos    lexer.Position
+	EndPos lexer.Position
 
 	Terminal *Terminal
 
@@ -15,7 +16,8 @@ type Expression struct {
 }
 
 type Terminal struct {
-	Pos lexer.Position
+	Pos    lexer.Position
+	EndPos lexer.Position
 
 	Ganzzahl               *int                   `  @Int`
 	Zeichenkette           *string                `| @String`
@@ -69,7 +71,8 @@ type Muster struct {
 }
 
 type Pattern struct {
-	Pos lexer.Position
+	Pos    lexer.Position
+	EndPos lexer.Position
 
 	Name      Symbolkette `"#" @@`
 	Variabeln []string    `("(" ( @Ident ( "," @Ident )* )? ")")?`

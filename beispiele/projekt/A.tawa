@@ -1,0 +1,7 @@
+paket A zeigt alles
+
+funk Haupt()
+	1 * "a"
+
+funk Geil()
+    "a" * 1

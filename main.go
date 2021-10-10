@@ -4,6 +4,7 @@ import (
 	"Tawa/kompilierer/ast"
 	"Tawa/kompilierer/codegenierung"
 	"Tawa/kompilierer/typisierung"
+	"Tawa/langserv"
 	"os"
 
 	"github.com/alecthomas/repr"
@@ -35,6 +36,14 @@ func main() {
 
 					repr.Println(dat)
 
+					return nil
+				},
+			},
+			{
+				Name:  "lsp",
+				Usage: "lsp",
+				Action: func(c *cli.Context) error {
+					langserv.StartServer()
 					return nil
 				},
 			},

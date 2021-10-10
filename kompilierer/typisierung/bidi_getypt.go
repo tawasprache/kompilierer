@@ -1,9 +1,9 @@
 package typisierung
 
 import (
+	"Tawa/kompilierer/fehlerberichtung"
 	"Tawa/kompilierer/getypisiertast"
 
-	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/alecthomas/repr"
 )
 
@@ -15,7 +15,7 @@ func checkGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 	}
 
 	if !TypGleich(ruck.Typ(), gegenTyp) {
-		return nil, gleichErr(expr.Pos(), "check", ruck.Typ(), gegenTyp)
+		return nil, fehlerberichtung.GleichErr(expr.Pos(), "check", ruck.Typ(), gegenTyp)
 	}
 
 	return ruck, nil
@@ -37,7 +37,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 	case getypisiertast.Variable:
 		typ, ok := s.suche(e.Name)
 		if !ok {
-			return nil, neuFehler(e.Pos(), "variable »%s« nicht gefunden", e.Name)
+			return nil, fehlerberichtung.NeuFehler(e.Pos(), "variable »%s« nicht gefunden", e.Name)
 		}
 		return getypisiertast.Variable{
 			Name: e.Name,
@@ -69,20 +69,20 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			}
 
 			if len(typDekl.Varianten) < 2 {
-				return nil, neuFehler(e.Pos(), " »%s« hat kein varianten", k.SymbolURL)
+				return nil, fehlerberichtung.NeuFehler(e.Pos(), " »%s« hat kein varianten", k.SymbolURL)
 			}
 
 			if len(typDekl.Varianten) != len(e.Mustern) {
-				return nil, neuFehler(e.Pos(), "len nicht gleich")
+				return nil, fehlerberichtung.NeuFehler(e.Pos(), "len nicht gleich")
 			}
 
-			suche := func(s string, p lexer.Position) (getypisiertast.Variant, error) {
+			suche := func(s string, p getypisiertast.Span) (getypisiertast.Variant, error) {
 				for _, it := range typDekl.Varianten {
 					if it.Name == s {
 						return it, nil
 					}
 				}
-				return getypisiertast.Variant{}, neuFehler(p, "variant »%s« existiert nicht", s)
+				return getypisiertast.Variant{}, fehlerberichtung.NeuFehler(p, "variant »%s« existiert nicht", s)
 			}
 
 			varis := map[string]getypisiertast.Variant{}
@@ -94,7 +94,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 				}
 
 				if len(vari.Datenfelden) != len(it.Variablen) {
-					return nil, neuFehler(it.Expression.Pos(), "variante »%s« hat %d variablen, aber du nutzt %d", vari.Name, len(vari.Datenfelden), len(it.Variablen))
+					return nil, fehlerberichtung.NeuFehler(it.Expression.Pos(), "variante »%s« hat %d variablen, aber du nutzt %d", vari.Name, len(vari.Datenfelden), len(it.Variablen))
 				}
 
 				varis[it.Konstruktor] = vari
@@ -137,7 +137,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 					kind = expr.Typ()
 				} else {
 					if !TypGleich(kind, expr.Typ()) {
-						return nil, neuFehler(e.Pos(), "arme sind nicht gleich, erwartete %s und sah %s", kind, expr.Typ())
+						return nil, fehlerberichtung.NeuFehler(e.Pos(), "arme sind nicht gleich, erwartete %s und sah %s", kind, expr.Typ())
 					}
 				}
 
@@ -166,10 +166,10 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		rechtsIstGanz := TypGleich(rechts.Typ(), getypisiertast.TypGanz)
 
 		if !linksIstGanz {
-			return nil, gleichErr(links.Pos(), "term", links.Typ(), getypisiertast.TypGanz)
+			return nil, fehlerberichtung.GleichErr(links.Pos(), "term", links.Typ(), getypisiertast.TypGanz)
 		}
 		if !rechtsIstGanz {
-			return nil, gleichErr(rechts.Pos(), "term", rechts.Typ(), getypisiertast.TypGanz)
+			return nil, fehlerberichtung.GleichErr(rechts.Pos(), "term", rechts.Typ(), getypisiertast.TypGanz)
 		}
 
 		return getypisiertast.ValBinaryOperator{
@@ -190,7 +190,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		}
 
 		if !TypGleich(links.Typ(), rechts.Typ()) {
-			return nil, gleichErr(e.Pos(), "vergleich", links.Typ(), rechts.Typ())
+			return nil, fehlerberichtung.GleichErr(e.Pos(), "vergleich", links.Typ(), rechts.Typ())
 		}
 
 		switch e.Art {
@@ -202,7 +202,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			fallthrough
 		case getypisiertast.BinOpGrößerGleich:
 			if !TypGleich(links.Typ(), getypisiertast.TypGanz) {
-				return nil, gleichErr(e.Pos(), "vergleich", links.Typ(), getypisiertast.TypGanz)
+				return nil, fehlerberichtung.GleichErr(e.Pos(), "vergleich", links.Typ(), getypisiertast.TypGanz)
 			}
 		}
 
@@ -228,7 +228,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 				typ = substituteTypdekl(typ, getypisiertast.Typvariable{Name: typ.Generischeargumenten[idx]}, k.Generischeargumenten[idx])
 			}
 			if len(typ.Datenfelden) == 0 {
-				return nil, neuFehler(e.Pos(), "%s ist kein struktur", typ.SymbolURL)
+				return nil, fehlerberichtung.NeuFehler(e.Pos(), "%s ist kein struktur", typ.SymbolURL)
 			}
 		äußere:
 			for _, usrFeld := range e.Felden {
@@ -243,7 +243,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 					}
 
 					if !TypGleich(typFeld.Typ, b.Typ()) {
-						return nil, gleichErr(usrFeld.Wert.Pos(), "strukturfeld", typFeld.Typ, b.Typ())
+						return nil, fehlerberichtung.GleichErr(usrFeld.Wert.Pos(), "strukturfeld", typFeld.Typ, b.Typ())
 					}
 
 					felden = append(felden, getypisiertast.Strukturaktualisierungsfeld{
@@ -253,7 +253,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 
 					continue äußere
 				}
-				return nil, neuFehler(usrFeld.Wert.Pos(), "%s ist kein feld von %s", usrFeld.Name, typ.SymbolURL)
+				return nil, fehlerberichtung.NeuFehler(usrFeld.Wert.Pos(), "%s ist kein feld von %s", usrFeld.Name, typ.SymbolURL)
 			}
 			return getypisiertast.Strukturaktualisierung{
 				Wert:   links,
@@ -291,7 +291,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 				}, nil
 			}
 
-			return nil, neuFehler(e.Pos(), "%s ist kein feld von %s", e.Feld, typ.SymbolURL)
+			return nil, fehlerberichtung.NeuFehler(e.Pos(), "%s ist kein feld von %s", e.Feld, typ.SymbolURL)
 		case getypisiertast.Typvariable:
 			panic("idk")
 		}
@@ -301,7 +301,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 	panic("unreachable " + repr.String(expr))
 }
 
-func substituteVars(pos lexer.Position, vars map[string]getypisiertast.ITyp, substitutions map[string]getypisiertast.ITyp) error {
+func substituteVars(pos getypisiertast.Span, vars map[string]getypisiertast.ITyp, substitutions map[string]getypisiertast.ITyp) error {
 	for k, v := range substitutions {
 		if _, ok := vars[k]; !ok {
 			vars[k] = v
@@ -309,7 +309,7 @@ func substituteVars(pos lexer.Position, vars map[string]getypisiertast.ITyp, sub
 			if TypGleich(vars[k], v) {
 				return nil
 			}
-			return neuFehler(pos, "this wants %s to be %s, but %s is already %s", k, v, k, vars[k])
+			return fehlerberichtung.NeuFehler(pos, "this wants %s to be %s, but %s is already %s", k, v, k, vars[k])
 		}
 	}
 	return nil
@@ -335,13 +335,13 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 		panic("!ok")
 	}
 	if len(typDekl.Datenfelden) > len(aufruf.Strukturfelden) {
-		return nil, neuFehler(aufruf.Pos(), "nicht genug felden")
+		return nil, fehlerberichtung.NeuFehler(aufruf.Pos(), "nicht genug felden")
 	}
 
 	aufruf = copy(aufruf).(getypisiertast.Variantaufruf)
 
 	if len(typ.Datenfelden) != len(aufruf.Argumenten) {
-		return nil, neuFehler(aufruf.Pos(), "len nicht gleich")
+		return nil, fehlerberichtung.NeuFehler(aufruf.Pos(), "len nicht gleich")
 	}
 
 	vars := map[string]getypisiertast.ITyp{}
@@ -375,7 +375,7 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 			}
 
 			if !TypGleich(a, b.Typ()) {
-				return nil, gleichErr(aufruf.Pos(), "variante", a, b.Typ())
+				return nil, fehlerberichtung.GleichErr(aufruf.Pos(), "variante", a, b.Typ())
 			}
 
 			felden = append(felden, getypisiertast.Strukturfeld{
@@ -385,7 +385,7 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 
 			continue äußere
 		}
-		return nil, neuFehler(aufruf.LPos, "du hast %s vergessen", typFeld.Name)
+		return nil, fehlerberichtung.NeuFehler(aufruf.LPos, "du hast %s vergessen", typFeld.Name)
 	}
 
 äußere2:
@@ -395,7 +395,7 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 				continue äußere2
 			}
 		}
-		return nil, neuFehler(aufruf.LPos, "%s ist kein feld von %s", usrFeld.Name, typDekl.SymbolURL)
+		return nil, fehlerberichtung.NeuFehler(aufruf.LPos, "%s ist kein feld von %s", usrFeld.Name, typDekl.SymbolURL)
 	}
 
 	var bs []getypisiertast.Expression
@@ -423,7 +423,7 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 		}
 
 		if !TypGleich(a, b.Typ()) {
-			return nil, gleichErr(aufruf.Pos(), "variante", a, b.Typ())
+			return nil, fehlerberichtung.GleichErr(aufruf.Pos(), "variante", a, b.Typ())
 		}
 
 		bs = append(bs, b)
@@ -465,7 +465,7 @@ func synthGetypisiertApplication(l *lokalekontext, s *scopes, funktion getypisie
 	arg := aufruf.Argumenten
 
 	if len(sigArg) != len(arg) {
-		return nil, neuFehler(aufruf.Pos(), "len nicht gleich")
+		return nil, fehlerberichtung.NeuFehler(aufruf.Pos(), "len nicht gleich")
 	}
 
 	vars := map[string]getypisiertast.ITyp{}
@@ -493,7 +493,7 @@ func synthGetypisiertApplication(l *lokalekontext, s *scopes, funktion getypisie
 		}
 
 		if !TypGleich(a, b.Typ()) {
-			return nil, gleichErr(eingabe.Pos(), "funktionsaufruf", a, b.Typ())
+			return nil, fehlerberichtung.GleichErr(eingabe.Pos(), "funktionsaufruf", a, b.Typ())
 		}
 
 		arg[idx] = b

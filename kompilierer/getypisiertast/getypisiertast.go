@@ -55,12 +55,12 @@ type Nativ struct {
 	Code map[string]string
 
 	LTyp ITyp
-	LPos lexer.Position
+	LPos Span
 }
 
-func (v Nativ) istExpression()      {}
-func (v Nativ) Typ() ITyp           { return v.LTyp }
-func (v Nativ) Pos() lexer.Position { return v.LPos }
+func (v Nativ) istExpression() {}
+func (v Nativ) Typ() ITyp      { return v.LTyp }
+func (v Nativ) Pos() Span      { return v.LPos }
 
 type Typnutzung struct {
 	SymbolURL            SymbolURL
@@ -114,16 +114,28 @@ type Variant struct {
 type Expression interface {
 	istExpression()
 	Typ() ITyp
-	Pos() lexer.Position
+	Pos() Span
+}
+
+type Span struct {
+	Von lexer.Position
+	Zu  lexer.Position
+}
+
+func NeuSpan(von, zu lexer.Position) Span {
+	return Span{
+		Von: von,
+		Zu:  zu,
+	}
 }
 
 type Ganzzahl struct {
 	Wert int
-	LPos lexer.Position
+	LPos Span
 }
 
-func (g Ganzzahl) Pos() lexer.Position { return g.LPos }
-func (g Ganzzahl) istExpression()      {}
+func (g Ganzzahl) Pos() Span      { return g.LPos }
+func (g Ganzzahl) istExpression() {}
 func (g Ganzzahl) Typ() ITyp {
 	return TypGanz
 }
@@ -149,11 +161,11 @@ var TypZeichenkette = Typnutzung{
 
 type Zeichenkette struct {
 	Wert string
-	LPos lexer.Position
+	LPos Span
 }
 
-func (g Zeichenkette) Pos() lexer.Position { return g.LPos }
-func (g Zeichenkette) istExpression()      {}
+func (g Zeichenkette) Pos() Span      { return g.LPos }
+func (g Zeichenkette) istExpression() {}
 func (g Zeichenkette) Typ() ITyp {
 	return TypZeichenkette
 }
@@ -161,24 +173,24 @@ func (g Zeichenkette) Typ() ITyp {
 type Variable struct {
 	Name string
 	ITyp ITyp
-	LPos lexer.Position
+	LPos Span
 }
 
-func (v Variable) istExpression()      {}
-func (v Variable) Typ() ITyp           { return v.ITyp }
-func (v Variable) Pos() lexer.Position { return v.LPos }
+func (v Variable) istExpression() {}
+func (v Variable) Typ() ITyp      { return v.ITyp }
+func (v Variable) Pos() Span      { return v.LPos }
 
 type Funktionsaufruf struct {
 	Funktion    SymbolURL
 	Argumenten  []Expression
 	Rückgabetyp ITyp
 
-	LPos lexer.Position
+	LPos Span
 }
 
-func (v Funktionsaufruf) istExpression()      {}
-func (v Funktionsaufruf) Typ() ITyp           { return v.Rückgabetyp }
-func (v Funktionsaufruf) Pos() lexer.Position { return v.LPos }
+func (v Funktionsaufruf) istExpression() {}
+func (v Funktionsaufruf) Typ() ITyp      { return v.Rückgabetyp }
+func (v Funktionsaufruf) Pos() Span      { return v.LPos }
 
 type Variantaufruf struct {
 	Variant        SymbolURL
@@ -187,23 +199,23 @@ type Variantaufruf struct {
 	Strukturfelden []Strukturfeld
 	Varianttyp     ITyp
 
-	LPos lexer.Position
+	LPos Span
 }
 
-func (v Variantaufruf) istExpression()      {}
-func (v Variantaufruf) Typ() ITyp           { return v.Varianttyp }
-func (v Variantaufruf) Pos() lexer.Position { return v.LPos }
+func (v Variantaufruf) istExpression() {}
+func (v Variantaufruf) Typ() ITyp      { return v.Varianttyp }
+func (v Variantaufruf) Pos() Span      { return v.LPos }
 
 type Strukturaktualisierung struct {
 	Wert   Expression
 	Felden []Strukturaktualisierungsfeld
 
-	LPos lexer.Position
+	LPos Span
 }
 
-func (s Strukturaktualisierung) istExpression()      {}
-func (v Strukturaktualisierung) Typ() ITyp           { return v.Wert.Typ() }
-func (s Strukturaktualisierung) Pos() lexer.Position { return s.LPos }
+func (s Strukturaktualisierung) istExpression() {}
+func (v Strukturaktualisierung) Typ() ITyp      { return v.Wert.Typ() }
+func (s Strukturaktualisierung) Pos() Span      { return s.LPos }
 
 type Strukturaktualisierungsfeld struct {
 	Name string
@@ -215,12 +227,12 @@ type Pattern struct {
 	Mustern []Muster
 
 	LTyp ITyp
-	LPos lexer.Position
+	LPos Span
 }
 
-func (v Pattern) istExpression()      {}
-func (v Pattern) Typ() ITyp           { return v.LTyp }
-func (v Pattern) Pos() lexer.Position { return v.LPos }
+func (v Pattern) istExpression() {}
+func (v Pattern) Typ() ITyp      { return v.LTyp }
+func (v Pattern) Pos() Span      { return v.LPos }
 
 type Muster struct {
 	Variante    SymbolURL
@@ -269,23 +281,23 @@ type ValBinaryOperator struct {
 	Art    ValBinOp
 
 	LTyp ITyp
-	LPos lexer.Position
+	LPos Span
 }
 
-func (v ValBinaryOperator) istExpression()      {}
-func (v ValBinaryOperator) Typ() ITyp           { return v.LTyp }
-func (v ValBinaryOperator) Pos() lexer.Position { return v.LPos }
+func (v ValBinaryOperator) istExpression() {}
+func (v ValBinaryOperator) Typ() ITyp      { return v.LTyp }
+func (v ValBinaryOperator) Pos() Span      { return v.LPos }
 
 type LogikBinaryOperator struct {
 	Links  Expression
 	Rechts Expression
 	Art    LogikBinOp
 
-	LPos lexer.Position
+	LPos Span
 }
 
-func (v LogikBinaryOperator) istExpression()      {}
-func (v LogikBinaryOperator) Pos() lexer.Position { return v.LPos }
+func (v LogikBinaryOperator) istExpression() {}
+func (v LogikBinaryOperator) Pos() Span      { return v.LPos }
 func (v LogikBinaryOperator) Typ() ITyp {
 	return TypLogik
 }
@@ -295,12 +307,12 @@ type Feldzugriff struct {
 	Feld  string
 
 	LTyp ITyp
-	LPos lexer.Position
+	LPos Span
 }
 
-func (f Feldzugriff) istExpression()      {}
-func (f Feldzugriff) Typ() ITyp           { return f.LTyp }
-func (f Feldzugriff) Pos() lexer.Position { return f.LPos }
+func (f Feldzugriff) istExpression() {}
+func (f Feldzugriff) Typ() ITyp      { return f.LTyp }
+func (f Feldzugriff) Pos() Span      { return f.LPos }
 
 type Strukturfeld struct {
 	Name string

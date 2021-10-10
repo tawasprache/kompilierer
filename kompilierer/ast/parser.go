@@ -78,7 +78,8 @@ type Variante struct {
 }
 
 type Typ struct {
-	Pos lexer.Position
+	Pos    lexer.Position
+	EndPos lexer.Position
 
 	Typvariable    *Typvariable    `("§"@Ident) |`
 	Typkonstruktor *Typkonstruktor `(@@)`

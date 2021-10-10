@@ -1,6 +1,9 @@
 package typisierung
 
-import "Tawa/kompilierer/getypisiertast"
+import (
+	"Tawa/kompilierer/fehlerberichtung"
+	"Tawa/kompilierer/getypisiertast"
+)
 
 func Typiere(k *Kontext, m getypisiertast.Modul, modulePrefix string) (getypisiertast.Modul, error) {
 	m = copy(m).(getypisiertast.Modul)
@@ -42,7 +45,7 @@ func Typiere(k *Kontext, m getypisiertast.Modul, modulePrefix string) (getypisie
 			rückgabe, err = checkGetypisiertExpression(l, &s, it.Expression, it.Funktionssignatur.Rückgabetyp)
 		}
 
-		serr = fehlerVerketten(serr, err)
+		serr = fehlerberichtung.FehlerVerketten(serr, err)
 		m.Funktionen[idx].Expression = rückgabe
 	}
 

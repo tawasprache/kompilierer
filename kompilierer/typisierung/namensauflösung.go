@@ -2,12 +2,12 @@ package typisierung
 
 import (
 	"Tawa/kompilierer/ast"
+	"Tawa/kompilierer/fehlerberichtung"
 	"Tawa/kompilierer/getypisiertast"
 	"Tawa/standardbibliothek"
 	"errors"
 	"strings"
 
-	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/alecthomas/repr"
 )
 
@@ -20,7 +20,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 		if terminal.Ganzzahl != nil {
 			return getypisiertast.Ganzzahl{
 				Wert: *terminal.Ganzzahl,
-				LPos: terminal.Pos,
+				LPos: getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos),
 			}, nil
 		} else if terminal.Passt != nil {
 			var (
@@ -28,7 +28,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				mustern []getypisiertast.Muster
 
 				lTyp getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
-				lPos lexer.Position      = terminal.Pos
+				lPos getypisiertast.Span = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
 			)
 
 			wert, feh = exprNamensauflösung(k, s, l, terminal.Passt.Wert)
@@ -37,7 +37,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			}
 
 			for _, it := range terminal.Passt.Mustern {
-				_, _, sym, feh := l.auflöseVariant(it.Pattern.Name, it.Pattern.Pos)
+				_, _, sym, feh := l.auflöseVariant(it.Pattern.Name, getypisiertast.NeuSpan(it.Pattern.Pos, it.Pattern.EndPos))
 				if feh != nil {
 					return nil, feh
 				}
@@ -85,12 +85,12 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				strukturfelden []getypisiertast.Strukturfeld
 				varianttyp     getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
 
-				lPos lexer.Position = terminal.Pos
+				lPos getypisiertast.Span = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
 			)
 
-			_, _, variant, feh := l.auflöseVariant(terminal.Variantaufruf.Name, terminal.Pos)
+			_, _, variant, feh := l.auflöseVariant(terminal.Variantaufruf.Name, getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos))
 			if feh != nil && len(terminal.Variantaufruf.Argumente) == 0 && len(terminal.Variantaufruf.Strukturfelden) > 0 {
-				_, variant, feh = l.auflöseTyp(terminal.Variantaufruf.Name, terminal.Pos)
+				_, variant, feh = l.auflöseTyp(terminal.Variantaufruf.Name, getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos))
 				if feh != nil {
 					return nil, feh
 				}
@@ -131,10 +131,10 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				funktion    getypisiertast.SymbolURL
 				argumenten  []getypisiertast.Expression
 				rückgabetyp getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
-				lPos        lexer.Position      = terminal.Pos
+				lPos        getypisiertast.Span = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
 			)
 
-			_, funktion, feh = l.auflöseFunkSig(terminal.Funktionsaufruf.Name, terminal.Pos)
+			_, funktion, feh = l.auflöseFunkSig(terminal.Funktionsaufruf.Name, getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos))
 			if feh != nil {
 				return nil, feh
 			}
@@ -157,24 +157,24 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			_, gefunden := s.suche(*terminal.Variable)
 
 			if !gefunden {
-				return nil, neuFehler(terminal.Pos, "variable »%s« nicht gefunden", *terminal.Variable)
+				return nil, fehlerberichtung.NeuFehler(getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos), "variable »%s« nicht gefunden", *terminal.Variable)
 			}
 
 			return getypisiertast.Variable{
 				Name: *terminal.Variable,
 				ITyp: getypisiertast.Nichtunifiziert{},
-				LPos: terminal.Pos,
+				LPos: getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos),
 			}, nil
 		} else if terminal.Zeichenkette != nil {
 			return getypisiertast.Zeichenkette{
 				Wert: *terminal.Zeichenkette,
-				LPos: terminal.Pos,
+				LPos: getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos),
 			}, nil
 		} else if terminal.Strukturaktualisierung != nil {
 			var (
 				wert   getypisiertast.Expression
 				felden []getypisiertast.Strukturaktualisierungsfeld
-				lpos   lexer.Position = terminal.Pos
+				lpos   getypisiertast.Span = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
 			)
 
 			wert, feh = exprNamensauflösung(k, s, l, terminal.Strukturaktualisierung.Struktur)
@@ -228,7 +228,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpAdd,
 				LTyp:   getypisiertast.Nichtunifiziert{},
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpSub:
 			return getypisiertast.ValBinaryOperator{
@@ -236,7 +236,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpSub,
 				LTyp:   getypisiertast.Nichtunifiziert{},
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpMul:
 			return getypisiertast.ValBinaryOperator{
@@ -244,7 +244,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpMul,
 				LTyp:   getypisiertast.Nichtunifiziert{},
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpDiv:
 			return getypisiertast.ValBinaryOperator{
@@ -252,7 +252,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpDiv,
 				LTyp:   getypisiertast.Nichtunifiziert{},
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpPow:
 			return getypisiertast.ValBinaryOperator{
@@ -260,7 +260,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpPow,
 				LTyp:   getypisiertast.Nichtunifiziert{},
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpMod:
 			return getypisiertast.ValBinaryOperator{
@@ -268,55 +268,55 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpMod,
 				LTyp:   getypisiertast.Nichtunifiziert{},
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpGleich:
 			return getypisiertast.LogikBinaryOperator{
 				Links:  links,
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpGleich,
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpNichtGleich:
 			return getypisiertast.LogikBinaryOperator{
 				Links:  links,
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpNichtGleich,
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpWeniger:
 			return getypisiertast.LogikBinaryOperator{
 				Links:  links,
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpWeniger,
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpWenigerGleich:
 			return getypisiertast.LogikBinaryOperator{
 				Links:  links,
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpWenigerGleich,
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpGrößer:
 			return getypisiertast.LogikBinaryOperator{
 				Links:  links,
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpGrößer,
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpGrößerGleich:
 			return getypisiertast.LogikBinaryOperator{
 				Links:  links,
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpGrößerGleich,
-				LPos:   astExpr.Pos,
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
 		case ast.BinOpFeld:
 			var v getypisiertast.Variable
 			var ok bool
 			if v, ok = rechts.(getypisiertast.Variable); !ok {
-				return nil, neuFehler(rechts.Pos(), "ist kein feld")
+				return nil, fehlerberichtung.NeuFehler(rechts.Pos(), "ist kein feld")
 			}
 			return getypisiertast.Feldzugriff{
 				Links: links,
@@ -371,7 +371,7 @@ func typNamensauflösung(k *Kontext, l *lokalekontext, t ast.Typdeklarationen) (
 
 func typ(l *lokalekontext, t ast.Typ, generischeargumenten []string) (getypisiertast.ITyp, error) {
 	if t.Typkonstruktor != nil {
-		_, haupt, err := l.auflöseTyp(t.Typkonstruktor.Name, t.Pos)
+		_, haupt, err := l.auflöseTyp(t.Typkonstruktor.Name, getypisiertast.NeuSpan(t.Pos, t.EndPos))
 		if err != nil {
 			return nil, err
 		}
@@ -396,7 +396,7 @@ func typ(l *lokalekontext, t ast.Typ, generischeargumenten []string) (getypisier
 				return getypisiertast.Typvariable{Name: string(*t.Typvariable)}, nil
 			}
 		}
-		return nil, neuFehler(t.Pos, "typvariable »%s« nicht gefunden", s)
+		return nil, fehlerberichtung.NeuFehler(getypisiertast.NeuSpan(t.Pos, t.EndPos), "typvariable »%s« nicht gefunden", s)
 	}
 	panic("unreachable")
 }
