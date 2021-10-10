@@ -1,0 +1,7 @@
+paket Haupt zeigt alles
+
+funk map(): Leiste[Ganz]
+	[1, 2, 3]
+
+funk Concat(): Leiste[Ganz]
+	[1, 2, 3] ++ [1, 2, 3]

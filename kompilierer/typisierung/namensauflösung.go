@@ -126,6 +126,27 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 
 				LPos: lPos,
 			}, nil
+		} else if terminal.Leiste != nil {
+			var (
+				expressionen []getypisiertast.Expression
+
+				lTyp getypisiertast.ITyp = getypisiertast.Nichtunifiziert{}
+				lPos getypisiertast.Span = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
+			)
+
+			for _, it := range terminal.Leiste.Expressionen {
+				v, feh := exprNamensauflösung(k, s, l, it)
+				if feh != nil {
+					return nil, feh
+				}
+				expressionen = append(expressionen, v)
+			}
+
+			return getypisiertast.Leiste{
+				Werte: expressionen,
+				LTyp:  lTyp,
+				LPos:  lPos,
+			}, nil
 		} else if terminal.Funktionsaufruf != nil {
 			var (
 				funktion    getypisiertast.SymbolURL
@@ -267,6 +288,14 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				Links:  links,
 				Rechts: rechts,
 				Art:    getypisiertast.BinOpMod,
+				LTyp:   getypisiertast.Nichtunifiziert{},
+				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
+			}, nil
+		case ast.BinOpVerketten:
+			return getypisiertast.ValBinaryOperator{
+				Links:  links,
+				Rechts: rechts,
+				Art:    getypisiertast.BinOpVerketten,
 				LTyp:   getypisiertast.Nichtunifiziert{},
 				LPos:   getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 			}, nil
@@ -415,7 +444,7 @@ func funkZuSignatur(l *lokalekontext, t ast.Funktiondeklaration) (getypisiertast
 	} else {
 		t, err := typ(l, *t.Rückgabetyp, t.Generischeargumenten)
 		if err != nil {
-			return getypisiertast.Funktionssignatur{}, nil
+			return getypisiertast.Funktionssignatur{}, err
 		}
 		r.Rückgabetyp = t
 	}
@@ -448,6 +477,11 @@ var defaultDependencies = []getypisiertast.Dependency{
 		Paket:  "Tawa/Vielleicht",
 		Als:    "Vielleicht",
 		Zeigen: []string{"Vielleicht"},
+	},
+	{
+		Paket:  "Tawa/Leiste",
+		Als:    "Leiste",
+		Zeigen: []string{"Leiste"},
 	},
 }
 

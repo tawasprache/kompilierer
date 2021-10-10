@@ -159,6 +159,16 @@ var TypZeichenkette = Typnutzung{
 	},
 }
 
+func TypLeiste(i ITyp) ITyp {
+	return Typnutzung{
+		SymbolURL: SymbolURL{
+			Paket: "Tawa/Leiste",
+			Name:  "Leiste",
+		},
+		Generischeargumenten: []ITyp{i},
+	}
+}
+
 type Zeichenkette struct {
 	Wert string
 	LPos Span
@@ -234,6 +244,17 @@ func (v Pattern) istExpression() {}
 func (v Pattern) Typ() ITyp      { return v.LTyp }
 func (v Pattern) Pos() Span      { return v.LPos }
 
+type Leiste struct {
+	Werte []Expression
+
+	LTyp ITyp
+	LPos Span
+}
+
+func (v Leiste) istExpression() {}
+func (v Leiste) Typ() ITyp      { return v.LTyp }
+func (v Leiste) Pos() Span      { return v.LPos }
+
 type Muster struct {
 	Variante    SymbolURL
 	Konstruktor string
@@ -261,6 +282,7 @@ const (
 	BinOpDiv
 	BinOpPow
 	BinOpMod
+	BinOpVerketten
 )
 
 type LogikBinOp int

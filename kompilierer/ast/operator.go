@@ -11,6 +11,8 @@ const (
 	BinOpPow
 	BinOpMod
 
+	BinOpVerketten
+
 	BinOpGleich
 	BinOpNichtGleich
 	BinOpWeniger
@@ -39,6 +41,8 @@ var info = map[string]*opInfo{
 
 	"+": {Enum: BinOpAdd, Priority: 6},
 	"-": {Enum: BinOpSub, Priority: 6},
+
+	"++": {Enum: BinOpVerketten, Priority: 5, RightAssociative: true},
 
 	"==": {Enum: BinOpGleich, Priority: 4, NonAssociative: true},
 	"!=": {Enum: BinOpNichtGleich, Priority: 4, NonAssociative: true},

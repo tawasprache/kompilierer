@@ -21,12 +21,17 @@ type Terminal struct {
 
 	Ganzzahl               *int                   `  @Int`
 	Zeichenkette           *string                `| @String`
+	Leiste                 *Leiste                `| @@`
 	Nativ                  *Nativ                 `| @@`
 	Passt                  *Passt                 `| @@`
 	Variantaufruf          *Variantaufruf         `| @@`
 	Funktionsaufruf        *Funktionsaufruf       `| @@`
 	Strukturaktualisierung *Stukturaktualisierung `| @@`
 	Variable               *string                `| @Ident`
+}
+
+type Leiste struct {
+	Expressionen []Expression `"[" @@ ( "," @@ )* "]"`
 }
 
 type Nativ struct {

@@ -176,6 +176,12 @@ func typZuIdent(e getypisiertast.ITyp, aktuellePaket string) string {
 				return "string"
 			}
 		}
+		if k.SymbolURL.Paket == "Tawa/Leiste" {
+			switch k.SymbolURL.Name {
+			case "Leiste":
+				return "Array<" + typZuIdent(k.Generischeargumenten[0], aktuellePaket) + ">"
+			}
+		}
 		ident := symZuIdent(k.SymbolURL, aktuellePaket)
 		if len(k.Generischeargumenten) > 0 {
 			var gens []string
@@ -280,6 +286,17 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 		f.AddK(`)`)
 		f.AddNL()
 	case getypisiertast.ValBinaryOperator:
+		if e.Art == getypisiertast.BinOpVerketten {
+			f.AddK(`(`)
+			f.AddK(`(`)
+			genExpr(f, e.Links, aktuellePaket)
+			f.AddK(`).concat(`)
+			genExpr(f, e.Rechts, aktuellePaket)
+			f.AddK(`)`)
+			f.AddK(`)`)
+			return
+		}
+
 		f.AddK(`(`)
 		genExpr(f, e.Links, aktuellePaket)
 
@@ -371,6 +388,15 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 			panic("kein nativ fur typescript")
 		}
 		f.AddK(v)
+	case getypisiertast.Leiste:
+		f.AddK(`[`)
+		for idx, wert := range e.Werte {
+			genExpr(f, wert, aktuellePaket)
+			if idx != len(e.Werte)-1 {
+				f.AddK(`,`)
+			}
+		}
+		f.AddK(`]`)
 	default:
 		panic("e " + repr.String(e))
 	}
