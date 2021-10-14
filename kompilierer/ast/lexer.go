@@ -58,6 +58,7 @@ var _ lexer.Lexer = &lexScan{}
 func (l *lexFac) Lex(f string, r io.Reader) (lexer.Lexer, error) {
 	s := &scanner.Scanner{}
 	s.Init(r)
+	s.Mode ^= scanner.SkipComments // don't skip comments
 	lex := &lexScan{
 		file:    f,
 		scanner: s,

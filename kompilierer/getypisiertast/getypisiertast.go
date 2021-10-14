@@ -25,6 +25,7 @@ type Dependency struct {
 }
 
 type Funktion struct {
+	Dokumentation     string
 	SymbolURL         SymbolURL
 	Funktionssignatur Funktionssignatur
 	Expression        Expression
@@ -95,6 +96,7 @@ func (s SymbolURL) String() string {
 }
 
 type Typ struct {
+	Dokumentation        string
 	SymbolURL            SymbolURL
 	Generischeargumenten []string
 	Datenfelden          []Datenfeld

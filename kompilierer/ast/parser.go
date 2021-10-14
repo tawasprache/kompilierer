@@ -2,6 +2,7 @@ package ast
 
 import (
 	"strings"
+	"text/scanner"
 
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
@@ -43,8 +44,27 @@ func (s Symbolkette) String() string {
 }
 
 type Deklaration struct {
+	Tokens []lexer.Token
+
 	Funktiondeklaration *Funktiondeklaration `(@@ |`
 	Typdeklarationen    *Typdeklarationen    `@@)`
+}
+
+func (d Deklaration) Comments() string {
+	var s strings.Builder
+	for _, it := range d.Tokens {
+		if it.Type != scanner.Comment {
+			return s.String()
+		}
+
+		if strings.HasPrefix(it.Value, "/*") {
+			s.WriteString(it.Value[2 : len(it.Value)-2])
+		} else {
+			s.WriteString(it.Value[2:])
+			s.WriteString("\n")
+		}
+	}
+	return s.String()
 }
 
 type Funktiondeklaration struct {
@@ -92,8 +112,8 @@ type Typkonstruktor struct {
 }
 
 var (
-	Parser         = participle.MustBuild(&Modul{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}))
-	TerminalParser = participle.MustBuild(&Terminal{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}))
+	Parser         = participle.MustBuild(&Modul{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
+	TerminalParser = participle.MustBuild(&Terminal{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
 )
 
 func VonStringX(filename, content string) (r Modul) {

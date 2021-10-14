@@ -563,6 +563,7 @@ func Auflösenamen(k *Kontext, m ast.Modul, modulePrefix string) (getypisiertast
 			if feh != nil {
 				return getypisiertast.Modul{}, feh
 			}
+			typ.Dokumentation = it.Comments()
 			modul.Typen = append(modul.Typen, typ)
 		}
 	}
@@ -592,6 +593,7 @@ func Auflösenamen(k *Kontext, m ast.Modul, modulePrefix string) (getypisiertast
 			}
 
 			modul.Funktionen = append(modul.Funktionen, getypisiertast.Funktion{
+				Dokumentation: it.Comments(),
 				SymbolURL: getypisiertast.SymbolURL{
 					Paket: l.inModul,
 					Name:  it.Funktiondeklaration.Name,
