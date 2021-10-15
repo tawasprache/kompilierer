@@ -1,5 +1,13 @@
 paket Main zeigt nichts
 
-// Hallo!
-funk Hallo()
-	10
+// Farbe ist Farbe
+typ Farbe ist
+	a: Ganz
+
+	| RGB(r: Ganz, b: Ganz, g: Ganz)
+	| HSV(h: Ganz, s: Ganz, v: Ganz)
+beende
+
+// Hallo erlaubt man, um zu pisswasser machen
+funk Hallo[A](a: §A)
+	a

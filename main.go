@@ -1,11 +1,15 @@
 package main
 
 import (
+	"Tawa/dokumentation"
 	"Tawa/kompilierer/ast"
 	"Tawa/kompilierer/codegenierung"
 	"Tawa/kompilierer/typisierung"
 	"Tawa/langserv"
+	"io/ioutil"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/alecthomas/repr"
 	"github.com/urfave/cli/v2"
@@ -83,6 +87,61 @@ func main() {
 					}
 
 					repr.Println(getypt)
+					return nil
+				},
+			},
+			{
+				Name:  "doku",
+				Usage: "doku",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name: "standardbibliothek",
+					},
+					&cli.StringFlag{
+						Name:     "ausgabe-ordner",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					ktx := typisierung.NeuKontext()
+					opath := c.String("ausgabe-ordner")
+
+					if c.IsSet("standardbibliothek") {
+						for m, v := range ktx.Module {
+							feh := ioutil.WriteFile(path.Join(opath, strings.ReplaceAll(m, "/", ":")+".html"), []byte(dokumentation.Dokumentation(v)), 0o666)
+							if feh != nil {
+								return feh
+							}
+						}
+					} else {
+						fi, err := os.Open(c.Args().First())
+						if err != nil {
+							return err
+						}
+						defer fi.Close()
+
+						dat := ast.Modul{}
+						err = ast.Parser.Parse(c.Args().First(), fi, &dat)
+						if err != nil {
+							return err
+						}
+
+						genannt, err := typisierung.Auflösenamen(ktx, dat, "User")
+						if err != nil {
+							return err
+						}
+
+						getypt, err := typisierung.Typiere(ktx, genannt, "User")
+						if err != nil {
+							return err
+						}
+
+						feh := ioutil.WriteFile(path.Join(opath, strings.ReplaceAll(getypt.Name, "/", ":")+".html"), []byte(dokumentation.Dokumentation(getypt)), 0o666)
+						if feh != nil {
+							return feh
+						}
+					}
+
 					return nil
 				},
 			},

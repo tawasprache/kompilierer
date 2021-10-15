@@ -54,7 +54,7 @@ func (d Deklaration) Comments() string {
 	var s strings.Builder
 	for _, it := range d.Tokens {
 		if it.Type != scanner.Comment {
-			return s.String()
+			return strings.TrimSpace(s.String())
 		}
 
 		if strings.HasPrefix(it.Value, "/*") {
@@ -64,7 +64,7 @@ func (d Deklaration) Comments() string {
 			s.WriteString("\n")
 		}
 	}
-	return s.String()
+	return strings.TrimSpace(s.String())
 }
 
 type Funktiondeklaration struct {

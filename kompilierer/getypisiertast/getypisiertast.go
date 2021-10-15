@@ -44,6 +44,7 @@ type Formvariable struct {
 
 type ITyp interface {
 	istTyp()
+	String() string
 }
 
 type Typvariable struct {
@@ -51,6 +52,10 @@ type Typvariable struct {
 }
 
 func (t Typvariable) istTyp() {}
+
+func (t Typvariable) String() string {
+	return "§" + t.Name
+}
 
 type Nativ struct {
 	Code map[string]string
@@ -85,6 +90,9 @@ type Nichtunifiziert struct {
 }
 
 func (t Nichtunifiziert) istTyp() {}
+func (t Nichtunifiziert) String() string {
+	return ""
+}
 
 type SymbolURL struct {
 	Paket string

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TawaDoku</title>
+
+    <style>
+        * {
+            font-family: sans-serif;
+        }
+
+        pre>code {
+            font-family: monospace;
+        }
+        pre {
+            padding: 0.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        .wrapper {
+            display: flex;
+            justify-content: center;
+        }
+
+        .wrapper main {
+            width: 65ch;
+        }
+
+        .wrapper aside {
+            width: 20ch;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <aside>
+            <h4>{{ .Name }}</h4>
+            <h5>Typen</h5>
+            {{ range $type := .T }}
+            <a href="#type-{{ $type.SymbolURL.Name }}">{{ $type.SymbolURL.Name }}</a> <br>
+            {{ end }}
+            <h5>Funktionen</h5>
+            {{ range $funk := .F }}
+            <a href="#funk-{{ $funk.SymbolURL.Name }}">{{ $funk.SymbolURL.Name }}</a> <br>
+            {{ end }}
+        </aside>
+        <main>
+            <h2>Paket {{ .Name }}</h2>
+
+            <h3>Typen</h3>
+
+            {{ range $type := .T }}
+
+            <h4 id="type-{{ $type.SymbolURL.Name }}">{{ $type.SymbolURL.Name }}</h4>
+
+            <p>{{ $type.Dokumentation }}</p>
+
+            <pre><code>{{ typZuHTML $type }}</code></pre>
+
+            {{ end }}
+
+            <h3>Funktionen</h3>
+
+            {{ range $funk := .F }}
+
+            <h4 id="funk-{{ $funk.SymbolURL.Name }}">{{ $funk.SymbolURL.Name }}</h4>
+
+            <p>{{ $funk.Dokumentation }}</p>
+
+            <pre><code>{{ funkZuHTML $funk }}</code></pre>
+
+            {{ end }}
+        </main>
+    </div>
+</body>
+
+</html>
