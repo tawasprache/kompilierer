@@ -14,6 +14,7 @@ import (
 	"github.com/alecthomas/repr"
 	"github.com/urfave/cli/v2"
 
+	_ "Tawa/kompilierer/codegenierung/llvm"
 	_ "Tawa/kompilierer/codegenierung/typescript"
 )
 

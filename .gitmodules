@@ -1,3 +1,6 @@
 [submodule "kompilierer/codegenierung/typescript/million"]
 	path = kompilierer/codegenierung/typescript/million
 	url = https://github.com/aidenybai/million.git
+[submodule "go-llvm"]
+	path = go-llvm
+	url = https://github.com/tinygo-org/go-llvm.git
