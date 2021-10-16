@@ -232,6 +232,23 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				n.Code[it.Language] = it.Code[1 : len(it.Code)-1]
 			}
 			return n, nil
+		} else if terminal.Sei != nil {
+			sei := getypisiertast.Sei{}
+			sei.LPos = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
+			sei.Name = terminal.Sei.Variable
+			sei.Wert, feh = exprNamensauflösung(k, s, l, terminal.Sei.Wert)
+			if feh != nil {
+				return nil, feh
+			}
+			s.neuScope()
+			s.head().vars[sei.Name] = sei.Wert.Typ()
+			sei.In, feh = exprNamensauflösung(k, s, l, terminal.Sei.In)
+			s.loescheScope()
+			if feh != nil {
+				return nil, feh
+			}
+
+			return sei, nil
 		}
 	} else {
 		links, feh := exprNamensauflösung(k, s, l, *astExpr.Links)

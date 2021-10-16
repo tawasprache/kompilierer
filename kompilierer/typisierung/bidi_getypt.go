@@ -350,6 +350,26 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		}, nil
 	case getypisiertast.Nativ:
 		return e, nil
+	case getypisiertast.Sei:
+		var neuer getypisiertast.Sei
+		var feh error
+
+		neuer.Name = e.Name
+		neuer.Wert, feh = synthGetypisiertExpression(l, s, e.Wert)
+		if feh != nil {
+			return nil, feh
+		}
+		neuer.LPos = e.LPos
+
+		s.neuScope()
+		s.head().vars[neuer.Name] = neuer.Wert.Typ()
+		neuer.In, feh = synthGetypisiertExpression(l, s, e.In)
+		if feh != nil {
+			return nil, feh
+		}
+		s.loescheScope()
+
+		return neuer, nil
 	}
 	panic("unreachable " + repr.String(expr))
 }

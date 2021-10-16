@@ -127,6 +127,22 @@ type Expression interface {
 	Pos() Span
 }
 
+type Sei struct {
+	Name string
+	Wert Expression
+
+	In   Expression
+	LPos Span
+}
+
+func (Sei) istExpression() {}
+func (s Sei) Typ() ITyp {
+	return s.In.Typ()
+}
+func (s Sei) Pos() Span {
+	return s.LPos
+}
+
 type Span struct {
 	Von lexer.Position
 	Zu  lexer.Position

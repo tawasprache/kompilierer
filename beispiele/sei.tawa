@@ -1,0 +1,6 @@
+paket Main zeigt nichts
+
+funk Hallo(): Ganz
+    sei x = 1 in
+    sei y = 1 in
+    x + y

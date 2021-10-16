@@ -21,6 +21,7 @@ type Terminal struct {
 
 	Ganzzahl               *int                   `  @Int`
 	Zeichenkette           *string                `| @String`
+	Sei                    *Sei                   `| @@`
 	Leiste                 *Leiste                `| @@`
 	Nativ                  *Nativ                 `| @@`
 	Passt                  *Passt                 `| @@`
@@ -28,6 +29,12 @@ type Terminal struct {
 	Funktionsaufruf        *Funktionsaufruf       `| @@`
 	Strukturaktualisierung *Stukturaktualisierung `| @@`
 	Variable               *string                `| @Ident`
+}
+
+type Sei struct {
+	Variable string     `"sei" @Ident`
+	Wert     Expression `"=" @@`
+	In       Expression `"in" @@`
 }
 
 type Leiste struct {

@@ -397,6 +397,12 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 			}
 		}
 		f.AddK(`]`)
+	case getypisiertast.Sei:
+		f.AddK(`((%s = `, e.Name)
+		genExpr(f, e.Wert, aktuellePaket)
+		f.AddK(`) => `)
+		genExpr(f, e.In, aktuellePaket)
+		f.AddK(`)()`)
 	default:
 		panic("e " + repr.String(e))
 	}
