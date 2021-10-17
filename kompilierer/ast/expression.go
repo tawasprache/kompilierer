@@ -13,6 +13,19 @@ type Expression struct {
 	Links  *Expression
 	Op     *BinaryOperator
 	Rechts *Expression
+
+	// oder
+
+	FunktionErsteKlasseAufruf *FunktionErsteKlasseAufruf
+}
+
+type FunktionErsteKlasseAufruf struct {
+	Funktion   Expression `@@`
+	Argumenten Argumentleiste
+}
+
+type Argumentleiste struct {
+	Argumenten []Expression `"(" ( @@ ( "," @@ )* )? ")"`
 }
 
 type Terminal struct {
@@ -27,8 +40,15 @@ type Terminal struct {
 	Passt                  *Passt                 `| @@`
 	Variantaufruf          *Variantaufruf         `| @@`
 	Funktionsaufruf        *Funktionsaufruf       `| @@`
+	Funktionsliteral       *Funktionsliteral      `| @@`
 	Strukturaktualisierung *Stukturaktualisierung `| @@`
 	Variable               *string                `| @Ident`
+}
+
+type Funktionsliteral struct {
+	Formvariabeln []Formvariable `"\\" "(" ( @@ ( "," @@ )* )? ")"`
+	Rückgabetyp   *Typ           `(":" @@)?`
+	Expression    Expression     `(("=>") | ("->"))? @@`
 }
 
 type Sei struct {

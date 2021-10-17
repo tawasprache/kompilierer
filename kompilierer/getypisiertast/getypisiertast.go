@@ -86,6 +86,20 @@ func (t Typnutzung) String() string {
 	}
 }
 
+type Typfunktion struct {
+	Argumenten  []ITyp
+	Rückgabetyp ITyp
+}
+
+func (t Typfunktion) istTyp() {}
+func (t Typfunktion) String() string {
+	var s []string
+	for _, it := range t.Argumenten {
+		s = append(s, it.String())
+	}
+	return "funk(" + strings.Join(s, ", ") + ")"
+}
+
 type Nichtunifiziert struct {
 }
 
@@ -184,6 +198,12 @@ var TypZeichenkette = Typnutzung{
 		Name:  "Zeichenkette",
 	},
 }
+var TypEinheit = Typnutzung{
+	SymbolURL: SymbolURL{
+		Paket: "Tawa/Eingebaut",
+		Name:  "Einheit",
+	},
+}
 
 func TypLeiste(i ITyp) ITyp {
 	return Typnutzung{
@@ -227,6 +247,18 @@ type Funktionsaufruf struct {
 func (v Funktionsaufruf) istExpression() {}
 func (v Funktionsaufruf) Typ() ITyp      { return v.Rückgabetyp }
 func (v Funktionsaufruf) Pos() Span      { return v.LPos }
+
+type FunktionErsteKlasseAufruf struct {
+	Funktion    Expression
+	Argumenten  []Expression
+	Rückgabetyp ITyp
+
+	LPos Span
+}
+
+func (v FunktionErsteKlasseAufruf) istExpression() {}
+func (v FunktionErsteKlasseAufruf) Typ() ITyp      { return v.Rückgabetyp }
+func (v FunktionErsteKlasseAufruf) Pos() Span      { return v.LPos }
 
 type Variantaufruf struct {
 	Variant        SymbolURL
@@ -366,3 +398,15 @@ type Strukturfeld struct {
 	Name string
 	Wert Expression
 }
+
+type Funktionsliteral struct {
+	Formvariabeln []Formvariable
+	Expression    Expression
+
+	LTyp Typfunktion
+	LPos Span
+}
+
+func (f Funktionsliteral) istExpression() {}
+func (f Funktionsliteral) Typ() ITyp      { return f.LTyp }
+func (f Funktionsliteral) Pos() Span      { return f.LPos }

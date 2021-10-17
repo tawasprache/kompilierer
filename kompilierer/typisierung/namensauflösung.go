@@ -249,7 +249,62 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			}
 
 			return sei, nil
+		} else if terminal.Funktionsliteral != nil {
+			s.neuScope()
+			defer s.loescheScope()
+
+			fliteral := getypisiertast.Funktionsliteral{}
+			fliteral.LPos = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
+			ftyp := getypisiertast.Typfunktion{}
+			for _, it := range terminal.Funktionsliteral.Formvariabeln {
+				typ, feh := typ(l, it.Typ, []string{})
+				if feh != nil {
+					return nil, feh
+				}
+				s.head().vars[it.Name] = typ
+				ftyp.Argumenten = append(ftyp.Argumenten, typ)
+				fliteral.Formvariabeln = append(fliteral.Formvariabeln, getypisiertast.Formvariable{
+					Name: it.Name,
+					Typ:  typ,
+				})
+			}
+			if terminal.Funktionsliteral.Rückgabetyp != nil {
+				ftyp.Rückgabetyp, feh = typ(l, *terminal.Funktionsliteral.Rückgabetyp, []string{})
+				if feh != nil {
+					return nil, feh
+				}
+			}
+			funk, feh := exprNamensauflösung(k, s, l, terminal.Funktionsliteral.Expression)
+			if feh != nil {
+				return nil, feh
+			}
+			fliteral.Expression = funk
+			fliteral.LTyp = ftyp
+			return fliteral, nil
 		}
+	} else if astExpr.FunktionErsteKlasseAufruf != nil {
+		funk, feh := exprNamensauflösung(k, s, l, astExpr.FunktionErsteKlasseAufruf.Funktion)
+		if feh != nil {
+			return nil, feh
+		}
+
+		var argumenten []getypisiertast.Expression
+
+		for _, it := range astExpr.FunktionErsteKlasseAufruf.Argumenten.Argumenten {
+			garg, feh := exprNamensauflösung(k, s, l, it)
+			if feh != nil {
+				return nil, feh
+			}
+			argumenten = append(argumenten, garg)
+		}
+
+		return getypisiertast.FunktionErsteKlasseAufruf{
+			Funktion:    funk,
+			Argumenten:  argumenten,
+			Rückgabetyp: getypisiertast.Nichtunifiziert{},
+
+			LPos: getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
+		}, nil
 	} else {
 		links, feh := exprNamensauflösung(k, s, l, *astExpr.Links)
 		if feh != nil {
@@ -443,6 +498,34 @@ func typ(l *lokalekontext, t ast.Typ, generischeargumenten []string) (getypisier
 			}
 		}
 		return nil, fehlerberichtung.NeuFehler(getypisiertast.NeuSpan(t.Pos, t.EndPos), "typvariable »%s« nicht gefunden", s)
+	} else if t.Typfunktion != nil {
+		var feh error
+
+		argn, rück := t.Typfunktion.Argumenten, t.Typfunktion.Rückgabetyp
+
+		var targn []getypisiertast.ITyp
+		for _, it := range argn {
+			targ, feh := typ(l, it, generischeargumenten)
+			if feh != nil {
+				return nil, feh
+			}
+			targn = append(targn, targ)
+		}
+
+		var trück getypisiertast.ITyp
+		if rück == nil {
+			trück = getypisiertast.TypEinheit
+		} else {
+			trück, feh = typ(l, *rück, generischeargumenten)
+			if feh != nil {
+				return nil, feh
+			}
+		}
+
+		return getypisiertast.Typfunktion{
+			Argumenten:  targn,
+			Rückgabetyp: trück,
+		}, nil
 	}
 	panic("unreachable")
 }

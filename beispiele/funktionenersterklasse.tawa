@@ -1,0 +1,18 @@
+paket Main zeigt nichts
+
+funk Wenn(wert: Logik, val: funk())
+    passt wert zu
+        #Wahr =>
+            sei es = val.() in
+            wert
+
+        #Falsch =>
+            wert
+    beende
+
+funk SchlechteWenn(val: funk(Logik))
+    val.(#Wahr)
+
+funk Geil()
+    sei x = 1 + 1 in
+    \(y: Ganz): Ganz => x + y

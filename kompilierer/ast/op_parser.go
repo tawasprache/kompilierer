@@ -16,15 +16,52 @@ func (e *Expression) Parse(lex *lexer.PeekingLexer) (err error) {
 	return nil
 }
 
-func parseExpr(lex *lexer.PeekingLexer, minPrec int) (*Expression, error) {
+func parseExpr(lex *lexer.PeekingLexer, minPrec int) (re *Expression, rerr error) {
+	t, feh := lex.Peek(0)
+	if feh != nil {
+		return nil, feh
+	}
 	lhs, feh := parseAtom(lex)
 	if feh != nil {
 		return nil, feh
 	}
+	defer func() {
+		if re != nil {
+			re.Pos = t.Pos
+
+			t, _ := lex.RawPeek(0)
+			re.EndPos = t.Pos
+		}
+	}()
 	for {
 		tok, feh := peek(lex)
 		if feh != nil {
 			return nil, feh
+		}
+		if tok.Value == "." {
+			tok2, feh := peek2(lex)
+			if feh != nil {
+				return nil, feh
+			}
+
+			if tok2.Type == '(' {
+				_, feh := lex.Next()
+				if feh != nil {
+					panic(feh)
+				}
+				v := Argumentleiste{}
+				err := argLeisteParser.ParseFromLexer(lex, &v, participle.AllowTrailing(true))
+				if err != nil {
+					return nil, err
+				}
+
+				return &Expression{
+					FunktionErsteKlasseAufruf: &FunktionErsteKlasseAufruf{
+						Funktion:   *lhs,
+						Argumenten: v,
+					},
+				}, nil
+			}
 		}
 		if tok.EOF() || !isOp(tok) || info[tok.Value] == nil || info[tok.Value].Priority < minPrec {
 			break
@@ -91,6 +128,14 @@ func isOp(t lexer.Token) bool {
 
 func peek(lex *lexer.PeekingLexer) (lexer.Token, error) {
 	tok, err := lex.Peek(0)
+	if err != nil {
+		return lexer.Token{}, err
+	}
+	return tok, nil
+}
+
+func peek2(lex *lexer.PeekingLexer) (lexer.Token, error) {
+	tok, err := lex.Peek(1)
 	if err != nil {
 		return lexer.Token{}, err
 	}

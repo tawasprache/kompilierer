@@ -193,6 +193,18 @@ func typZuIdent(e getypisiertast.ITyp, aktuellePaket string) string {
 		return ident
 	case getypisiertast.Typvariable:
 		return k.Name
+	case getypisiertast.Typfunktion:
+		var (
+			ein string
+			aus string
+		)
+		var eins []string
+		for idx, it := range k.Argumenten {
+			eins = append(eins, fmt.Sprintf("arg%d: %s", idx, typZuIdent(it, aktuellePaket)))
+		}
+		ein = strings.Join(eins, ", ")
+		aus = typZuIdent(k.Rückgabetyp, aktuellePaket)
+		return fmt.Sprintf("(%s) => %s", ein, aus)
 	}
 	panic("e")
 }
@@ -403,6 +415,26 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 		f.AddK(`) => `)
 		genExpr(f, e.In, aktuellePaket)
 		f.AddK(`)()`)
+	case getypisiertast.FunktionErsteKlasseAufruf:
+		genExpr(f, e.Funktion, aktuellePaket)
+		f.AddK(`(`)
+		for idx, it := range e.Argumenten {
+			genExpr(f, it, aktuellePaket)
+			if idx != len(e.Argumenten)-1 {
+				f.AddK(`, `)
+			}
+		}
+		f.AddK(`)`)
+	case getypisiertast.Funktionsliteral:
+		f.AddK(`(`)
+		for idx, it := range e.Formvariabeln {
+			f.AddK(`%s: %s`, it.Name, typZuIdent(it.Typ, aktuellePaket))
+			if idx != len(e.Formvariabeln)-1 {
+				f.AddK(`, `)
+			}
+		}
+		f.AddK(`) =>`)
+		genExpr(f, e.Expression, aktuellePaket)
 	default:
 		panic("e " + repr.String(e))
 	}

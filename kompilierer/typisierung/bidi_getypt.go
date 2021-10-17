@@ -370,6 +370,60 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		s.loescheScope()
 
 		return neuer, nil
+	case getypisiertast.FunktionErsteKlasseAufruf:
+		nfunk, feh := synthGetypisiertExpression(l, s, e.Funktion)
+		if feh != nil {
+			return nil, feh
+		}
+
+		funk, ok := nfunk.Typ().(getypisiertast.Typfunktion)
+		if !ok {
+			// TODO: generische
+			return nil, fehlerberichtung.NeuFehler(e.Pos(), "%s ist kein Funktion", funk)
+		}
+
+		if len(funk.Argumenten) != len(e.Argumenten) {
+			if len(funk.Argumenten) < len(e.Argumenten) {
+				return nil, fehlerberichtung.NeuFehler(e.Pos(), "zu viele argumenten. es will nur %d, aber du hast es %d gegeben.", len(funk.Argumenten), len(e.Argumenten))
+			} else {
+				return nil, fehlerberichtung.NeuFehler(e.Pos(), "nicht genug argumenten. es will %d, aber du hast es %d gegeben.", len(funk.Argumenten), len(e.Argumenten))
+			}
+		}
+
+		var nargen []getypisiertast.Expression
+		for idx, it := range e.Argumenten {
+			narg, feh := synthGetypisiertExpression(l, s, it)
+			if feh != nil {
+				return nil, feh
+			}
+			_, feh = checkGetypisiertExpression(l, s, it, funk.Argumenten[idx])
+			if feh != nil {
+				return nil, feh
+			}
+			nargen = append(nargen, narg)
+		}
+
+		return getypisiertast.FunktionErsteKlasseAufruf{
+			Funktion:    nfunk,
+			Argumenten:  nargen,
+			Rückgabetyp: funk.Rückgabetyp,
+			LPos:        e.LPos,
+		}, nil
+	case getypisiertast.Funktionsliteral:
+		s.neuScope()
+		for _, it := range e.Formvariabeln {
+			s.head().vars[it.Name] = it.Typ
+		}
+		rückgabe, feh := synthGetypisiertExpression(l, s, e.Expression)
+		if feh != nil {
+			return nil, feh
+		}
+		if !TypGleich(rückgabe.Typ(), e.LTyp.Rückgabetyp) && !TypGleich(e.LTyp.Rückgabetyp, getypisiertast.TypEinheit) {
+			return nil, fehlerberichtung.NeuFehler(e.Expression.Pos(), "Das Funktionssignatur sagt das diese Funktion züruck %s gibt, aber es gibt %s züruck.", e.LTyp.Rückgabetyp, rückgabe.Typ())
+		}
+		s.loescheScope()
+		e.Expression = rückgabe
+		return e, nil
 	}
 	panic("unreachable " + repr.String(expr))
 }

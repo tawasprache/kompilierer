@@ -101,10 +101,15 @@ type Typ struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
-	Typvariable    *Typvariable    `("§"@Ident) |`
-	Typkonstruktor *Typkonstruktor `(@@)`
+	Typvariable    *Typvariable    `  ("§"@Ident)`
+	Typfunktion    *Typfunktion    `| (@@)`
+	Typkonstruktor *Typkonstruktor `| (@@)`
 }
 
+type Typfunktion struct {
+	Argumenten  []Typ `"funk" "(" ( @@ ( "," @@ )* )? ")"`
+	Rückgabetyp *Typ  `(":" @@)?`
+}
 type Typvariable string
 type Typkonstruktor struct {
 	Name                 Symbolkette `@@`
@@ -112,8 +117,11 @@ type Typkonstruktor struct {
 }
 
 var (
-	Parser         = participle.MustBuild(&Modul{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
-	TerminalParser = participle.MustBuild(&Terminal{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
+	Parser                 = participle.MustBuild(&Modul{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
+	TerminalParser         = participle.MustBuild(&Terminal{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
+	argLeisteParser        = participle.MustBuild(&Argumentleiste{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
+	typFunktionParser      = participle.MustBuild(&Typfunktion{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
+	funktionsLiteralParser = participle.MustBuild(&Funktionsliteral{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
 )
 
 func VonStringX(filename, content string) (r Modul) {
