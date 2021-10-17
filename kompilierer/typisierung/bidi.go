@@ -19,6 +19,23 @@ func TypGleich(a getypisiertast.ITyp, b getypisiertast.ITyp) bool {
 		return lhv.Name == rhv.Name
 	}
 
+	if nlhv, lok, nrhv, rok := e(a, b); lok && rok {
+		if len(nlhv.Argumenten) != len(nrhv.Argumenten) {
+			return false
+		}
+
+		for idx := range nlhv.Argumenten {
+			lh := nlhv.Argumenten[idx]
+			rh := nrhv.Argumenten[idx]
+
+			if !TypGleich(lh, rh) {
+				return false
+			}
+		}
+
+		return TypGleich(nlhv.Rückgabetyp, nrhv.Rückgabetyp)
+	}
+
 	nlhv := a.(getypisiertast.Typnutzung)
 	nrhv := b.(getypisiertast.Typnutzung)
 
@@ -42,6 +59,12 @@ func TypGleich(a getypisiertast.ITyp, b getypisiertast.ITyp) bool {
 	return true
 }
 
+func e(lhs getypisiertast.ITyp, rhs getypisiertast.ITyp) (getypisiertast.Typfunktion, bool, getypisiertast.Typfunktion, bool) {
+	lhv, lok := lhs.(getypisiertast.Typfunktion)
+	rhv, rok := rhs.(getypisiertast.Typfunktion)
+	return lhv, lok, rhv, rok
+}
+
 func unify(lhs getypisiertast.ITyp, rhs getypisiertast.ITyp) (map[string]getypisiertast.ITyp, error) {
 	if rhv, ok := rhs.(getypisiertast.Typvariable); ok {
 		return map[string]getypisiertast.ITyp{
@@ -51,6 +74,33 @@ func unify(lhs getypisiertast.ITyp, rhs getypisiertast.ITyp) (map[string]getypis
 		return map[string]getypisiertast.ITyp{
 			lhv.Name: rhs,
 		}, nil
+	} else if lhv, lok, rhv, rok := e(lhs, rhs); lok && rok {
+		if len(lhv.Argumenten) != len(rhv.Argumenten) {
+			return nil, fmt.Errorf("%s != %s", lhv, rhv)
+		}
+
+		for idx := range lhv.Argumenten {
+			lhs2 := lhv.Argumenten[idx]
+			rhs2 := rhv.Argumenten[idx]
+
+			r := map[string]getypisiertast.ITyp{}
+
+			unified, feh := unify(lhs2, rhs2)
+			if feh != nil {
+				return nil, feh
+			}
+
+			for k, v := range unified {
+				r[k] = v
+			}
+		}
+
+		unified, feh := unify(lhv.Rückgabetyp, rhv.Rückgabetyp)
+		if feh != nil {
+			return nil, feh
+		}
+
+		return unified, nil
 	} else {
 		lhv := lhs.(getypisiertast.Typnutzung)
 		rhv := rhs.(getypisiertast.Typnutzung)
@@ -122,6 +172,11 @@ func substitute(typ getypisiertast.ITyp, suche getypisiertast.ITyp, ersetzen get
 		return getypisiertast.Typnutzung{
 			SymbolURL:            v.SymbolURL,
 			Generischeargumenten: substituteList(v.Generischeargumenten, suche, ersetzen),
+		}
+	case getypisiertast.Typfunktion:
+		return getypisiertast.Typfunktion{
+			Argumenten:  substituteList(v.Argumenten, suche, ersetzen),
+			Rückgabetyp: substitute(v.Rückgabetyp, suche, ersetzen),
 		}
 	case getypisiertast.Nichtunifiziert:
 		println("warning: ununified type being substituted")

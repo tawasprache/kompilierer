@@ -11,7 +11,7 @@ import (
 	"github.com/alecthomas/repr"
 )
 
-func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.Expression) (getypisiertast.Expression, error) {
+func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.Expression, typvariablen []string) (getypisiertast.Expression, error) {
 	var feh error
 
 	if astExpr.Terminal != nil {
@@ -31,7 +31,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				lPos getypisiertast.Span = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
 			)
 
-			wert, feh = exprNamensauflösung(k, s, l, terminal.Passt.Wert)
+			wert, feh = exprNamensauflösung(k, s, l, terminal.Passt.Wert, typvariablen)
 			if feh != nil {
 				return nil, feh
 			}
@@ -60,7 +60,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 					})
 				}
 
-				musterExpr, feh := exprNamensauflösung(k, s, l, it.Expression)
+				musterExpr, feh := exprNamensauflösung(k, s, l, it.Expression, typvariablen)
 				if feh != nil {
 					return nil, feh
 				}
@@ -99,7 +99,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			}
 
 			for _, it := range terminal.Variantaufruf.Argumente {
-				variExpr, feh := exprNamensauflösung(k, s, l, it)
+				variExpr, feh := exprNamensauflösung(k, s, l, it, typvariablen)
 				if feh != nil {
 					return nil, feh
 				}
@@ -107,7 +107,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			}
 
 			for _, it := range terminal.Variantaufruf.Strukturfelden {
-				variExpr, feh := exprNamensauflösung(k, s, l, it.Wert)
+				variExpr, feh := exprNamensauflösung(k, s, l, it.Wert, typvariablen)
 				if feh != nil {
 					return nil, feh
 				}
@@ -135,7 +135,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			)
 
 			for _, it := range terminal.Leiste.Expressionen {
-				v, feh := exprNamensauflösung(k, s, l, it)
+				v, feh := exprNamensauflösung(k, s, l, it, typvariablen)
 				if feh != nil {
 					return nil, feh
 				}
@@ -161,7 +161,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			}
 
 			for _, arg := range terminal.Funktionsaufruf.Argumente {
-				garg, feh := exprNamensauflösung(k, s, l, arg)
+				garg, feh := exprNamensauflösung(k, s, l, arg, typvariablen)
 				if feh != nil {
 					return nil, feh
 				}
@@ -198,13 +198,13 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				lpos   getypisiertast.Span = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
 			)
 
-			wert, feh = exprNamensauflösung(k, s, l, terminal.Strukturaktualisierung.Struktur)
+			wert, feh = exprNamensauflösung(k, s, l, terminal.Strukturaktualisierung.Struktur, typvariablen)
 			if feh != nil {
 				return nil, feh
 			}
 
 			for _, it := range terminal.Strukturaktualisierung.Felden {
-				feldwert, feh := exprNamensauflösung(k, s, l, it.Wert)
+				feldwert, feh := exprNamensauflösung(k, s, l, it.Wert, typvariablen)
 				if feh != nil {
 					return nil, feh
 				}
@@ -224,7 +224,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				Code: map[string]string{},
 			}
 			var feh error
-			n.LTyp, feh = typ(l, terminal.Nativ.Typ, []string{})
+			n.LTyp, feh = typ(l, terminal.Nativ.Typ, typvariablen)
 			if feh != nil {
 				return nil, feh
 			}
@@ -236,13 +236,13 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			sei := getypisiertast.Sei{}
 			sei.LPos = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
 			sei.Name = terminal.Sei.Variable
-			sei.Wert, feh = exprNamensauflösung(k, s, l, terminal.Sei.Wert)
+			sei.Wert, feh = exprNamensauflösung(k, s, l, terminal.Sei.Wert, typvariablen)
 			if feh != nil {
 				return nil, feh
 			}
 			s.neuScope()
 			s.head().vars[sei.Name] = sei.Wert.Typ()
-			sei.In, feh = exprNamensauflösung(k, s, l, terminal.Sei.In)
+			sei.In, feh = exprNamensauflösung(k, s, l, terminal.Sei.In, typvariablen)
 			s.loescheScope()
 			if feh != nil {
 				return nil, feh
@@ -257,7 +257,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			fliteral.LPos = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
 			ftyp := getypisiertast.Typfunktion{}
 			for _, it := range terminal.Funktionsliteral.Formvariabeln {
-				typ, feh := typ(l, it.Typ, []string{})
+				typ, feh := typ(l, it.Typ, typvariablen)
 				if feh != nil {
 					return nil, feh
 				}
@@ -269,12 +269,12 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				})
 			}
 			if terminal.Funktionsliteral.Rückgabetyp != nil {
-				ftyp.Rückgabetyp, feh = typ(l, *terminal.Funktionsliteral.Rückgabetyp, []string{})
+				ftyp.Rückgabetyp, feh = typ(l, *terminal.Funktionsliteral.Rückgabetyp, typvariablen)
 				if feh != nil {
 					return nil, feh
 				}
 			}
-			funk, feh := exprNamensauflösung(k, s, l, terminal.Funktionsliteral.Expression)
+			funk, feh := exprNamensauflösung(k, s, l, terminal.Funktionsliteral.Expression, typvariablen)
 			if feh != nil {
 				return nil, feh
 			}
@@ -283,7 +283,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			return fliteral, nil
 		}
 	} else if astExpr.FunktionErsteKlasseAufruf != nil {
-		funk, feh := exprNamensauflösung(k, s, l, astExpr.FunktionErsteKlasseAufruf.Funktion)
+		funk, feh := exprNamensauflösung(k, s, l, astExpr.FunktionErsteKlasseAufruf.Funktion, typvariablen)
 		if feh != nil {
 			return nil, feh
 		}
@@ -291,7 +291,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 		var argumenten []getypisiertast.Expression
 
 		for _, it := range astExpr.FunktionErsteKlasseAufruf.Argumenten.Argumenten {
-			garg, feh := exprNamensauflösung(k, s, l, it)
+			garg, feh := exprNamensauflösung(k, s, l, it, typvariablen)
 			if feh != nil {
 				return nil, feh
 			}
@@ -306,11 +306,11 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			LPos: getypisiertast.NeuSpan(astExpr.Pos, astExpr.EndPos),
 		}, nil
 	} else {
-		links, feh := exprNamensauflösung(k, s, l, *astExpr.Links)
+		links, feh := exprNamensauflösung(k, s, l, *astExpr.Links, typvariablen)
 		if feh != nil {
 			return nil, feh
 		}
-		rechts, feh := exprNamensauflösung(k, s, l, *astExpr.Rechts)
+		rechts, feh := exprNamensauflösung(k, s, l, *astExpr.Rechts, typvariablen)
 		if feh != nil {
 			return nil, feh
 		}
@@ -574,6 +574,10 @@ var defaultDependencies = []getypisiertast.Dependency{
 		Zeigen: []string{"Folge"},
 	},
 	{
+		Paket: "Tawa/Debuggen",
+		Als:   "Debuggen",
+	},
+	{
 		Paket:  "Tawa/Vielleicht",
 		Als:    "Vielleicht",
 		Zeigen: []string{"Vielleicht"},
@@ -687,7 +691,7 @@ func Auflösenamen(k *Kontext, m ast.Modul, modulePrefix string) (getypisiertast
 				s.head().vars[it.Name] = getypisiertast.Nichtunifiziert{}
 			}
 
-			expr, feh := exprNamensauflösung(k, &s, l, it.Funktiondeklaration.Expression)
+			expr, feh := exprNamensauflösung(k, &s, l, it.Funktiondeklaration.Expression, it.Funktiondeklaration.Generischeargumenten)
 			if feh != nil {
 				return getypisiertast.Modul{}, feh
 			}

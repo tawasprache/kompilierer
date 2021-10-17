@@ -1,0 +1,5 @@
+paket Debuggen zeigt (druck)
+
+funk druck[A](w: §A): §A
+    ¤ §A
+    | typescript: `console.log(JSON.stringify(w)) || w`

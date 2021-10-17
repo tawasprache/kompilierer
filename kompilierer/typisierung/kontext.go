@@ -44,6 +44,7 @@ func NeuKontext() *Kontext {
 	ladeEingebaute(k, "Tawa/Folge")
 	ladeEingebaute(k, "Tawa/Vielleicht")
 	ladeEingebaute(k, "Tawa/Leiste")
+	ladeEingebaute(k, "Tawa/Debuggen")
 
 	return k
 }
