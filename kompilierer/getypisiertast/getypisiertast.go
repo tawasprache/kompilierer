@@ -205,11 +205,11 @@ var TypEinheit = Typnutzung{
 	},
 }
 
-func TypLeiste(i ITyp) ITyp {
+func TypListe(i ITyp) ITyp {
 	return Typnutzung{
 		SymbolURL: SymbolURL{
-			Paket: "Tawa/Leiste",
-			Name:  "Leiste",
+			Paket: "Tawa/Liste",
+			Name:  "Liste",
 		},
 		Generischeargumenten: []ITyp{i},
 	}
@@ -302,16 +302,16 @@ func (v Pattern) istExpression() {}
 func (v Pattern) Typ() ITyp      { return v.LTyp }
 func (v Pattern) Pos() Span      { return v.LPos }
 
-type Leiste struct {
+type Liste struct {
 	Werte []Expression
 
 	LTyp ITyp
 	LPos Span
 }
 
-func (v Leiste) istExpression() {}
-func (v Leiste) Typ() ITyp      { return v.LTyp }
-func (v Leiste) Pos() Span      { return v.LPos }
+func (v Liste) istExpression() {}
+func (v Liste) Typ() ITyp      { return v.LTyp }
+func (v Liste) Pos() Span      { return v.LPos }
 
 type Muster struct {
 	Variante    SymbolURL

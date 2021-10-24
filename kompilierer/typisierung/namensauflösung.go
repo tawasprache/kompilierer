@@ -126,7 +126,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 
 				LPos: lPos,
 			}, nil
-		} else if terminal.Leiste != nil {
+		} else if terminal.Liste != nil {
 			var (
 				expressionen []getypisiertast.Expression
 
@@ -134,7 +134,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				lPos getypisiertast.Span = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
 			)
 
-			for _, it := range terminal.Leiste.Expressionen {
+			for _, it := range terminal.Liste.Expressionen {
 				v, feh := exprNamensauflösung(k, s, l, it, typvariablen)
 				if feh != nil {
 					return nil, feh
@@ -142,7 +142,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				expressionen = append(expressionen, v)
 			}
 
-			return getypisiertast.Leiste{
+			return getypisiertast.Liste{
 				Werte: expressionen,
 				LTyp:  lTyp,
 				LPos:  lPos,
@@ -583,9 +583,9 @@ var defaultDependencies = []getypisiertast.Dependency{
 		Zeigen: []string{"Vielleicht"},
 	},
 	{
-		Paket:  "Tawa/Leiste",
-		Als:    "Leiste",
-		Zeigen: []string{"Leiste"},
+		Paket:  "Tawa/Liste",
+		Als:    "Liste",
+		Zeigen: []string{"Liste"},
 	},
 }
 

@@ -167,14 +167,14 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 				return nil, fehlerberichtung.GleichErr(e.Pos(), "verketten", links.Typ(), rechts.Typ())
 			}
 
-			linksIstLeiste := TypGleich(links.Typ(), getypisiertast.TypLeiste(getypisiertast.Typvariable{Name: "L"}))
-			rechtsIstLeiste := TypGleich(rechts.Typ(), getypisiertast.TypLeiste(getypisiertast.Typvariable{Name: "L"}))
+			linksIstListe := TypGleich(links.Typ(), getypisiertast.TypListe(getypisiertast.Typvariable{Name: "L"}))
+			rechtsIstListe := TypGleich(rechts.Typ(), getypisiertast.TypListe(getypisiertast.Typvariable{Name: "L"}))
 
-			if !linksIstLeiste {
-				return nil, fehlerberichtung.NeuFehler(links.Pos(), "ist kein leiste")
+			if !linksIstListe {
+				return nil, fehlerberichtung.NeuFehler(links.Pos(), "ist kein liste")
 			}
-			if !rechtsIstLeiste {
-				return nil, fehlerberichtung.NeuFehler(rechts.Pos(), "ist kein leiste")
+			if !rechtsIstListe {
+				return nil, fehlerberichtung.NeuFehler(rechts.Pos(), "ist kein liste")
 			}
 
 			return getypisiertast.ValBinaryOperator{
@@ -319,7 +319,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		case getypisiertast.Typvariable:
 			panic("idk")
 		}
-	case getypisiertast.Leiste:
+	case getypisiertast.Liste:
 		var (
 			werte []getypisiertast.Expression
 			typ   getypisiertast.ITyp
@@ -343,9 +343,9 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		if typ == nil {
 			panic("e")
 		}
-		return getypisiertast.Leiste{
+		return getypisiertast.Liste{
 			Werte: werte,
-			LTyp:  getypisiertast.TypLeiste(typ),
+			LTyp:  getypisiertast.TypListe(typ),
 			LPos:  e.LPos,
 		}, nil
 	case getypisiertast.Nativ:

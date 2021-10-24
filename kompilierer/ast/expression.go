@@ -21,10 +21,10 @@ type Expression struct {
 
 type FunktionErsteKlasseAufruf struct {
 	Funktion   Expression `@@`
-	Argumenten Argumentleiste
+	Argumenten Argumentliste
 }
 
-type Argumentleiste struct {
+type Argumentliste struct {
 	Argumenten []Expression `"(" ( @@ ( "," @@ )* )? ")"`
 }
 
@@ -35,7 +35,7 @@ type Terminal struct {
 	Ganzzahl               *int                   `  @Int`
 	Zeichenkette           *string                `| @String`
 	Sei                    *Sei                   `| @@`
-	Leiste                 *Leiste                `| @@`
+	Liste                  *Liste                 `| @@`
 	Nativ                  *Nativ                 `| @@`
 	Passt                  *Passt                 `| @@`
 	Variantaufruf          *Variantaufruf         `| @@`
@@ -57,7 +57,7 @@ type Sei struct {
 	In       Expression `"in" @@`
 }
 
-type Leiste struct {
+type Liste struct {
 	Expressionen []Expression `"[" @@ ( "," @@ )* "]"`
 }
 

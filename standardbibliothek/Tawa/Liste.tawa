@@ -1,0 +1,8 @@
+paket Liste zeigt (Liste map)
+
+typ Liste[T] ist
+beende
+
+funk map[T](l: Liste[§T], fn: funk(§T): §T): Liste[§T]
+    ¤ Liste[§T]
+    | typescript: `l.map(fn)`

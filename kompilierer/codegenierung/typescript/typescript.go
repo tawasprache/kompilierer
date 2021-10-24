@@ -176,9 +176,9 @@ func typZuIdent(e getypisiertast.ITyp, aktuellePaket string) string {
 				return "string"
 			}
 		}
-		if k.SymbolURL.Paket == "Tawa/Leiste" {
+		if k.SymbolURL.Paket == "Tawa/Liste" {
 			switch k.SymbolURL.Name {
-			case "Leiste":
+			case "Liste":
 				return "Array<" + typZuIdent(k.Generischeargumenten[0], aktuellePaket) + ">"
 			}
 		}
@@ -400,7 +400,7 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 			panic("kein nativ fur typescript")
 		}
 		f.AddK(v)
-	case getypisiertast.Leiste:
+	case getypisiertast.Liste:
 		f.AddK(`[`)
 		for idx, wert := range e.Werte {
 			genExpr(f, wert, aktuellePaket)

@@ -49,8 +49,8 @@ func parseExpr(lex *lexer.PeekingLexer, minPrec int) (re *Expression, rerr error
 				if feh != nil {
 					panic(feh)
 				}
-				v := Argumentleiste{}
-				err := argLeisteParser.ParseFromLexer(lex, &v, participle.AllowTrailing(true))
+				v := Argumentliste{}
+				err := argListeParser.ParseFromLexer(lex, &v, participle.AllowTrailing(true))
 				if err != nil {
 					return nil, err
 				}

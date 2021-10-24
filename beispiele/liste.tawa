@@ -1,7 +1,7 @@
 paket Haupt zeigt alles
 
-funk map(): Leiste[Ganz]
+funk map(): Liste[Ganz]
 	[1, 2, 3]
 
-funk Concat(): Leiste[Ganz]
+funk Concat(): Liste[Ganz]
 	[1, 2, 3] ++ [1, 2, 3]
