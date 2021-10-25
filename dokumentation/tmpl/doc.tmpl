@@ -19,6 +19,7 @@
             padding: 0.5rem;
             border: 1px solid rgba(0, 0, 0, 0.1);
             border-radius: 5px;
+            overflow-x: scroll;
         }
 
         .wrapper {
@@ -32,6 +33,21 @@
 
         .wrapper aside {
             width: 20ch;
+        }
+
+        @media (max-width: 600px) {
+            .wrapper {
+                flex-direction: column;
+                max-width: 100%;
+            }
+            .wrapper main {
+                width: unset;
+                max-width: 100%;
+            }
+            .wrapper aside {
+                width: unset;
+                max-width: 100%;
+            }
         }
     </style>
 </head>
