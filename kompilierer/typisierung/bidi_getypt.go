@@ -322,8 +322,11 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 	case getypisiertast.Liste:
 		var (
 			werte []getypisiertast.Expression
-			typ   getypisiertast.ITyp
+			typ   getypisiertast.ITyp = e.LTyp
 		)
+		if _, ok := typ.(getypisiertast.Nichtunifiziert); ok {
+			typ = nil
+		}
 		for _, it := range e.Werte {
 			if typ == nil {
 				wert, feh := synthGetypisiertExpression(l, s, it)

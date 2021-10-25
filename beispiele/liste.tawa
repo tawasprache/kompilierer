@@ -5,3 +5,7 @@ funk map(): Liste[Ganz]
 
 funk Concat(): Liste[Ganz]
 	[1, 2, 3] ++ [1, 2, 3]
+
+funk Nichts(): Liste[Ganz]
+	sei x = [] von Ganz in
+	x ++ [1, 2, 3]
