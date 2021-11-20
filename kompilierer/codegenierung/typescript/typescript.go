@@ -121,13 +121,13 @@ func (t typescriptUnterbau) Postgen(o codegenierung.Optionen) error {
 }
 
 func typEinfach(b getypisiertast.ITyp) bool {
-	if typisierung.TypGleich(b, getypisiertast.TypGanz) {
+	if typisierung.TypIst(b, getypisiertast.TypGanz) {
 		return true
 	}
-	if typisierung.TypGleich(b, getypisiertast.TypZeichenkette) {
+	if typisierung.TypIst(b, getypisiertast.TypZeichenkette) {
 		return true
 	}
-	if typisierung.TypGleich(b, getypisiertast.TypLogik) {
+	if typisierung.TypIst(b, getypisiertast.TypLogik) {
 		return true
 	}
 	return false

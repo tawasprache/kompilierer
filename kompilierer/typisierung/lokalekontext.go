@@ -4,6 +4,7 @@ import (
 	"Tawa/kompilierer/ast"
 	"Tawa/kompilierer/fehlerberichtung"
 	"Tawa/kompilierer/getypisiertast"
+	"strconv"
 )
 
 type lokalekontext struct {
@@ -13,6 +14,26 @@ type lokalekontext struct {
 	inModul          string
 	importieren      []getypisiertast.Dependency
 	lokaleFunktionen map[string]getypisiertast.Funktionssignatur
+	_ftv             int
+}
+
+func (l *lokalekontext) ftv() getypisiertast.Typvariable {
+	l._ftv++
+	return getypisiertast.Typvariable{Name: strconv.FormatInt(int64(l._ftv), 10)}
+}
+
+type constraint struct {
+	typen []getypisiertast.ITyp
+
+	wo getypisiertast.Expression
+}
+
+type constraints struct {
+	l []constraint
+}
+
+func (c *constraints) hinzufuegen(wo getypisiertast.Expression, l ...getypisiertast.ITyp) {
+	c.l = append(c.l, constraint{l, wo})
 }
 
 type scopes struct {

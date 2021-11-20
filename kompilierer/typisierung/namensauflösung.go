@@ -134,14 +134,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				lPos getypisiertast.Span = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
 			)
 
-			if terminal.Liste.Typ != nil {
-				lTyp, feh = typ(l, *terminal.Liste.Typ, []string{})
-				if feh != nil {
-					return nil, feh
-				}
-			} else {
-				lTyp = getypisiertast.Nichtunifiziert{}
-			}
+			lTyp = getypisiertast.Nichtunifiziert{}
 
 			for _, it := range terminal.Liste.Expressionen {
 				v, feh := exprNamensauflösung(k, s, l, it, typvariablen)

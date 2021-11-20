@@ -7,56 +7,93 @@ import (
 	"github.com/alecthomas/repr"
 )
 
-func TypGleich(a getypisiertast.ITyp, b getypisiertast.ITyp) bool {
-	lhv, lhsIstTypvar := a.(getypisiertast.Typvariable)
-	rhv, rhsIstTypvar := b.(getypisiertast.Typvariable)
+func TypIst(a getypisiertast.ITyp, b getypisiertast.ITyp) bool {
+	// case a, b of
+	// TypeVar(a), TypeVar(b) ->
+	for {
+		lhv, ok := a.(getypisiertast.Typvariable)
+		if !ok {
+			break
+		}
+		rhv, ok := b.(getypisiertast.Typvariable)
+		if !ok {
+			break
+		}
 
-	if lhsIstTypvar && !rhsIstTypvar {
-		return true
-	} else if !lhsIstTypvar && rhsIstTypvar {
-		return true
-	} else if lhsIstTypvar && rhsIstTypvar {
 		return lhv.Name == rhv.Name
 	}
+	// TypeVar(a), _ ->
+	for {
+		_, ok := a.(getypisiertast.Typvariable)
+		if !ok {
+			break
+		}
 
-	if nlhv, lok, nrhv, rok := e(a, b); lok && rok {
-		if len(nlhv.Argumenten) != len(nrhv.Argumenten) {
+		return true
+	}
+	// _, TypeVar(b) ->
+	for {
+		_, ok := b.(getypisiertast.Typvariable)
+		if !ok {
+			break
+		}
+
+		return true
+	}
+	// Typfunktion(a), Typfunktion(b) ->
+	for {
+		lhv, lok := a.(getypisiertast.Typfunktion)
+		rhv, rok := b.(getypisiertast.Typfunktion)
+
+		if !lok || !rok {
+			break
+		}
+
+		if len(lhv.Argumenten) != len(rhv.Argumenten) {
 			return false
 		}
 
-		for idx := range nlhv.Argumenten {
-			lh := nlhv.Argumenten[idx]
-			rh := nrhv.Argumenten[idx]
+		for idx := range lhv.Argumenten {
+			lh := lhv.Argumenten[idx]
+			rh := rhv.Argumenten[idx]
 
 			if !TypGleich(lh, rh) {
 				return false
 			}
 		}
 
-		return TypGleich(nlhv.Rückgabetyp, nrhv.Rückgabetyp)
+		return TypGleich(lhv.Rückgabetyp, rhv.Rückgabetyp)
 	}
+	// Typnutzung(a), Typnutzung(b) ->
+	for {
+		nlhv, lok := a.(getypisiertast.Typnutzung)
+		nrhv, rok := b.(getypisiertast.Typnutzung)
 
-	nlhv := a.(getypisiertast.Typnutzung)
-	nrhv := b.(getypisiertast.Typnutzung)
+		if !lok || !rok {
+			break
+		}
 
-	if nlhv.SymbolURL != nrhv.SymbolURL {
-		return false
-	}
-
-	if len(nlhv.Generischeargumenten) != len(nrhv.Generischeargumenten) {
-		return false
-	}
-
-	for idx := range nlhv.Generischeargumenten {
-		lh := nlhv.Generischeargumenten[idx]
-		rh := nrhv.Generischeargumenten[idx]
-
-		if !TypGleich(lh, rh) {
+		if nlhv.SymbolURL != nrhv.SymbolURL {
 			return false
 		}
+
+		if len(nlhv.Generischeargumenten) != len(nrhv.Generischeargumenten) {
+			return false
+		}
+
+		for idx := range nlhv.Generischeargumenten {
+			lh := nlhv.Generischeargumenten[idx]
+			rh := nrhv.Generischeargumenten[idx]
+
+			if !TypGleich(lh, rh) {
+				return false
+			}
+		}
+
+		return true
 	}
 
-	return true
+	panic("nonexhaustive match: " + repr.String(a) + " " + repr.String(b))
 }
 
 func e(lhs getypisiertast.ITyp, rhs getypisiertast.ITyp) (getypisiertast.Typfunktion, bool, getypisiertast.Typfunktion, bool) {

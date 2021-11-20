@@ -58,8 +58,7 @@ type Sei struct {
 }
 
 type Liste struct {
-	Expressionen []Expression `("[" @@ ( "," @@ )* "]") | ("[" ( @@ ( "," @@ )* )? "]"`
-	Typ          *Typ         `("von" @@))`
+	Expressionen []Expression `"[" ( @@ ( "," @@ )* )? "]"`
 }
 
 type Nativ struct {

@@ -8,8 +8,8 @@ import (
 )
 
 // assert typeof e == a
-func checkGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast.Expression, gegenTyp getypisiertast.ITyp) (getypisiertast.Expression, error) {
-	ruck, err := synthGetypisiertExpression(l, s, expr)
+func checkGetypisiertExpression(l *lokalekontext, k *constraints, s *scopes, expr getypisiertast.Expression, gegenTyp getypisiertast.ITyp) (getypisiertast.Expression, error) {
+	ruck, err := synthGetypisiertExpression(l, k, s, expr)
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +22,7 @@ func checkGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 }
 
 // typeof e
-func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast.Expression) (getypisiertast.Expression, error) {
+func synthGetypisiertExpression(l *lokalekontext, k *constraints, s *scopes, expr getypisiertast.Expression) (getypisiertast.Expression, error) {
 	switch e := expr.(type) {
 	case getypisiertast.Ganzzahl:
 		return e, nil
@@ -33,7 +33,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		if feh != nil {
 			return nil, feh
 		}
-		return synthGetypisiertApplication(l, s, rumpf, e)
+		return synthGetypisiertApplication(l, k, s, rumpf, e)
 	case getypisiertast.Variable:
 		typ, ok := s.suche(e.Name)
 		if !ok {
@@ -44,13 +44,13 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			ITyp: typ,
 		}, nil
 	case getypisiertast.Variantaufruf:
-		return synthGetypisiertVariantApplication(l, s, e)
+		return synthGetypisiertVariantApplication(l, k, s, e)
 	case getypisiertast.Pattern:
-		wert, feh := synthGetypisiertExpression(l, s, e.Wert)
+		wert, feh := synthGetypisiertExpression(l, k, s, e.Wert)
 		if feh != nil {
 			return nil, feh
 		}
-		switch k := wert.Typ().(type) {
+		switch inner := wert.Typ().(type) {
 		case getypisiertast.Typvariable:
 			return getypisiertast.Pattern{
 				Wert:    wert,
@@ -59,17 +59,17 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 				LPos:    e.LPos,
 			}, nil
 		case getypisiertast.Typnutzung:
-			typDekl, feh := l.typDekl(k.SymbolURL, e.Pos())
+			typDekl, feh := l.typDekl(inner.SymbolURL, e.Pos())
 			if feh != nil {
 				return nil, feh
 			}
 
 			for idx, tvar := range typDekl.Generischeargumenten {
-				typDekl = substituteTypdekl(typDekl, getypisiertast.Typvariable{Name: tvar}, k.Generischeargumenten[idx])
+				typDekl = substituteTypdekl(typDekl, getypisiertast.Typvariable{Name: tvar}, inner.Generischeargumenten[idx])
 			}
 
 			if len(typDekl.Varianten) < 2 {
-				return nil, fehlerberichtung.NeuFehler(e.Pos(), " »%s« hat kein varianten", k.SymbolURL)
+				return nil, fehlerberichtung.NeuFehler(e.Pos(), " »%s« hat kein varianten", inner.SymbolURL)
 			}
 
 			if len(typDekl.Varianten) != len(e.Mustern) {
@@ -101,7 +101,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			}
 
 			var mustern []getypisiertast.Muster
-			var kind getypisiertast.ITyp
+			var kinden []getypisiertast.ITyp
 
 			for _, it := range e.Mustern {
 				s.neuScope()
@@ -111,7 +111,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 					s.head().vars[feld.Name] = vari.Datenfelden[feld.VonFeld].Typ
 				}
 
-				expr, feh := synthGetypisiertExpression(l, s, it.Expression)
+				expr, feh := synthGetypisiertExpression(l, k, s, it.Expression)
 				if feh != nil {
 					return nil, feh
 				}
@@ -120,7 +120,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 
 				for _, it := range it.Variablen {
 					mvars = append(mvars, getypisiertast.Mustervariable{
-						Variante:    k.SymbolURL,
+						Variante:    inner.SymbolURL,
 						Name:        it.Name,
 						Konstruktor: it.Konstruktor,
 						VonFeld:     it.VonFeld,
@@ -133,31 +133,32 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 					Expression:  expr,
 				})
 
-				if kind == nil {
-					kind = expr.Typ()
-				} else {
-					if !TypGleich(kind, expr.Typ()) {
-						return nil, fehlerberichtung.NeuFehler(e.Pos(), "arme sind nicht gleich, erwartete %s und sah %s", kind, expr.Typ())
-					}
-				}
+				kinden = append(kinden, expr.Typ())
 
 				s.loescheScope()
 			}
 
-			return getypisiertast.Pattern{
+			n := l.ftv()
+			kinden = append(kinden, n)
+
+			r := getypisiertast.Pattern{
 				Wert:    wert,
 				Mustern: mustern,
 
-				LTyp: kind,
+				LTyp: n,
 				LPos: e.Pos(),
-			}, nil
+			}
+
+			k.hinzufuegen(r, kinden...)
+
+			return r, nil
 		}
 	case getypisiertast.ValBinaryOperator:
-		links, feh := synthGetypisiertExpression(l, s, e.Links)
+		links, feh := synthGetypisiertExpression(l, k, s, e.Links)
 		if feh != nil {
 			return nil, feh
 		}
-		rechts, feh := synthGetypisiertExpression(l, s, e.Rechts)
+		rechts, feh := synthGetypisiertExpression(l, k, s, e.Rechts)
 		if feh != nil {
 			return nil, feh
 		}
@@ -204,11 +205,11 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			LPos:   e.LPos,
 		}, nil
 	case getypisiertast.LogikBinaryOperator:
-		links, feh := synthGetypisiertExpression(l, s, e.Links)
+		links, feh := synthGetypisiertExpression(l, k, s, e.Links)
 		if feh != nil {
 			return nil, feh
 		}
-		rechts, feh := synthGetypisiertExpression(l, s, e.Rechts)
+		rechts, feh := synthGetypisiertExpression(l, k, s, e.Rechts)
 		if feh != nil {
 			return nil, feh
 		}
@@ -237,19 +238,19 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			LPos:   e.Pos(),
 		}, nil
 	case getypisiertast.Strukturaktualisierung:
-		links, feh := synthGetypisiertExpression(l, s, e.Wert)
+		links, feh := synthGetypisiertExpression(l, k, s, e.Wert)
 		if feh != nil {
 			return nil, feh
 		}
 		var felden []getypisiertast.Strukturaktualisierungsfeld
-		switch k := links.Typ().(type) {
+		switch nutzung := links.Typ().(type) {
 		case getypisiertast.Typnutzung:
-			typ, feh := l.typDekl(k.SymbolURL, e.Pos())
+			typ, feh := l.typDekl(nutzung.SymbolURL, e.Pos())
 			if feh != nil {
 				panic(feh)
 			}
-			for idx := range k.Generischeargumenten {
-				typ = substituteTypdekl(typ, getypisiertast.Typvariable{Name: typ.Generischeargumenten[idx]}, k.Generischeargumenten[idx])
+			for idx := range nutzung.Generischeargumenten {
+				typ = substituteTypdekl(typ, getypisiertast.Typvariable{Name: typ.Generischeargumenten[idx]}, nutzung.Generischeargumenten[idx])
 			}
 			if len(typ.Datenfelden) == 0 {
 				return nil, fehlerberichtung.NeuFehler(e.Pos(), "%s ist kein struktur", typ.SymbolURL)
@@ -261,7 +262,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 						continue
 					}
 
-					b, f := synthGetypisiertExpression(l, s, usrFeld.Wert)
+					b, f := synthGetypisiertExpression(l, k, s, usrFeld.Wert)
 					if f != nil {
 						return nil, f
 					}
@@ -288,7 +289,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			panic("idk")
 		}
 	case getypisiertast.Feldzugriff:
-		links, feh := synthGetypisiertExpression(l, s, e.Links)
+		links, feh := synthGetypisiertExpression(l, k, s, e.Links)
 		if feh != nil {
 			return nil, feh
 		}
@@ -322,21 +323,18 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 	case getypisiertast.Liste:
 		var (
 			werte []getypisiertast.Expression
-			typ   getypisiertast.ITyp = e.LTyp
+			typ   getypisiertast.ITyp = nil
 		)
-		if _, ok := typ.(getypisiertast.Nichtunifiziert); ok {
-			typ = nil
-		}
 		for _, it := range e.Werte {
 			if typ == nil {
-				wert, feh := synthGetypisiertExpression(l, s, it)
+				wert, feh := synthGetypisiertExpression(l, k, s, it)
 				if feh != nil {
 					return nil, feh
 				}
 				werte = append(werte, wert)
 				typ = wert.Typ()
 			} else {
-				wert, feh := checkGetypisiertExpression(l, s, it, typ)
+				wert, feh := checkGetypisiertExpression(l, k, s, it, typ)
 				if feh != nil {
 					return nil, feh
 				}
@@ -344,7 +342,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			}
 		}
 		if typ == nil {
-			panic("e")
+			typ = getypisiertast.Typvariable{Name: l.ftv()}
 		}
 		return getypisiertast.Liste{
 			Werte: werte,
@@ -358,7 +356,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		var feh error
 
 		neuer.Name = e.Name
-		neuer.Wert, feh = synthGetypisiertExpression(l, s, e.Wert)
+		neuer.Wert, feh = synthGetypisiertExpression(l, k, s, e.Wert)
 		if feh != nil {
 			return nil, feh
 		}
@@ -366,7 +364,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 
 		s.neuScope()
 		s.head().vars[neuer.Name] = neuer.Wert.Typ()
-		neuer.In, feh = synthGetypisiertExpression(l, s, e.In)
+		neuer.In, feh = synthGetypisiertExpression(l, k, s, e.In)
 		if feh != nil {
 			return nil, feh
 		}
@@ -374,7 +372,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 
 		return neuer, nil
 	case getypisiertast.FunktionErsteKlasseAufruf:
-		nfunk, feh := synthGetypisiertExpression(l, s, e.Funktion)
+		nfunk, feh := synthGetypisiertExpression(l, k, s, e.Funktion)
 		if feh != nil {
 			return nil, feh
 		}
@@ -395,11 +393,11 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 
 		var nargen []getypisiertast.Expression
 		for idx, it := range e.Argumenten {
-			narg, feh := synthGetypisiertExpression(l, s, it)
+			narg, feh := synthGetypisiertExpression(l, k, s, it)
 			if feh != nil {
 				return nil, feh
 			}
-			_, feh = checkGetypisiertExpression(l, s, it, funk.Argumenten[idx])
+			_, feh = checkGetypisiertExpression(l, k, s, it, funk.Argumenten[idx])
 			if feh != nil {
 				return nil, feh
 			}
@@ -417,7 +415,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		for _, it := range e.Formvariabeln {
 			s.head().vars[it.Name] = it.Typ
 		}
-		rückgabe, feh := synthGetypisiertExpression(l, s, e.Expression)
+		rückgabe, feh := synthGetypisiertExpression(l, k, s, e.Expression)
 		if feh != nil {
 			return nil, feh
 		}
@@ -445,7 +443,7 @@ func substituteVars(pos getypisiertast.Span, vars map[string]getypisiertast.ITyp
 	return nil
 }
 
-func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf getypisiertast.Variantaufruf) (getypisiertast.Expression, error) {
+func synthGetypisiertVariantApplication(l *lokalekontext, k *constraints, s *scopes, aufruf getypisiertast.Variantaufruf) (getypisiertast.Expression, error) {
 	typDekl, feh := l.typDekl(aufruf.Variant, aufruf.Pos())
 	if feh != nil {
 		panic(feh)
@@ -485,7 +483,7 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 				continue
 			}
 
-			b, f := synthGetypisiertExpression(l, s, usrFeld.Wert)
+			b, f := synthGetypisiertExpression(l, k, s, usrFeld.Wert)
 			if f != nil {
 				return nil, f
 			}
@@ -533,7 +531,7 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 	for idx := range typ.Datenfelden {
 		eingabe := aufruf.Argumenten[idx]
 
-		b, f := synthGetypisiertExpression(l, s, eingabe)
+		b, f := synthGetypisiertExpression(l, k, s, eingabe)
 		if f != nil {
 			return nil, f
 		}
@@ -586,7 +584,7 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 	}, nil
 }
 
-func synthGetypisiertApplication(l *lokalekontext, s *scopes, funktion getypisiertast.Funktion, aufruf getypisiertast.Funktionsaufruf) (getypisiertast.Expression, error) {
+func synthGetypisiertApplication(l *lokalekontext, k *constraints, s *scopes, funktion getypisiertast.Funktion, aufruf getypisiertast.Funktionsaufruf) (getypisiertast.Expression, error) {
 	funktion = copy(funktion).(getypisiertast.Funktion)
 	aufruf = copy(aufruf).(getypisiertast.Funktionsaufruf)
 
@@ -603,7 +601,7 @@ func synthGetypisiertApplication(l *lokalekontext, s *scopes, funktion getypisie
 	for idx := range funktion.Funktionssignatur.Formvariabeln {
 		eingabe := arg[idx]
 
-		b, f := synthGetypisiertExpression(l, s, eingabe)
+		b, f := synthGetypisiertExpression(l, k, s, eingabe)
 		if f != nil {
 			return nil, f
 		}
