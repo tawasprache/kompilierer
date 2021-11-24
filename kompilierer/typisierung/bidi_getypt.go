@@ -9,16 +9,59 @@ import (
 
 // assert typeof e == a
 func checkGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast.Expression, gegenTyp getypisiertast.ITyp) (getypisiertast.Expression, error) {
-	ruck, err := synthGetypisiertExpression(l, s, expr)
-	if err != nil {
-		return nil, err
-	}
+	switch e := expr.(type) {
+	case getypisiertast.Liste:
+		var (
+			werte []getypisiertast.Expression
+			typ   getypisiertast.ITyp = e.LTyp
+		)
+		if _, ok := typ.(getypisiertast.Nichtunifiziert); ok {
+			typ = nil
+		}
+		for _, it := range e.Werte {
+			if typ == nil {
+				wert, feh := synthGetypisiertExpression(l, s, it)
+				if feh != nil {
+					return nil, feh
+				}
+				werte = append(werte, wert)
+				typ = wert.Typ()
+			} else {
+				wert, feh := checkGetypisiertExpression(l, s, it, typ)
+				if feh != nil {
+					return nil, feh
+				}
+				werte = append(werte, wert)
+			}
+		}
+		ltyp := getypisiertast.TypListe(typ)
+		if typ == nil {
+			switch t := gegenTyp.(type) {
+			case getypisiertast.Typnutzung:
+				if t.SymbolURL == getypisiertast.TypListURL {
+					ltyp = t
+				}
+			default:
+				return nil, fehlerberichtung.NeuFehler(e.Pos(), "was zum fick")
+			}
+		}
+		return getypisiertast.Liste{
+			Werte: werte,
+			LTyp:  ltyp,
+			LPos:  e.LPos,
+		}, nil
+	default:
+		ruck, err := synthGetypisiertExpression(l, s, expr)
+		if err != nil {
+			return nil, err
+		}
 
-	if !TypGleich(ruck.Typ(), gegenTyp) {
-		return nil, fehlerberichtung.GleichErr(expr.Pos(), "check", ruck.Typ(), gegenTyp)
-	}
+		if !TypGleich(ruck.Typ(), gegenTyp) {
+			return nil, fehlerberichtung.GleichErr(expr.Pos(), "check", ruck.Typ(), gegenTyp)
+		}
 
-	return ruck, nil
+		return ruck, nil
+	}
 }
 
 // typeof e
@@ -344,7 +387,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			}
 		}
 		if typ == nil {
-			panic("e")
+			return nil, fehlerberichtung.NeuFehler(e.Pos(), "Ich weiß nicht was nur [] bedeutet. Vergessen Sie eine Typanmerkung?")
 		}
 		return getypisiertast.Liste{
 			Werte: werte,
@@ -358,7 +401,12 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		var feh error
 
 		neuer.Name = e.Name
-		neuer.Wert, feh = synthGetypisiertExpression(l, s, e.Wert)
+		switch e.MussTyp.(type) {
+		case getypisiertast.Nichtunifiziert:
+			neuer.Wert, feh = synthGetypisiertExpression(l, s, e.Wert)
+		default:
+			neuer.Wert, feh = checkGetypisiertExpression(l, s, e.Wert, e.MussTyp)
+		}
 		if feh != nil {
 			return nil, feh
 		}
@@ -485,7 +533,7 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 				continue
 			}
 
-			b, f := synthGetypisiertExpression(l, s, usrFeld.Wert)
+			b, f := checkGetypisiertExpression(l, s, usrFeld.Wert, typFeld.Typ)
 			if f != nil {
 				return nil, f
 			}
@@ -533,7 +581,7 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 	for idx := range typ.Datenfelden {
 		eingabe := aufruf.Argumenten[idx]
 
-		b, f := synthGetypisiertExpression(l, s, eingabe)
+		b, f := checkGetypisiertExpression(l, s, eingabe, typ.Datenfelden[idx].Typ)
 		if f != nil {
 			return nil, f
 		}
@@ -603,7 +651,7 @@ func synthGetypisiertApplication(l *lokalekontext, s *scopes, funktion getypisie
 	for idx := range funktion.Funktionssignatur.Formvariabeln {
 		eingabe := arg[idx]
 
-		b, f := synthGetypisiertExpression(l, s, eingabe)
+		b, f := checkGetypisiertExpression(l, s, eingabe, sigArg[idx].Typ)
 		if f != nil {
 			return nil, f
 		}

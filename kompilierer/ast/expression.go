@@ -53,13 +53,13 @@ type Funktionsliteral struct {
 
 type Sei struct {
 	Variable string     `"sei" @Ident`
+	Typ      *Typ       `(":" @@)?`
 	Wert     Expression `"=" @@`
 	In       Expression `"in" @@`
 }
 
 type Liste struct {
-	Expressionen []Expression `("[" @@ ( "," @@ )* "]") | ("[" ( @@ ( "," @@ )* )? "]"`
-	Typ          *Typ         `("von" @@))`
+	Expressionen []Expression `"[" ( @@ ( "," @@ )* )? "]"`
 }
 
 type Nativ struct {

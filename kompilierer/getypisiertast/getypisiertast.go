@@ -145,8 +145,9 @@ type Sei struct {
 	Name string
 	Wert Expression
 
-	In   Expression
-	LPos Span
+	In      Expression
+	LPos    Span
+	MussTyp ITyp
 }
 
 func (Sei) istExpression() {}
@@ -203,6 +204,10 @@ var TypEinheit = Typnutzung{
 		Paket: "Tawa/Eingebaut",
 		Name:  "Einheit",
 	},
+}
+var TypListURL = SymbolURL{
+	Paket: "Tawa/Liste",
+	Name:  "Liste",
 }
 
 func TypListe(i ITyp) ITyp {
