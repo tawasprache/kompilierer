@@ -15,6 +15,9 @@ func Typiere(k *Kontext, m getypisiertast.Modul, modulePrefix string) (getypisie
 		lokaleFunktionen: map[string]getypisiertast.Funktionssignatur{},
 		importieren:      m.Dependencies,
 	}
+	if modulePrefix == "" {
+		l.inModul = m.Name
+	}
 
 	for _, it := range m.Funktionen {
 		l.lokaleFunktionen[it.SymbolURL.Name] = it.Funktionssignatur

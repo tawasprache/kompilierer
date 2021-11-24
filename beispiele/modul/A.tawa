@@ -1,0 +1,6 @@
+paket Haupt zeigt nichts
+
+import B
+
+funk A()
+    B:B()

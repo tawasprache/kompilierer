@@ -5,7 +5,9 @@ import (
 	"Tawa/kompilierer/fehlerberichtung"
 	"Tawa/kompilierer/getypisiertast"
 	"Tawa/standardbibliothek"
-	"errors"
+	"fmt"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/alecthomas/repr"
@@ -598,6 +600,8 @@ var defaultDependencies = []getypisiertast.Dependency{
 	},
 }
 
+var LadeVon = []string{"."}
+
 func Lade(k *Kontext, paket string) error {
 	if strings.HasPrefix(paket, "Tawa") {
 		modul := ast.Modul{}
@@ -617,7 +621,33 @@ func Lade(k *Kontext, paket string) error {
 		return nil
 	}
 
-	return errors.New("nicht implementiert")
+	for _, it := range LadeVon {
+		datei := path.Join(it, paket) + ".tawa"
+		dateiname := path.Base(datei)
+		fi, feh := os.Open(datei)
+		if feh != nil {
+			if os.IsNotExist(feh) {
+				continue
+			}
+			return feh
+		}
+		defer fi.Close()
+
+		modul := ast.Modul{}
+		feh = ast.Parser.Parse(dateiname, fi, &modul)
+		if feh != nil {
+			return feh
+		}
+
+		g, err := zuGetypisierteAst(k, "", modul)
+		if err != nil {
+			return err
+		}
+		k.Module[paket] = g
+		return nil
+	}
+
+	return fmt.Errorf("paket %s nicht gefunden", paket)
 }
 
 func Auflösenamen(k *Kontext, m ast.Modul, modulePrefix string) (getypisiertast.Modul, error) {
@@ -629,7 +659,13 @@ func Auflösenamen(k *Kontext, m ast.Modul, modulePrefix string) (getypisiertast
 		lokaleFunktionen: map[string]getypisiertast.Funktionssignatur{},
 		importieren:      defaultDependencies,
 	}
+	if modulePrefix == "" {
+		l.inModul = m.Package
+	}
 	modul.Name = modulePrefix + "/" + m.Package
+	if modulePrefix == "" {
+		modul.Name = m.Package
+	}
 	if m.Nativauftakt != nil {
 		modul.Nativcode = map[string]string{}
 		for _, it := range m.Nativauftakt.Code {
