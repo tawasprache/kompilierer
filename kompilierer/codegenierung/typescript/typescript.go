@@ -324,7 +324,7 @@ func genExpr(f *codegenierung.Filebuilder, expr getypisiertast.Expression, aktue
 		case getypisiertast.BinOpPow:
 			f.AddK(` ** `)
 		case getypisiertast.BinOpMod:
-			f.AddK(` % `)
+			f.AddK(` %% `)
 		default:
 			panic("e")
 		}
