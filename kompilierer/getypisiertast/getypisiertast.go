@@ -105,7 +105,7 @@ type Nichtunifiziert struct {
 
 func (t Nichtunifiziert) istTyp() {}
 func (t Nichtunifiziert) String() string {
-	return ""
+	return "!! NICHT UNIFIZIERT !!"
 }
 
 type SymbolURL struct {

@@ -46,9 +46,14 @@ type Terminal struct {
 }
 
 type Funktionsliteral struct {
-	Formvariabeln []Formvariable `"\\" "(" ( @@ ( "," @@ )* )? ")"`
-	Rückgabetyp   *Typ           `(":" @@)?`
-	Expression    Expression     `(("=>") | ("->")) @@`
+	Formvariabeln []Funktionsliteralformvariable `"\\" "(" ( @@ ( "," @@ )* )? ")"`
+	Rückgabetyp   *Typ                           `(":" @@)?`
+	Expression    Expression                     `(("=>") | ("->")) @@`
+}
+
+type Funktionsliteralformvariable struct {
+	Name string `@Ident`
+	Typ  *Typ   `(":" @@)?`
 }
 
 type Sei struct {

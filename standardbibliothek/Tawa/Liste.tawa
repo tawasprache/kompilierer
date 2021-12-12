@@ -3,6 +3,6 @@ paket Liste zeigt (Liste map)
 typ Liste[T] ist
 beende
 
-funk map[T](l: Liste[§T], fn: funk(§T): §T): Liste[§T]
-    ¤ Liste[§T]
+funk map[T, V](l: Liste[§T], fn: funk(§T): §V): Liste[§V]
+    ¤ Liste[§V]
     | typescript: `l.map(fn)`

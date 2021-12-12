@@ -50,6 +50,13 @@ func checkGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			LTyp:  ltyp,
 			LPos:  e.LPos,
 		}, nil
+	case getypisiertast.Funktionsliteral:
+		switch k := gegenTyp.(type) {
+		case getypisiertast.Typfunktion:
+			return typiereFunktionsliteral(l, s, e, &k)
+		default:
+			return nil, fehlerberichtung.NeuFehler(e.Pos(), "Das ist eine Funktion, aber eine wurde nicht erwartet")
+		}
 	default:
 		ruck, err := synthGetypisiertExpression(l, s, expr)
 		if err != nil {
@@ -461,22 +468,75 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			LPos:        e.LPos,
 		}, nil
 	case getypisiertast.Funktionsliteral:
-		s.neuScope()
-		for _, it := range e.Formvariabeln {
-			s.head().vars[it.Name] = it.Typ
-		}
-		rückgabe, feh := synthGetypisiertExpression(l, s, e.Expression)
-		if feh != nil {
-			return nil, feh
-		}
-		if !TypGleich(rückgabe.Typ(), e.LTyp.Rückgabetyp) && !TypGleich(e.LTyp.Rückgabetyp, getypisiertast.TypEinheit) {
-			return nil, fehlerberichtung.NeuFehler(e.Expression.Pos(), "Das Funktionssignatur sagt das diese Funktion züruck %s gibt, aber es gibt %s züruck.", e.LTyp.Rückgabetyp, rückgabe.Typ())
-		}
-		s.loescheScope()
-		e.Expression = rückgabe
-		return e, nil
+		return typiereFunktionsliteral(l, s, e, nil)
 	}
 	panic("unreachable " + repr.String(expr))
+}
+
+func typiereFunktionsliteral(l *lokalekontext, s *scopes, e getypisiertast.Funktionsliteral, erwartete *getypisiertast.Typfunktion) (getypisiertast.Expression, error) {
+	s.neuScope()
+	defer s.loescheScope()
+
+	e = copy(e).(getypisiertast.Funktionsliteral)
+
+	var rückgabe getypisiertast.Expression
+	var feh error
+
+	if erwartete != nil {
+		if len(erwartete.Argumenten) != len(e.Formvariabeln) {
+			return nil, fehlerberichtung.NeuFehler(e.Pos(), "%d != %d", len(erwartete.Argumenten), len(e.Formvariabeln))
+		}
+		for idx := range erwartete.Argumenten {
+			erwartet := erwartete.Argumenten[idx]
+			aktuelll := e.Formvariabeln[idx].Typ
+
+			if _, ok := aktuelll.(getypisiertast.Nichtunifiziert); ok {
+				e.Formvariabeln[idx].Typ = erwartet
+				e.LTyp.Argumenten[idx] = erwartet
+				continue
+			}
+
+			_, feh := unify(erwartet, aktuelll)
+			if feh != nil {
+				return nil, fehlerberichtung.GleichErr(e.Pos(), "formvariable", erwartet, aktuelll)
+			}
+		}
+		if _, ok := e.LTyp.Rückgabetyp.(getypisiertast.Nichtunifiziert); ok {
+			e.LTyp.Rückgabetyp = erwartete.Rückgabetyp
+		} else {
+			_, feh := unify(erwartete.Rückgabetyp, e.LTyp.Rückgabetyp)
+			if feh != nil {
+				return nil, fehlerberichtung.GleichErr(e.Pos(), "rückgabetyp", erwartete.Rückgabetyp, e.LTyp.Rückgabetyp)
+			}
+		}
+
+		for _, it := range e.Formvariabeln {
+			if _, ok := it.Typ.(getypisiertast.Nichtunifiziert); ok {
+				panic("nicht unifiziert!")
+			}
+			s.head().vars[it.Name] = it.Typ
+		}
+
+		rückgabe, feh = synthGetypisiertExpression(l, s, e.Expression)
+	} else {
+		for _, it := range e.Formvariabeln {
+			if _, ok := it.Typ.(getypisiertast.Nichtunifiziert); ok {
+				return nil, fehlerberichtung.NeuFehler(e.Pos(), "ich weiß nicht was %s sein sollen!", it.Name)
+			}
+			s.head().vars[it.Name] = it.Typ
+		}
+		rückgabe, feh = synthGetypisiertExpression(l, s, e.Expression)
+	}
+
+	if feh != nil {
+		return nil, feh
+	}
+	if !TypGleich(rückgabe.Typ(), e.LTyp.Rückgabetyp) && !TypGleich(e.LTyp.Rückgabetyp, getypisiertast.TypEinheit) {
+		return nil, fehlerberichtung.NeuFehler(e.Expression.Pos(), "Das Funktionssignatur sagt das diese Funktion züruck %s gibt, aber es gibt %s züruck.", e.LTyp.Rückgabetyp, rückgabe.Typ())
+	}
+
+	e.Expression = rückgabe
+	return e, nil
 }
 
 func substituteVars(pos getypisiertast.Span, vars map[string]getypisiertast.ITyp, substitutions map[string]getypisiertast.ITyp) error {
@@ -533,12 +593,16 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 				continue
 			}
 
-			b, f := checkGetypisiertExpression(l, s, usrFeld.Wert, typFeld.Typ)
+			a := typFeld.Typ
+
+			for k, v := range vars {
+				a = substitute(a, getypisiertast.Typvariable{Name: k}, v)
+			}
+
+			b, f := checkGetypisiertExpression(l, s, usrFeld.Wert, a)
 			if f != nil {
 				return nil, f
 			}
-
-			a := typFeld.Typ
 
 			es, feh := unify(b.Typ(), a)
 			if feh != nil {
@@ -581,12 +645,16 @@ func synthGetypisiertVariantApplication(l *lokalekontext, s *scopes, aufruf gety
 	for idx := range typ.Datenfelden {
 		eingabe := aufruf.Argumenten[idx]
 
-		b, f := checkGetypisiertExpression(l, s, eingabe, typ.Datenfelden[idx].Typ)
+		a := typ.Datenfelden[idx].Typ
+
+		for k, v := range vars {
+			a = substitute(a, getypisiertast.Typvariable{Name: k}, v)
+		}
+
+		b, f := checkGetypisiertExpression(l, s, eingabe, a)
 		if f != nil {
 			return nil, f
 		}
-
-		a := typ.Datenfelden[idx].Typ
 
 		es, feh := unify(b.Typ(), a)
 		if feh != nil {
@@ -650,13 +718,16 @@ func synthGetypisiertApplication(l *lokalekontext, s *scopes, funktion getypisie
 
 	for idx := range funktion.Funktionssignatur.Formvariabeln {
 		eingabe := arg[idx]
+		a := sigArg[idx].Typ
 
-		b, f := checkGetypisiertExpression(l, s, eingabe, sigArg[idx].Typ)
+		for k, v := range vars {
+			a = substitute(a, getypisiertast.Typvariable{Name: k}, v)
+		}
+
+		b, f := checkGetypisiertExpression(l, s, eingabe, a)
 		if f != nil {
 			return nil, f
 		}
-
-		a := sigArg[idx].Typ
 
 		es, feh := unify(b.Typ(), a)
 		if feh != nil {

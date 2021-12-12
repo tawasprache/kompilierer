@@ -86,7 +86,7 @@ func main() {
 						return err
 					}
 
-					repr.Println(getypt)
+					_ = getypt
 					return nil
 				},
 			},

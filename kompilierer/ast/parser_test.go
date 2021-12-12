@@ -16,4 +16,9 @@ func TestFunktionsLiteral(t *testing.T) {
 	if feh != nil {
 		t.Fatalf("error: %s", feh)
 	}
+
+	feh = funktionsLiteralParser.ParseString("mald", "\\(x) => x", &v)
+	if feh != nil {
+		t.Fatalf("error: %s", feh)
+	}
 }

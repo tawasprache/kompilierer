@@ -3,10 +3,10 @@ paket Main zeigt alles
 funk Oder[A, B](wert: §B, defaultWert: §A): §A
 	passt wert zu
 		#Nur(a) =>
-			a.
+			a
 
 		#Nichts =>
-			defaultWert.
+			defaultWert
 	beende
 
 funk OderLogik(wert: Vielleicht[Logik], defaultWert: Logik): Logik
@@ -17,6 +17,9 @@ funk Haupt(): Zeichenkette
 
 funk Nicht(wert: Logik): Logik
 	passt wert zu
-		#Wahr => #Falsch.
-		#Falsch => #Wahr.
+		#Wahr =>
+			#Falsch
+
+		#Falsch =>
+			#Wahr
 	beende

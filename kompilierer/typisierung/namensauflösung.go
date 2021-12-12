@@ -269,15 +269,20 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 			fliteral.LPos = getypisiertast.NeuSpan(terminal.Pos, terminal.EndPos)
 			ftyp := getypisiertast.Typfunktion{}
 			for _, it := range terminal.Funktionsliteral.Formvariabeln {
-				typ, feh := typ(l, it.Typ, typvariablen)
-				if feh != nil {
-					return nil, feh
+				var inTyp getypisiertast.ITyp
+				if it.Typ == nil {
+					inTyp = getypisiertast.Nichtunifiziert{}
+				} else {
+					inTyp, feh = typ(l, *it.Typ, typvariablen)
+					if feh != nil {
+						return nil, feh
+					}
 				}
-				s.head().vars[it.Name] = typ
-				ftyp.Argumenten = append(ftyp.Argumenten, typ)
+				s.head().vars[it.Name] = inTyp
+				ftyp.Argumenten = append(ftyp.Argumenten, inTyp)
 				fliteral.Formvariabeln = append(fliteral.Formvariabeln, getypisiertast.Formvariable{
 					Name: it.Name,
-					Typ:  typ,
+					Typ:  inTyp,
 				})
 			}
 			if terminal.Funktionsliteral.Rückgabetyp != nil {
@@ -285,6 +290,8 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 				if feh != nil {
 					return nil, feh
 				}
+			} else {
+				ftyp.Rückgabetyp = getypisiertast.Nichtunifiziert{}
 			}
 			funk, feh := exprNamensauflösung(k, s, l, terminal.Funktionsliteral.Expression, typvariablen)
 			if feh != nil {

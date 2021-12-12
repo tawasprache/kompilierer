@@ -10,10 +10,6 @@ funk Nichts(): Liste[Ganz]
 	sei x: Liste[Ganz] = [] in
 	x ++ [1, 2, 3]
 
-funk Auch(): Liste[Ganz]
-	sei x = [] in
-	x ++ [1, 2, 3]
-
 funk Verdopple(a: Liste[Ganz]): Liste[Ganz]
 	a ++ a
 

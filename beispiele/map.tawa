@@ -2,5 +2,5 @@ paket Haupt zeigt alles
 
 funk Haupt()
     Debuggen:druck(
-        Liste:map([1, 2, 3], \(x: Ganz): Ganz => x + 1)
+        Liste:map([1, 2, 3], \(x) => x + 1)
     )
