@@ -214,6 +214,55 @@ func substituteExpression(expr getypisiertast.Expression, suche getypisiertast.I
 	case getypisiertast.Nativ:
 		v.LTyp = substitute(v.LTyp, suche, ersetzen)
 		return v
+	case getypisiertast.ValBinaryOperator:
+		v.LTyp = substitute(v.LTyp, suche, ersetzen)
+		v.Links = substituteExpression(v.Links, suche, ersetzen)
+		v.Rechts = substituteExpression(v.Rechts, suche, ersetzen)
+		return v
+	case getypisiertast.Feldzugriff:
+		v.LTyp = substitute(v.LTyp, suche, ersetzen)
+		v.Links = substituteExpression(v.Links, suche, ersetzen)
+		return v
+	case getypisiertast.FunktionErsteKlasseAufruf:
+		v.Funktion = substituteExpression(v.Funktion, suche, ersetzen)
+		for idx, expr := range v.Argumenten {
+			v.Argumenten[idx] = substituteExpression(expr, suche, ersetzen)
+		}
+		v.Rückgabetyp = substitute(v.Rückgabetyp, suche, ersetzen)
+		return v
+	case getypisiertast.Sei:
+		v.Wert = substituteExpression(v.Wert, suche, ersetzen)
+		v.In = substituteExpression(v.In, suche, ersetzen)
+		if v.MussTyp == nil {
+			panic("e")
+		}
+		v.MussTyp = substitute(v.MussTyp, suche, ersetzen)
+		return v
+	case getypisiertast.Funktionsliteral:
+		v.LTyp = substitute(v.LTyp, suche, ersetzen).(getypisiertast.Typfunktion)
+		v.Expression = substituteExpression(v.Expression, suche, ersetzen)
+		for idx, fv := range v.Formvariabeln {
+			v.Formvariabeln[idx].Typ = substitute(fv.Typ, suche, ersetzen)
+		}
+		return v
+	case getypisiertast.Liste:
+		v.ElTyp = substitute(v.ElTyp, suche, ersetzen)
+		for idx, fv := range v.Werte {
+			v.Werte[idx] = substituteExpression(fv, suche, ersetzen)
+		}
+		return v
+	case getypisiertast.Strukturaktualisierung:
+		v.Wert = substituteExpression(v.Wert, suche, ersetzen)
+		for idx, fv := range v.Felden {
+			v.Felden[idx].Wert = substituteExpression(fv.Wert, suche, ersetzen)
+		}
+		return v
+	case getypisiertast.LogikBinaryOperator:
+		v.Links = substituteExpression(v.Links, suche, ersetzen)
+		v.Rechts = substituteExpression(v.Rechts, suche, ersetzen)
+		return v
+	case getypisiertast.Zeichenkette:
+		return v
 	default:
 		panic("e " + repr.String(v))
 	}

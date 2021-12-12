@@ -3,7 +3,6 @@ package ast
 import (
 	"fmt"
 	"io"
-	"strings"
 	"text/scanner"
 
 	"github.com/alecthomas/participle/v2/lexer"
@@ -62,12 +61,6 @@ func (l *lexFac) Lex(f string, r io.Reader) (lexer.Lexer, error) {
 	lex := &lexScan{
 		file:    f,
 		scanner: s,
-	}
-	lex.scanner.Error = func(s *scanner.Scanner, msg string) {
-		// This is to support single quoted strings. Hacky.
-		if !strings.HasSuffix(msg, "char literal") {
-			lex.err = errorf(lexer.Position(lex.scanner.Pos()), msg)
-		}
 	}
 
 	return lex, nil

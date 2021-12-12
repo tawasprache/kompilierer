@@ -146,7 +146,7 @@ func exprNamensauflösung(k *Kontext, s *scopes, l *lokalekontext, astExpr ast.E
 
 			return getypisiertast.Liste{
 				Werte: expressionen,
-				LTyp:  lTyp,
+				ElTyp: lTyp,
 				LPos:  lPos,
 			}, nil
 		} else if terminal.Funktionsaufruf != nil {

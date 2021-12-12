@@ -1,0 +1,9 @@
+paket Haupt zeigt alles
+
+funk Liste1()
+    sei x = [1] in
+    x
+
+funk Liste2()
+    sei x: Liste[Ganz] = [] in
+    x

@@ -1,0 +1,11 @@
+paket Haupt zeigt nichts
+
+typ Mald ist
+    | A(a: Ganz, b: Ganz)
+beende
+
+funk Seethe(a: Mald)
+    passt a zu
+        #A =>
+            1
+    beende

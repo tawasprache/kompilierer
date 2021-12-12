@@ -119,6 +119,7 @@ type Typkonstruktor struct {
 var (
 	Parser                 = participle.MustBuild(&Modul{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
 	TerminalParser         = participle.MustBuild(&Terminal{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
+	deklParser             = participle.MustBuild(&Deklaration{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
 	argListeParser         = participle.MustBuild(&Argumentliste{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
 	typFunktionParser      = participle.MustBuild(&Typfunktion{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))
 	funktionsLiteralParser = participle.MustBuild(&Funktionsliteral{}, participle.UseLookahead(4), participle.Lexer(&lexFac{}), participle.Elide("Comment"))

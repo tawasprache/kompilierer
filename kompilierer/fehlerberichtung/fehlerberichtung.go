@@ -4,6 +4,8 @@ import (
 	"Tawa/kompilierer/getypisiertast"
 	"fmt"
 	"strings"
+
+	"github.com/ztrue/tracerr"
 )
 
 func GleichErr(span getypisiertast.Span, art string, a getypisiertast.ITyp, b getypisiertast.ITyp) error {
@@ -11,10 +13,10 @@ func GleichErr(span getypisiertast.Span, art string, a getypisiertast.ITyp, b ge
 }
 
 func NeuFehler(span getypisiertast.Span, format string, a ...interface{}) error {
-	return PositionError{
+	return tracerr.Wrap(PositionError{
 		Text: fmt.Sprintf(format, a...),
 		Span: span,
-	}
+	})
 }
 
 type PositionError struct {

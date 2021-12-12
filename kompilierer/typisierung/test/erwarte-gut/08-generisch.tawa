@@ -1,0 +1,34 @@
+paket Haupt zeigt nichts
+
+typ Doble[T] ist
+    a: §T
+    b: §T
+beende
+
+typ K ist
+    a: Ganz
+beende
+
+funk NDoble()
+    sei x = #Doble { a = 1, b = 2 } in
+    x
+
+funk TuDoble[A](a: §A): §A
+    passt #Nur(1) zu
+        #Nur(a) =>
+            a * 2 + a
+
+        #Nichts =>
+            sei mau = #K { a = 1 } in
+            sei maug = { mau | a = mau.a + 1 } in
+            sei mald =
+                \(x: Ganz) => x*2
+            in
+            sei k = [1, 2, 3] in
+            sei a = 1 == 2 in
+            ident(mau.a)
+    beende
+
+funk Tu()
+    TuDoble(1)
+

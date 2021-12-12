@@ -1,0 +1,4 @@
+paket Haupt zeigt nichts
+
+funk Verketten1()
+    [1] ++ [2]

@@ -1,0 +1,5 @@
+paket Haupt zeigt alles
+
+funk Annotation(): Ganz
+    sei x = \(x: Ganz) => x + 1 in
+    x.(5)

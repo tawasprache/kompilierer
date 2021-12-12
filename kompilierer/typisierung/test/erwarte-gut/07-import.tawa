@@ -1,0 +1,12 @@
+paket Haupt zeigt nichts
+
+import Tawa:DOM zeigende alles
+import Tawa:VDOM als VDOM
+import Tawa:Pi
+import Tawa:Folge
+
+funk Haupt()
+	VDOM:ElementAnwenden( #VDOM:Element { art = "h1"
+										, inhalt = "hello" }
+						, VDOM:NeuVDOMAnchor(#Nichts)
+						)

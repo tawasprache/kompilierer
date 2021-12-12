@@ -1,0 +1,18 @@
+paket Haupt zeigt nichts
+
+funk Mald(a: Ganz)
+    a
+
+funk Mald1()
+    Mald()
+
+funk Mald2()
+    Mald(1, 1)
+
+funk E()
+    sei k = \(x: Ganz) => x + 1 in
+    k.()
+
+funk A()
+    sei k = \(x: Ganz) => x + 1 in
+    k.(1, 2)

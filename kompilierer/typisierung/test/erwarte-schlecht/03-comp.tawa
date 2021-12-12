@@ -1,0 +1,7 @@
+paket Haupt zeigt nichts
+
+funk Comp1()
+	1 <= "a"
+
+funk Comp2()
+	"a" <= "b"

@@ -1,0 +1,11 @@
+paket Haupt zeigt alles
+
+funk Annotation()
+    Debuggen:druck(
+        Liste:map([1, 2, 3], \(x: Ganz): Ganz => x + 1)
+    )
+
+funk KeinAnnotation()
+    Debuggen:druck(
+        Liste:map([1, 2, 3], \(x) => x + 1)
+    )

@@ -1,0 +1,12 @@
+paket Haupt zeigt alles
+
+// ¤
+// §
+
+funk Keke[T](a: §T, b: §T) => 1
+
+funk Ala(): Folge[Ganz, Ganz]
+    #Okay(1)
+
+funk Mama()
+    Keke([1], Ala())

@@ -13,7 +13,7 @@ func checkGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 	case getypisiertast.Liste:
 		var (
 			werte []getypisiertast.Expression
-			typ   getypisiertast.ITyp = e.LTyp
+			typ   getypisiertast.ITyp = e.ElTyp
 		)
 		if _, ok := typ.(getypisiertast.Nichtunifiziert); ok {
 			typ = nil
@@ -34,12 +34,11 @@ func checkGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 				werte = append(werte, wert)
 			}
 		}
-		ltyp := getypisiertast.TypListe(typ)
 		if typ == nil {
 			switch t := gegenTyp.(type) {
 			case getypisiertast.Typnutzung:
 				if t.SymbolURL == getypisiertast.TypListURL {
-					ltyp = t
+					typ = t
 				}
 			default:
 				return nil, fehlerberichtung.NeuFehler(e.Pos(), "was zum fick")
@@ -47,7 +46,7 @@ func checkGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		}
 		return getypisiertast.Liste{
 			Werte: werte,
-			LTyp:  ltyp,
+			ElTyp: typ,
 			LPos:  e.LPos,
 		}, nil
 	case getypisiertast.Funktionsliteral:
@@ -372,7 +371,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 	case getypisiertast.Liste:
 		var (
 			werte []getypisiertast.Expression
-			typ   getypisiertast.ITyp = e.LTyp
+			typ   getypisiertast.ITyp = e.ElTyp
 		)
 		if _, ok := typ.(getypisiertast.Nichtunifiziert); ok {
 			typ = nil
@@ -398,7 +397,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 		}
 		return getypisiertast.Liste{
 			Werte: werte,
-			LTyp:  getypisiertast.TypListe(typ),
+			ElTyp: typ,
 			LPos:  e.LPos,
 		}, nil
 	case getypisiertast.Nativ:
@@ -418,6 +417,7 @@ func synthGetypisiertExpression(l *lokalekontext, s *scopes, expr getypisiertast
 			return nil, feh
 		}
 		neuer.LPos = e.LPos
+		neuer.MussTyp = getypisiertast.Nichtunifiziert{}
 
 		s.neuScope()
 		s.head().vars[neuer.Name] = neuer.Wert.Typ()
@@ -531,8 +531,13 @@ func typiereFunktionsliteral(l *lokalekontext, s *scopes, e getypisiertast.Funkt
 	if feh != nil {
 		return nil, feh
 	}
-	if !TypGleich(rückgabe.Typ(), e.LTyp.Rückgabetyp) && !TypGleich(e.LTyp.Rückgabetyp, getypisiertast.TypEinheit) {
-		return nil, fehlerberichtung.NeuFehler(e.Expression.Pos(), "Das Funktionssignatur sagt das diese Funktion züruck %s gibt, aber es gibt %s züruck.", e.LTyp.Rückgabetyp, rückgabe.Typ())
+
+	if _, ok := e.LTyp.Rückgabetyp.(getypisiertast.Nichtunifiziert); ok && erwartete == nil {
+		e.LTyp.Rückgabetyp = rückgabe.Typ()
+	} else {
+		if !TypGleich(rückgabe.Typ(), e.LTyp.Rückgabetyp) && !TypGleich(e.LTyp.Rückgabetyp, getypisiertast.TypEinheit) {
+			return nil, fehlerberichtung.NeuFehler(e.Expression.Pos(), "Das Funktionssignatur sagt das diese Funktion züruck %s gibt, aber es gibt %s züruck.", e.LTyp.Rückgabetyp, rückgabe.Typ())
+		}
 	}
 
 	e.Expression = rückgabe

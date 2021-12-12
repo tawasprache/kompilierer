@@ -1,0 +1,4 @@
+paket Haupt zeigt alles
+
+funk IstEinheit(): Einheit
+    Debuggen:druck("jo!")

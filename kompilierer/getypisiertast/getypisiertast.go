@@ -310,12 +310,12 @@ func (v Pattern) Pos() Span      { return v.LPos }
 type Liste struct {
 	Werte []Expression
 
-	LTyp ITyp
-	LPos Span
+	ElTyp ITyp
+	LPos  Span
 }
 
 func (v Liste) istExpression() {}
-func (v Liste) Typ() ITyp      { return v.LTyp }
+func (v Liste) Typ() ITyp      { return TypListe(v.ElTyp) }
 func (v Liste) Pos() Span      { return v.LPos }
 
 type Muster struct {

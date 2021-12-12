@@ -1,0 +1,13 @@
+paket Haupt zeigt nichts
+
+funk Comp1()
+	1 < 2
+
+funk Comp2()
+	1 > 2
+
+funk Comp3()
+	1 >= 2
+
+funk Comp4()
+	1 <= 2

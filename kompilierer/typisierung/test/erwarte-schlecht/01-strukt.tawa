@@ -1,0 +1,19 @@
+paket Haupt zeigt alles
+
+typ Mald ist
+    a: Ganz
+    b: Ganz
+beende
+
+typ Dinge ist
+    | Paket(a: Mald, b: Mald)
+beende
+
+typ Malders ist
+beende
+
+funk Mama()
+    #Mald { a = 1 }
+
+funk Mama3()
+    #Paket(#Mald { a = 1, b = 2 })
