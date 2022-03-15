@@ -13,12 +13,17 @@ type Expression struct {
 	Links  *Expression
 	Op     *BinaryOperator
 	Rechts *Expression
+
+	// oder
+
+	Objekt   *Expression
+	Selektor *Ident
 }
 
 type Terminal struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
-	Ganzzahl *int    `  @Int`
-	Variable *string `| @Ident`
+	Ganzzahl *int         `  @Int`
+	Variable *Symbolkette `| @@`
 }

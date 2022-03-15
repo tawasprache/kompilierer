@@ -3,19 +3,18 @@ package ast_test
 import (
 	"Tawa/kompilierer/v2/ast"
 	"Tawa/kompilierer/v2/parser"
-	_ "embed"
 	"testing"
 )
 
-//go:embed testdata/Hallo.tawa
-var hallo string
-
-func TestConvert(t *testing.T) {
+func TestInspect(t *testing.T) {
 	var v parser.Modul
 	feh := parser.Parser.ParseString("Hallo.tawa", hallo, &v)
 	if feh != nil {
 		t.Fatalf("error: %s", feh)
 	}
 
-	ast.VonParser(v)
+	k := ast.VonParser(v)
+	ast.Inspect(k, func(n ast.Node) bool {
+		return true
+	})
 }

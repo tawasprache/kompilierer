@@ -8,7 +8,7 @@ type Datei struct {
 	Deklarationen []Deklaration
 }
 
-func VonParser(p parser.Modul) Datei {
+func VonParser(p parser.Modul) *Datei {
 	datei := Datei{
 		pos: pos{
 			anfang: p.Pos,
@@ -26,5 +26,5 @@ func VonParser(p parser.Modul) Datei {
 		}
 	}
 
-	return datei
+	return &datei
 }

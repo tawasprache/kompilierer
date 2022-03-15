@@ -9,14 +9,14 @@ type Typnutzung interface {
 type Typkonstruktor struct {
 	pos
 
-	Symbolkette
+	Symbolkette *Symbolkette
 }
 
-var _ Typnutzung = Typkonstruktor{}
+var _ Typnutzung = &Typkonstruktor{}
 
 func typnutzungVonParser(p parser.Typ) Typnutzung {
 	if p.Typkonstruktor != nil {
-		return Typkonstruktor{
+		return &Typkonstruktor{
 			pos: pos{
 				anfang: p.Pos,
 				ende:   p.EndPos,

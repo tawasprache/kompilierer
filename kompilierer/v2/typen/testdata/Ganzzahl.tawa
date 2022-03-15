@@ -1,0 +1,6 @@
+paket Test
+
+funk Hallo() Ganzzahl: beginne
+    sei a := 5
+    gib a
+beende

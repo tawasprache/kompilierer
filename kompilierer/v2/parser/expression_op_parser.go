@@ -2,6 +2,7 @@ package parser
 
 import (
 	"errors"
+	"text/scanner"
 
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
@@ -37,6 +38,30 @@ func parseExpr(lex *lexer.PeekingLexer, minPrec int) (re *Expression, rerr error
 		tok, feh := peek(lex)
 		if feh != nil {
 			return nil, feh
+		}
+		if tok.Type == '.' {
+			tok2, feh := peek2(lex)
+			if feh != nil {
+				return nil, feh
+			}
+
+			if tok2.Type == scanner.Ident {
+				lex.Next()
+				lex.Next()
+
+				endpos := tok2
+				endpos.Pos.Column += len(endpos.Value)
+
+				return &Expression{
+					Objekt: lhs,
+					Selektor: &Ident{
+						Pos:    tok2.Pos,
+						EndPos: endpos.Pos,
+
+						Name: tok2.Value,
+					},
+				}, nil
+			}
 		}
 		if tok.EOF() || !isOp(tok) || info[tok.Value] == nil || info[tok.Value].Priority < minPrec {
 			break

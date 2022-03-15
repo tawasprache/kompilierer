@@ -7,10 +7,6 @@ type Node interface {
 	Ende() lexer.Position
 }
 
-type Expression interface {
-	Node
-}
-
 type Deklaration interface {
 	Node
 }
@@ -20,10 +16,10 @@ type pos struct {
 	ende   lexer.Position
 }
 
-func (p pos) Anfang() lexer.Position {
+func (p *pos) Anfang() lexer.Position {
 	return p.anfang
 }
 
-func (p pos) Ende() lexer.Position {
+func (p *pos) Ende() lexer.Position {
 	return p.ende
 }

@@ -15,3 +15,14 @@ func TestHallo(t *testing.T) {
 		t.Fatalf("error: %s", feh)
 	}
 }
+
+//go:embed testdata/Funktionen.tawa
+var funktionen string
+
+func TestFunktionen(t *testing.T) {
+	var v Modul
+	feh := Parser.ParseString("Funktionen.tawa", funktionen, &v)
+	if feh != nil {
+		t.Fatalf("error: %s", feh)
+	}
+}

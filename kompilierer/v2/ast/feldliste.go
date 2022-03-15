@@ -5,21 +5,21 @@ import "Tawa/kompilierer/v2/parser"
 type Feld struct {
 	pos
 
-	Name Ident
+	Name *Ident
 	Typ  Typnutzung
 }
 
 type Feldliste struct {
 	pos
 
-	Felden []Feld
+	Felden []*Feld
 }
 
-var _ Node = Feld{}
-var _ Node = Feldliste{}
+var _ Node = &Feld{}
+var _ Node = &Feldliste{}
 
-func feldVonParser(p parser.Verbunddeklarationsfeld) Feld {
-	return Feld{
+func feldVonParser(p parser.Verbunddeklarationsfeld) *Feld {
+	return &Feld{
 		pos: pos{
 			anfang: p.Pos,
 			ende:   p.EndPos,

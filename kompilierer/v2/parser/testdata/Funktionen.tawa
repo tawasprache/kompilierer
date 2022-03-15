@@ -1,0 +1,9 @@
+paket Hallo
+
+typ Farbe = verbund
+    a: Eingebaut::Ganz
+beende
+
+funk NeueFarbe(von: Farbe) Farbe: beginne
+    gib von
+beende

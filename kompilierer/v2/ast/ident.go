@@ -1,6 +1,9 @@
 package ast
 
-import "Tawa/kompilierer/v2/parser"
+import (
+	"Tawa/kompilierer/v2/parser"
+	"strings"
+)
 
 type Ident struct {
 	pos
@@ -8,10 +11,14 @@ type Ident struct {
 	Name string
 }
 
-var _ Node = Ident{}
+func (i Ident) String() string {
+	return i.Name
+}
 
-func identVonParser(p parser.Ident) Ident {
-	return Ident{
+var _ Node = &Ident{}
+
+func identVonParser(p parser.Ident) *Ident {
+	return &Ident{
 		pos: pos{
 			anfang: p.Pos,
 			ende:   p.EndPos,
@@ -23,17 +30,28 @@ func identVonParser(p parser.Ident) Ident {
 type Symbolkette struct {
 	pos
 
-	Name []Ident
+	Name []*Ident
 }
 
-var _ Node = Symbolkette{}
+var _ Node = &Symbolkette{}
 
-func symbolketteVonParser(p parser.Symbolkette) Symbolkette {
-	idents := []Ident{}
+func (s *Symbolkette) String() string {
+	var sb strings.Builder
+	for idx, es := range s.Name {
+		sb.WriteString(es.Name)
+		if idx+1 < len(s.Name) {
+			sb.WriteString("::")
+		}
+	}
+	return sb.String()
+}
+
+func symbolketteVonParser(p parser.Symbolkette) *Symbolkette {
+	idents := []*Ident{}
 	for _, es := range p.Symbolen {
 		idents = append(idents, identVonParser(es))
 	}
-	return Symbolkette{
+	return &Symbolkette{
 		pos: pos{
 			anfang: p.Pos,
 			ende:   p.EndPos,

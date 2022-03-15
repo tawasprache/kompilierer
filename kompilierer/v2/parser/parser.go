@@ -54,23 +54,40 @@ type Symbolkette struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
-	Symbolen []Ident `@@ ( "/" @@ )*`
+	Symbolen []Ident `@@ ( "::" @@ )*`
+}
+
+type Argument struct {
+	Pos    lexer.Position
+	EndPos lexer.Position
+
+	Namen []Ident `@@ ("," @@)*`
+	Typ   Typ     `":" @@`
+}
+
+type Argumentliste struct {
+	Pos    lexer.Position
+	EndPos lexer.Position
+
+	Argumenten []Argument `( @@ ( "," @@ )* )?`
 }
 
 type Funktiondeklaration struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
-	Name       Ident  `"funk" @@`
-	Argumenten string `"(" ")"`
-	Inhalt     Block  `@@`
+	Name        Ident         `"funk" @@`
+	Argumenten  Argumentliste `"(" @@ ")"`
+	Rückgabetyp *Typ          `@@?`
+
+	Inhalt Block `":" @@`
 }
 
 type Block struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
-	Anweisungen []Anweisung `"fang" EOS? (@@ EOS)* "beende"`
+	Anweisungen []Anweisung `"beginne" EOS? (@@ EOS)* "beende"`
 }
 
 type Anweisung struct {

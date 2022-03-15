@@ -1,25 +1,26 @@
 paket Hallo
 
 typ Farbe = verbund
-	a: Eingebaut/Ganz
+	a: Eingebaut::Ganz
 
 mit fälle
 	RGB: (
-        r: Eingebaut/Ganz
-        b: Eingebaut/Ganz
-        g: Eingebaut/Ganz
+        r: Eingebaut::Ganz
+        b: Eingebaut::Ganz
+        g: Eingebaut::Ganz
     )
 
 	HSV: (
-        h: Eingebaut/Ganz
-        s: Eingebaut/Ganz
-        v: Eingebaut/Ganz
+        h: Eingebaut::Ganz
+        s: Eingebaut::Ganz
+        v: Eingebaut::Ganz
     )
 beende
 
-funk Hallo() fang
+funk Hallo(): beginne
     sei a := 5
     a := a + 3
+    k := (1 + 2).a.c
 
     gib 5
 
