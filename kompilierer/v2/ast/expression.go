@@ -28,9 +28,43 @@ func terminalVonParser(p parser.Terminal) Expression {
 			pos:  pos{p.Pos, p.EndPos},
 			Wert: *p.Zeichenkette,
 		}
+	} else if p.Strukturwert != nil {
+		s := &StrukturwertExpression{
+			pos:  pos{p.Pos, p.EndPos},
+			Name: symbolketteVonParser(p.Strukturwert.Name),
+		}
+		for _, arg := range p.Strukturwert.Argumente {
+			s.Argumente = append(s.Argumente, expressionVonParser(arg))
+		}
+		for _, feld := range p.Strukturwert.Strukturfelden {
+			s.Felden = append(s.Felden, &StrukturwertFeld{
+				pos: pos{feld.Pos, feld.EndPos},
+
+				Name: identVonParser(feld.Name),
+				Wert: expressionVonParser(feld.Wert),
+			})
+		}
+		return s
 	} else {
 		panic("e")
 	}
+}
+
+type StrukturwertFeld struct {
+	pos
+
+	Name *Ident
+	Wert Expression
+}
+
+type StrukturwertExpression struct {
+	pos
+
+	Name      *Ident
+	Argumente []Expression
+	Felden    []*StrukturwertFeld
+
+	istExpressionImpl
 }
 
 type GanzzahlExpression struct {

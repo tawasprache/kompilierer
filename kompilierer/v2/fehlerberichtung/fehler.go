@@ -15,7 +15,12 @@ const (
 	GleichheitSeitenNichtGleichTyp
 	VergleichSeitenNichtGleichTyp
 	NichtErwarteTyp
-	NichtGefunden
+	TypNichtGefunden
+	VarNichtGefunden
+	FeldNichtGefunden
+	MüssenFällSein
+	NichtGenugArgumente
+	ZuVieleArgumente
 	IstKeinTyp
 	IstKeinVariable
 )
@@ -38,12 +43,16 @@ func String(f Fehlercode) string {
 		return "Beide Seiten eines Vergleischsexpression müssen vom gleichen Typen sein"
 	case NichtErwarteTyp:
 		return "Das typ hatte ich nicht erwartet"
-	case NichtGefunden:
-		return "Es wird nicht gefunden"
+	case TypNichtGefunden:
+		return "Typ kann nicht gefunden"
+	case VarNichtGefunden:
+		return "Var kann nicht gefunden"
 	case IstKeinTyp:
 		return "Es ist kein Typ"
 	case IstKeinVariable:
 		return "Es ist kein Variable"
+	case FeldNichtGefunden:
+		return "Feld nicht gefunden"
 	default:
 		panic("a")
 	}

@@ -24,7 +24,25 @@ type Terminal struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
-	Ganzzahl     *int         `  @Int`
-	Variable     *Symbolkette `| @@`
-	Zeichenkette *string      `| (@String | @RawString)`
+	Ganzzahl     *int          `  @Int`
+	Variable     *Symbolkette  `| @@`
+	Zeichenkette *string       `| (@String | @RawString)`
+	Strukturwert *Strukturwert `| @@`
+}
+
+type Strukturwert struct {
+	Pos    lexer.Position
+	EndPos lexer.Position
+
+	Name           Symbolkette    `"#" @@`
+	Argumente      []Expression   `("(" ( @@ ( "," @@ )* )? ")")?`
+	Strukturfelden []Strukturfeld `("{" ( @@ ( "," @@ )* )? "}")?`
+}
+
+type Strukturfeld struct {
+	Pos    lexer.Position
+	EndPos lexer.Position
+
+	Name Ident      `@@`
+	Wert Expression `"=" @@`
 }

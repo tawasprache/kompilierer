@@ -38,7 +38,7 @@ func (k *namenaufslösungkontext) sucheTyp(a ast.Typnutzung) (*Typname, error) {
 		case *Typname:
 			return objekt, nil
 		case nil:
-			return nil, fehlerberichtung.Neu(fehlerberichtung.NichtGefunden, a)
+			return nil, fehlerberichtung.Neu(fehlerberichtung.TypNichtGefunden, a)
 		default:
 			return nil, fehlerberichtung.Neu(fehlerberichtung.IstKeinTyp, a)
 		}
@@ -61,7 +61,7 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 						Argumenten: func() []*Typname {
 							var r []*Typname
 
-							for _, arg := range x.Argumenten.Argumenten {
+							for _, arg := range x.Argumenten.Argumente {
 								t, feh := k.sucheTyp(arg.Typ)
 								if feh != nil {
 									k.fehler = append(k.fehler, feh)
@@ -92,17 +92,69 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 		)
 		k.push()
 	case *ast.Typdeklaration:
-		k.ktx.Defs[x.Name] = k.sichtbarkeitsbereich.Hinzufügen(
+		strukturTyp := &Strukturtyp{
+			objekt: objekt{
+				sichtbarkeitsbereich: k.sichtbarkeitsbereich,
+				name:                 x.Name.Name,
+				paket:                "TODO",
+				pos:                  x.Anfang(),
+			},
+		}
+		strukturTyp.Felden = func() (r []*Strukturfeld) {
+			for _, feld := range x.Felden {
+				t, feh := k.sucheTyp(feld.Typ)
+				if feh != nil {
+					panic(feh)
+				}
+				r = append(r, &Strukturfeld{
+					Name:                      feld.Name.Name,
+					Typ:                       t.Typ(),
+					ÜbergeordneterStrukturtyp: strukturTyp,
+				})
+			}
+			return r
+		}()
+		// strukturTyp.Fälle = func() (r []*Strukturfall) {
+		// 	for _, feld := range x. {
+		// 		t, feh := k.sucheTyp(feld.Typ)
+		// 		if feh != nil {
+		// 			panic(feh)
+		// 		}
+		// 		r = append(r, &Strukturfeld{
+		// 			Name:                      feld.Name.Name,
+		// 			Typ:                       t.Typ(),
+		// 			ÜbergeordneterStrukturtyp: strukturTyp,
+		// 		})
+		// 	}
+		// 	return r
+		// }()
+		k.ktx.Defs[x.Name] = strukturTyp.sichtbarkeitsbereich.Hinzufügen(
 			&Typname{
 				objekt: objekt{
-					sichtbarkeitsbereich: k.sichtbarkeitsbereich,
+					sichtbarkeitsbereich: strukturTyp.sichtbarkeitsbereich,
 					name:                 x.Name.Name,
 					paket:                "TODO",
 					pos:                  x.Anfang(),
 					typ: &Genanntetyp{
 						Name:  x.Name.Name,
 						Paket: "TODO",
+						basis: strukturTyp,
 					},
+				},
+				basis: strukturTyp,
+			},
+		)
+	case *ast.Argument:
+		// fehler handled in funktiondeklaration
+		t, _ := k.sucheTyp(x.Typ)
+		k.ktx.Defs[x.Name] = k.sichtbarkeitsbereich.Hinzufügen(
+			&Variable{
+				objekt: objekt{
+					sichtbarkeitsbereich: k.sichtbarkeitsbereich,
+					name:                 x.Name.Name,
+					paket:                "TODO",
+					pos:                  x.Anfang(),
+					typ:                  t.Typ(),
 				},
 			},
 		)
@@ -124,7 +176,7 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 			k.ktx.Benutzern[x.Ident] = o
 			return k
 		case nil:
-			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.NichtGefunden, n))
+			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.TypNichtGefunden, n))
 		default:
 			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.IstKeinTyp, n))
 		}
@@ -135,9 +187,31 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 			k.ktx.Benutzern[x.Ident] = o
 			return k
 		case nil:
-			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.NichtGefunden, n))
+			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.VarNichtGefunden, n))
 		default:
 			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.IstKeinVariable, n))
+		}
+	case *ast.StrukturwertExpression:
+		_, o := k.sichtbarkeitsbereich.Suchen(x.Name.String())
+		var strukturtyp *Strukturtyp
+		switch objekt := o.(type) {
+		case *Strukturfall:
+			k.ktx.Benutzern[x.Name] = objekt
+			strukturtyp = objekt.ÜbergeordneterStrukturtyp
+		case *Strukturtyp:
+			k.ktx.Benutzern[x.Name] = objekt
+			strukturtyp = objekt
+		case nil:
+			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.TypNichtGefunden, n))
+			return k
+		}
+	aus:
+		for _, feld := range x.Felden {
+			v := strukturtyp.Feld(feld.Name.String())
+			if v != nil {
+				continue aus
+			}
+			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.FeldNichtGefunden, n))
 		}
 	}
 	return k

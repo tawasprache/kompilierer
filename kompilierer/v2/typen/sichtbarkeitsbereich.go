@@ -6,7 +6,39 @@ type Sichtbarkeitsbereich struct {
 	namen map[string]Objekt
 }
 
-var Welt = &Sichtbarkeitsbereich{
+var Wahr Objekt = &Strukturfall{
+	objekt: objekt{
+		sichtbarkeitsbereich: nil,
+		name:                 "Wahr",
+		paket:                "Eingebaut",
+	},
+
+	Fallname: "Wahr",
+}
+
+var Falsch Objekt = &Strukturfall{
+	objekt: objekt{
+		sichtbarkeitsbereich: nil,
+		name:                 "Falsch",
+		paket:                "Eingebaut",
+	},
+
+	Fallname: "Falsch",
+}
+
+var Wahrheitswert Typ = &Strukturtyp{
+	Fälle: []*Strukturfall{
+		Wahr.(*Strukturfall),
+		Falsch.(*Strukturfall),
+	},
+}
+
+func init() {
+	Wahr.(*Strukturfall).ÜbergeordneterStrukturtyp = Wahrheitswert.(*Strukturtyp)
+	Falsch.(*Strukturfall).ÜbergeordneterStrukturtyp = Wahrheitswert.(*Strukturtyp)
+}
+
+var Welt *Sichtbarkeitsbereich = &Sichtbarkeitsbereich{
 	übergeordneterSichtbarkeitsbereich: nil,
 	namen: map[string]Objekt{
 		"Ganzzahl": &Typname{
@@ -29,7 +61,10 @@ var Welt = &Sichtbarkeitsbereich{
 				name:                 "Wahrheitswert",
 				paket:                "Eingebaut",
 			},
+			basis: Wahrheitswert,
 		},
+		"Wahr":   Wahr,
+		"Falsch": Falsch,
 	},
 }
 

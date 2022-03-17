@@ -41,12 +41,14 @@ func (o *objekt) Sichtbarkeitsbereich() *Sichtbarkeitsbereich {
 
 type Typname struct {
 	objekt
+	basis Typ
 }
 
 func (t *Typname) Typ() Typ {
 	return &Genanntetyp{
 		Name:  t.name,
 		Paket: t.paket,
+		basis: t.basis,
 	}
 }
 

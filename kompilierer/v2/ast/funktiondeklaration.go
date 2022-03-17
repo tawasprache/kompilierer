@@ -14,7 +14,7 @@ type Argument struct {
 type Argumentliste struct {
 	pos
 
-	Argumenten []*Argument
+	Argumente []*Argument
 }
 
 func argumentlisteVonParser(p parser.Argumentliste) *Argumentliste {
@@ -31,8 +31,8 @@ func argumentlisteVonParser(p parser.Argumentliste) *Argumentliste {
 	}
 
 	return &Argumentliste{
-		pos:        pos{p.Pos, p.EndPos},
-		Argumenten: a,
+		pos:       pos{p.Pos, p.EndPos},
+		Argumente: a,
 	}
 }
 

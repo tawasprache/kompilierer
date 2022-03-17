@@ -1,0 +1,9 @@
+paket Strukt
+
+typ A = verbund
+	a: Wahrheitswert
+beende
+
+funk Hallo(a: A) Wahrheitswert: beginne
+    gib a.b
+beende

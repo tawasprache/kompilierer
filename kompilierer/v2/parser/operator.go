@@ -19,9 +19,42 @@ const (
 	BinOpWenigerGleich
 	BinOpGrößer
 	BinOpGrößerGleich
-
-	BinOpFeld
 )
+
+func (b BinaryOperator) String() string {
+	switch b {
+	case BinOpCus:
+		return "BinOpCus"
+	case BinOpAdd:
+		return "BinOpAdd"
+	case BinOpSub:
+		return "BinOpSub"
+	case BinOpMul:
+		return "BinOpMul"
+	case BinOpDiv:
+		return "BinOpDiv"
+	case BinOpPow:
+		return "BinOpPow"
+	case BinOpMod:
+		return "BinOpMod"
+	case BinOpVerketten:
+		return "BinOpVerketten"
+	case BinOpGleich:
+		return "BinOpGleich"
+	case BinOpNichtGleich:
+		return "BinOpNichtGleich"
+	case BinOpWeniger:
+		return "BinOpWeniger"
+	case BinOpWenigerGleich:
+		return "BinOpWenigerGleich"
+	case BinOpGrößer:
+		return "BinOpGrößer"
+	case BinOpGrößerGleich:
+		return "BinOpGrößerGleich"
+	default:
+		panic("BinOpNil")
+	}
+}
 
 type opInfo struct {
 	Enum             BinaryOperator
@@ -31,8 +64,6 @@ type opInfo struct {
 }
 
 var info = map[string]*opInfo{
-	".": {Enum: BinOpFeld, Priority: 10},
-
 	"^": {Enum: BinOpPow, Priority: 8, RightAssociative: true},
 
 	"*": {Enum: BinOpMul, Priority: 7},

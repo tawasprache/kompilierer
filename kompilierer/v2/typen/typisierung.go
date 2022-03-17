@@ -4,6 +4,7 @@ import (
 	"Tawa/kompilierer/v2/ast"
 	"Tawa/kompilierer/v2/fehlerberichtung"
 	"Tawa/kompilierer/v2/parser"
+	"fmt"
 )
 
 type typisierung struct {
@@ -18,9 +19,10 @@ func (t *typisierung) checkGetypisiertExpression(expr ast.Expression, mit Typ) T
 	default:
 		ruck := t.synthGetypisiertExpression(expr)
 		if ruck == nil {
-			panic("e")
+			panic("nil")
 		}
 		if !Gleich(mit, ruck) {
+			fmt.Printf("%+v %+v\n", mit, ruck)
 			t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.NichtErwarteTyp, expr))
 		}
 
@@ -59,7 +61,7 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 			}
 			return Welt.namen["Wahrheitswert"].Typ()
 		default:
-			panic("e")
+			panic("e " + expr.Operator.String())
 		}
 	case *ast.GanzzahlExpression:
 		return Welt.namen["Ganzzahl"].Typ()
@@ -72,7 +74,56 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 		}
 		return obj.Typ()
 	case *ast.SelektorExpression:
-		panic("selektor")
+		kind := t.synthGetypisiertExpression(expr.Objekt)
+		switch kind := kind.Basis().(type) {
+		case *Strukturtyp:
+			// TODO: nicht gefunden
+			return kind.Feld(expr.Feld.String()).Typ
+		case nil:
+			panic("nil kind")
+		default:
+			panic("selektor")
+		}
+	case *ast.StrukturwertExpression:
+		_, obj := t.s.Suchen(expr.Name.String())
+		if obj == nil {
+			panic("nicht gefunden")
+		}
+
+		var s *Strukturtyp
+		var f *Strukturfall
+
+		if v, ok := obj.(*Strukturfall); ok {
+			f = v
+			s = f.ÜbergeordneterStrukturtyp
+		} else {
+			switch typ := obj.Typ().Basis().(type) {
+			case *Strukturtyp:
+				s = typ
+			}
+		}
+
+		if f != nil {
+			if len(expr.Argumente) > len(f.Felden) {
+				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.ZuVieleArgumente, expr))
+			} else if len(expr.Argumente) < len(f.Felden) {
+				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.NichtGenugArgumente, expr))
+			}
+
+			for idx := range expr.Argumente {
+				if len(f.Felden) < idx {
+					t.synthGetypisiertExpression(expr.Argumente[idx])
+				} else {
+					t.checkGetypisiertExpression(expr.Argumente[idx], f.Felden[idx].Typ)
+				}
+			}
+		} else {
+			if len(s.Fälle) > 0 {
+				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.MüssenFällSein, expr))
+			}
+		}
+
+		return s
 	default:
 		panic("e")
 	}

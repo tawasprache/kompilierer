@@ -1,0 +1,5 @@
+paket Test
+
+funk Hallo() Wahrheitswert: beginne
+    gib #Wahr
+beende

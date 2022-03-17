@@ -58,12 +58,20 @@ func Walk(v Visitor, n Node) {
 		Walk(v, node.Objekt)
 		Walk(v, node.Feld)
 	case *Argumentliste:
-		for _, arg := range node.Argumenten {
+		for _, arg := range node.Argumente {
 			Walk(v, arg)
 		}
 	case *Argument:
 		Walk(v, node.Name)
 		Walk(v, node.Typ)
+	case *StrukturwertExpression:
+		Walk(v, node.Name)
+		for _, arg := range node.Argumente {
+			Walk(v, arg)
+		}
+		for _, feld := range node.Felden {
+			Walk(v, feld)
+		}
 	case *Ident, *GanzzahlExpression, *ZeichenketteExpression:
 		return
 	default:

@@ -39,7 +39,7 @@ func parseExpr(lex *lexer.PeekingLexer, minPrec int) (re *Expression, rerr error
 		if feh != nil {
 			return nil, feh
 		}
-		if tok.Type == '.' {
+		if tok.Value == "." {
 			tok2, feh := peek2(lex)
 			if feh != nil {
 				return nil, feh
