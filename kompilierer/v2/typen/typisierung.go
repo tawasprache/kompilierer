@@ -2,8 +2,8 @@ package typen
 
 import (
 	"Tawa/kompilierer/v2/ast"
+	"Tawa/kompilierer/v2/fehlerberichtung"
 	"Tawa/kompilierer/v2/parser"
-	"errors"
 )
 
 type typisierung struct {
@@ -21,7 +21,7 @@ func (t *typisierung) checkGetypisiertExpression(expr ast.Expression, mit Typ) T
 			panic("e")
 		}
 		if !Gleich(mit, ruck) {
-			t.fehler = append(t.fehler, errors.New("nicht gleich"))
+			t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.NichtErwarteTyp, expr))
 		}
 
 		return mit
@@ -36,7 +36,7 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 			links := t.synthGetypisiertExpression(expr.Links)
 			rechts := t.synthGetypisiertExpression(expr.Rechts)
 			if !Gleich(links, rechts) {
-				t.fehler = append(t.fehler, errors.New("arithmetik"))
+				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.ArithmetikSeitenNichtGleichTyp, expr))
 			}
 			return links
 		case parser.BinOpVerketten:
@@ -45,14 +45,14 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 			links := t.synthGetypisiertExpression(expr.Links)
 			rechts := t.synthGetypisiertExpression(expr.Rechts)
 			if !Gleich(links, rechts) {
-				t.fehler = append(t.fehler, errors.New("gleich"))
+				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.GleichheitSeitenNichtGleichTyp, expr))
 			}
 			panic("gleich")
 		case parser.BinOpWeniger, parser.BinOpWenigerGleich, parser.BinOpGrößer, parser.BinOpGrößerGleich:
 			links := t.synthGetypisiertExpression(expr.Links)
 			rechts := t.synthGetypisiertExpression(expr.Rechts)
 			if !Gleich(links, rechts) {
-				t.fehler = append(t.fehler, errors.New("gleich"))
+				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.VergleichSeitenNichtGleichTyp, expr))
 			}
 			panic("comp")
 		default:

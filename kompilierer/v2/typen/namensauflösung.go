@@ -2,7 +2,7 @@ package typen
 
 import (
 	"Tawa/kompilierer/v2/ast"
-	"fmt"
+	"Tawa/kompilierer/v2/fehlerberichtung"
 )
 
 type namenaufslösungkontext struct {
@@ -34,13 +34,13 @@ func (k *namenaufslösungkontext) sucheTyp(a ast.Typnutzung) (*Typname, error) {
 	switch t := a.(type) {
 	case *ast.Typkonstruktor:
 		_, o := k.sichtbarkeitsbereich.Suchen(t.Ident.String())
-		switch a := o.(type) {
+		switch objekt := o.(type) {
 		case *Typname:
-			return a, nil
+			return objekt, nil
 		case nil:
-			return nil, fmt.Errorf("%s nicht gefunden", a)
+			return nil, fehlerberichtung.Neu(fehlerberichtung.NichtGefunden, a)
 		default:
-			return nil, fmt.Errorf("%s ist kein Typ", a)
+			return nil, fehlerberichtung.Neu(fehlerberichtung.IstKeinTyp, a)
 		}
 	default:
 		panic("e")
@@ -119,25 +119,25 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 		)
 	case *ast.Typkonstruktor:
 		_, o := k.sichtbarkeitsbereich.Suchen(x.Ident.String())
-		switch a := o.(type) {
+		switch o.(type) {
 		case *Typname:
 			k.ktx.Benutzern[x.Ident] = o
 			return k
 		case nil:
-			k.fehler = append(k.fehler, fmt.Errorf("%s nicht gefunden", a))
+			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.NichtGefunden, n))
 		default:
-			k.fehler = append(k.fehler, fmt.Errorf("%s ist kein Typ", a))
+			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.IstKeinTyp, n))
 		}
 	case *ast.IdentExpression:
 		_, o := k.sichtbarkeitsbereich.Suchen(x.Ident.String())
-		switch a := o.(type) {
+		switch o.(type) {
 		case *Variable:
 			k.ktx.Benutzern[x.Ident] = o
 			return k
 		case nil:
-			k.fehler = append(k.fehler, fmt.Errorf("%s nicht gefunden", a))
+			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.NichtGefunden, n))
 		default:
-			k.fehler = append(k.fehler, fmt.Errorf("%s ist kein Variable", a))
+			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.IstKeinVariable, n))
 		}
 	}
 	return k
