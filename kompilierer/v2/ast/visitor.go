@@ -1,6 +1,8 @@
 package ast
 
-import "reflect"
+import (
+	"github.com/alecthomas/repr"
+)
 
 type Visitor interface {
 	Visit(node Node) (w Visitor)
@@ -8,6 +10,9 @@ type Visitor interface {
 }
 
 func Walk(v Visitor, n Node) {
+	if n == nil {
+		panic("nil node")
+	}
 	defer v.EndVisit(n)
 	if v = v.Visit(n); v == nil {
 		return
@@ -72,10 +77,13 @@ func Walk(v Visitor, n Node) {
 		for _, feld := range node.Felden {
 			Walk(v, feld)
 		}
+	case *StrukturwertFeld:
+		Walk(v, node.Name)
+		Walk(v, node.Wert)
 	case *Ident, *GanzzahlExpression, *ZeichenketteExpression:
 		return
 	default:
-		panic("eep " + reflect.TypeOf(node).Name())
+		panic("eep " + repr.String(node))
 	}
 }
 

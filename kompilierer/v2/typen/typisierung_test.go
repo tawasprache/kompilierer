@@ -105,7 +105,29 @@ func TestTypisierungSchlechtStrukt(t *testing.T) {
 	datei := ast.VonParser(v)
 	k := NeuKontext()
 	fehler := Namenaufslösung(datei, k)
-	if len(fehler) > 0 {
+	if len(fehler) != 1 {
+		t.Fatalf("fehler: %+v", fehler)
+	}
+	fehler = Typisierung(datei, k)
+	if len(fehler) != 1 {
+		t.Fatalf("fehler: %+v", fehler)
+	}
+}
+
+//go:embed testdata/Wahrheitswert.tawa
+var wahrheitswert string
+
+func TestTypisierungWahrheitswert(t *testing.T) {
+	var v parser.Modul
+	feh := parser.Parser.ParseString("Wahrheitswert.tawa", wahrheitswert, &v)
+	if feh != nil {
+		t.Fatalf("error: %s", feh)
+	}
+
+	datei := ast.VonParser(v)
+	k := NeuKontext()
+	fehler := Namenaufslösung(datei, k)
+	if len(fehler) != 0 {
 		t.Fatalf("fehler: %+v", fehler)
 	}
 	fehler = Typisierung(datei, k)

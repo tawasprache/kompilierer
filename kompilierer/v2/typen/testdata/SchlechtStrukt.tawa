@@ -7,3 +7,11 @@ beende
 funk Hallo(a: A) Wahrheitswert: beginne
     gib a.b
 beende
+
+funk Mald() A: beginne
+    gib #A { a = #Wahr }
+beende
+
+funk Meld() A: beginne
+    gib #A { b = #Wahr }
+beende
