@@ -23,6 +23,13 @@ var Welt = &Sichtbarkeitsbereich{
 				paket:                "Eingebaut",
 			},
 		},
+		"Wahrheitswert": &Typname{
+			objekt: objekt{
+				sichtbarkeitsbereich: nil,
+				name:                 "Wahrheitswert",
+				paket:                "Eingebaut",
+			},
+		},
 	},
 }
 

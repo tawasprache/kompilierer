@@ -40,21 +40,24 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 			}
 			return links
 		case parser.BinOpVerketten:
-			panic("verketten")
+			zeichenkette := Welt.namen["Zeichenkette"].Typ()
+			t.checkGetypisiertExpression(expr.Links, zeichenkette)
+			t.checkGetypisiertExpression(expr.Rechts, zeichenkette)
+			return zeichenkette
 		case parser.BinOpGleich, parser.BinOpNichtGleich:
 			links := t.synthGetypisiertExpression(expr.Links)
 			rechts := t.synthGetypisiertExpression(expr.Rechts)
 			if !Gleich(links, rechts) {
 				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.GleichheitSeitenNichtGleichTyp, expr))
 			}
-			panic("gleich")
+			return Welt.namen["Wahrheitswert"].Typ()
 		case parser.BinOpWeniger, parser.BinOpWenigerGleich, parser.BinOpGrößer, parser.BinOpGrößerGleich:
 			links := t.synthGetypisiertExpression(expr.Links)
 			rechts := t.synthGetypisiertExpression(expr.Rechts)
 			if !Gleich(links, rechts) {
 				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.VergleichSeitenNichtGleichTyp, expr))
 			}
-			panic("comp")
+			return Welt.namen["Wahrheitswert"].Typ()
 		default:
 			panic("e")
 		}
