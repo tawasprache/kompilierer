@@ -109,7 +109,7 @@ func TestTypisierungSchlechtStrukt(t *testing.T) {
 		t.Fatalf("fehler: %+v", fehler)
 	}
 	fehler = Typisierung(datei, k)
-	if len(fehler) != 2 {
+	if len(fehler) != 1 {
 		t.Fatalf("fehler: %+v", fehler)
 	}
 }

@@ -39,19 +39,6 @@ func (o *objekt) Sichtbarkeitsbereich() *Sichtbarkeitsbereich {
 	return o.sichtbarkeitsbereich
 }
 
-type Typname struct {
-	objekt
-	basis Typ
-}
-
-func (t *Typname) Typ() Typ {
-	return &Genanntetyp{
-		Name:  t.name,
-		Paket: t.paket,
-		basis: t.basis,
-	}
-}
-
 type Funktion struct {
 	objekt
 }

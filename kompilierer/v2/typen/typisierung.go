@@ -4,7 +4,6 @@ import (
 	"Tawa/kompilierer/v2/ast"
 	"Tawa/kompilierer/v2/fehlerberichtung"
 	"Tawa/kompilierer/v2/parser"
-	"fmt"
 )
 
 type typisierung struct {
@@ -21,8 +20,10 @@ func (t *typisierung) checkGetypisiertExpression(expr ast.Expression, mit Typ) T
 		if ruck == nil {
 			panic("nil")
 		}
+		if _, ok := ruck.(*Fehlertyp); ok {
+			return mit
+		}
 		if !Gleich(mit, ruck) {
-			fmt.Printf("%+v %+v\n", mit, ruck)
 			t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.NichtErwarteTyp, expr))
 		}
 
@@ -77,7 +78,10 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 		kind := t.synthGetypisiertExpression(expr.Objekt)
 		switch kind := kind.Basis().(type) {
 		case *Strukturtyp:
-			// TODO: nicht gefunden
+			if kind.Feld(expr.Feld.String()) == nil {
+				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.FeldNichtGefunden, expr.Feld))
+				return &Fehlertyp{}
+			}
 			return kind.Feld(expr.Feld.String()).Typ
 		case nil:
 			panic("nil kind")
@@ -146,7 +150,7 @@ func (t *typisierung) Visit(n ast.Node) ast.Visitor {
 		} else if t.f.typ.(*Signature).Rückgabetyp == nil && x.Wert == nil {
 			return nil
 		}
-		t.checkGetypisiertExpression(x.Wert, t.f.typ.(*Signature).Rückgabetyp.Typ())
+		t.checkGetypisiertExpression(x.Wert, t.f.typ.(*Signature).Rückgabetyp)
 		return nil
 	case *ast.Ist:
 		_, varTyp := t.s.Suchen(x.Variable.String())

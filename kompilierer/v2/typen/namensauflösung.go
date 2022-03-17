@@ -30,12 +30,12 @@ func neuNamenaufslösungkontext(ktx *Kontext) *namenaufslösungkontext {
 	return k
 }
 
-func (k *namenaufslösungkontext) sucheTyp(a ast.Typnutzung) (*Typname, error) {
+func (k *namenaufslösungkontext) sucheTyp(a ast.Typnutzung) (*Strukturtyp, error) {
 	switch t := a.(type) {
 	case *ast.Typkonstruktor:
 		_, o := k.sichtbarkeitsbereich.Suchen(t.Ident.String())
 		switch objekt := o.(type) {
-		case *Typname:
+		case *Strukturtyp:
 			return objekt, nil
 		case nil:
 			return nil, fehlerberichtung.Neu(fehlerberichtung.TypNichtGefunden, a)
@@ -58,8 +58,8 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 					paket:                "TODO",
 					pos:                  x.Anfang(),
 					typ: &Signature{
-						Argumenten: func() []*Typname {
-							var r []*Typname
+						Argumenten: func() []Typ {
+							var r []Typ
 
 							for _, arg := range x.Argumenten.Argumente {
 								t, feh := k.sucheTyp(arg.Typ)
@@ -73,7 +73,7 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 
 							return r
 						}(),
-						Rückgabetyp: func() *Typname {
+						Rückgabetyp: func() Typ {
 							if x.Rückgabetyp == nil {
 								return nil
 							}
@@ -128,22 +128,7 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 		// 	}
 		// 	return r
 		// }()
-		k.ktx.Defs[x.Name] = strukturTyp.sichtbarkeitsbereich.Hinzufügen(
-			&Typname{
-				objekt: objekt{
-					sichtbarkeitsbereich: strukturTyp.sichtbarkeitsbereich,
-					name:                 x.Name.Name,
-					paket:                "TODO",
-					pos:                  x.Anfang(),
-					typ: &Genanntetyp{
-						Name:  x.Name.Name,
-						Paket: "TODO",
-						basis: strukturTyp,
-					},
-				},
-				basis: strukturTyp,
-			},
-		)
+		k.ktx.Defs[x.Name] = strukturTyp.sichtbarkeitsbereich.Hinzufügen(strukturTyp)
 	case *ast.Argument:
 		// fehler handled in funktiondeklaration
 		t, _ := k.sucheTyp(x.Typ)
@@ -172,7 +157,7 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 	case *ast.Typkonstruktor:
 		_, o := k.sichtbarkeitsbereich.Suchen(x.Ident.String())
 		switch o.(type) {
-		case *Typname:
+		case *Strukturtyp:
 			k.ktx.Benutzern[x.Ident] = o
 			return k
 		case nil:

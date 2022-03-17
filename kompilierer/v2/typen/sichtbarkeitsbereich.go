@@ -26,7 +26,7 @@ var Falsch Objekt = &Strukturfall{
 	Fallname: "Falsch",
 }
 
-var Wahrheitswert Typ = &Strukturtyp{
+var Wahrheitswert = &Strukturtyp{
 	Fälle: []*Strukturfall{
 		Wahr.(*Strukturfall),
 		Falsch.(*Strukturfall),
@@ -34,37 +34,30 @@ var Wahrheitswert Typ = &Strukturtyp{
 }
 
 func init() {
-	Wahr.(*Strukturfall).ÜbergeordneterStrukturtyp = Wahrheitswert.(*Strukturtyp)
-	Falsch.(*Strukturfall).ÜbergeordneterStrukturtyp = Wahrheitswert.(*Strukturtyp)
+	Wahr.(*Strukturfall).ÜbergeordneterStrukturtyp = Wahrheitswert
+	Falsch.(*Strukturfall).ÜbergeordneterStrukturtyp = Wahrheitswert
 }
 
 var Welt *Sichtbarkeitsbereich = &Sichtbarkeitsbereich{
 	übergeordneterSichtbarkeitsbereich: nil,
 	namen: map[string]Objekt{
-		"Ganzzahl": &Typname{
+		"Ganzzahl": &Strukturtyp{
 			objekt: objekt{
 				sichtbarkeitsbereich: nil,
 				name:                 "Ganzzahl",
 				paket:                "Eingebaut",
 			},
 		},
-		"Zeichenkette": &Typname{
+		"Zeichenkette": &Strukturtyp{
 			objekt: objekt{
 				sichtbarkeitsbereich: nil,
 				name:                 "Zeichenkette",
 				paket:                "Eingebaut",
 			},
 		},
-		"Wahrheitswert": &Typname{
-			objekt: objekt{
-				sichtbarkeitsbereich: nil,
-				name:                 "Wahrheitswert",
-				paket:                "Eingebaut",
-			},
-			basis: Wahrheitswert,
-		},
-		"Wahr":   Wahr,
-		"Falsch": Falsch,
+		"Wahrheitswert": Wahrheitswert,
+		"Wahr":          Wahr,
+		"Falsch":        Falsch,
 	},
 }
 

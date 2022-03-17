@@ -5,19 +5,12 @@ type Typ interface {
 }
 
 type Signature struct {
-	Argumenten  []*Typname
-	Rückgabetyp *Typname
+	Argumenten  []Typ
+	Rückgabetyp Typ
 }
 
 func (s *Signature) Basis() Typ {
 	return s
-}
-
-type Genanntetyp struct {
-	Name  string
-	Paket string
-
-	basis Typ
 }
 
 func Gleich(l, r Typ) bool {
@@ -29,9 +22,9 @@ func Gleich(l, r Typ) bool {
 	}
 
 	switch l := l.(type) {
-	case *Genanntetyp:
-		if r, ok := r.(*Genanntetyp); ok {
-			return l.Name == r.Name && l.Paket == r.Paket
+	case *Strukturtyp:
+		if r, ok := r.(*Strukturtyp); ok {
+			return l.Name() == r.Name() && l.Paket() == r.Paket()
 		}
 	case *Signature:
 		if r, ok := r.(*Signature); ok {
@@ -43,14 +36,14 @@ func Gleich(l, r Typ) bool {
 				return false
 			}
 
-			if !Gleich(l.Rückgabetyp.Typ(), r.Rückgabetyp.Typ()) {
+			if !Gleich(l.Rückgabetyp, r.Rückgabetyp) {
 				return false
 			}
 			if len(l.Argumenten) != len(r.Argumenten) {
 				return false
 			}
 			for idx := range l.Argumenten {
-				if !Gleich(l.Argumenten[idx].Typ(), r.Argumenten[idx].Typ()) {
+				if !Gleich(l.Argumenten[idx], r.Argumenten[idx]) {
 					return false
 				}
 			}
@@ -61,13 +54,6 @@ func Gleich(l, r Typ) bool {
 	}
 
 	return false
-}
-
-func (g *Genanntetyp) Basis() Typ {
-	if g.basis != nil {
-		return g.basis
-	}
-	return g
 }
 
 type Strukturfeld struct {
@@ -93,6 +79,10 @@ type Strukturtyp struct {
 	Fälle  []*Strukturfall
 }
 
+func (s *Strukturtyp) Typ() Typ {
+	return s
+}
+
 func (s *Strukturtyp) Feld(n string) (f *Strukturfeld) {
 	for _, es := range s.Felden {
 		if es.Name == n {
@@ -100,6 +90,13 @@ func (s *Strukturtyp) Feld(n string) (f *Strukturfeld) {
 		}
 	}
 	return nil
+}
+
+type Fehlertyp struct {
+}
+
+func (f *Fehlertyp) Basis() Typ {
+	return f
 }
 
 func (s *Strukturtyp) Basis() Typ {
