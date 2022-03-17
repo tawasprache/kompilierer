@@ -103,7 +103,7 @@ type Gib struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
-	Wert Expression `"gib" @@`
+	Wert *Expression `"gib" @@?`
 }
 
 type Sei struct {

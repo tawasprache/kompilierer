@@ -16,11 +16,19 @@ var Welt = &Sichtbarkeitsbereich{
 				paket:                "Eingebaut",
 			},
 		},
+		"Zeichenkette": &Typname{
+			objekt: objekt{
+				sichtbarkeitsbereich: nil,
+				name:                 "Zeichenkette",
+				paket:                "Eingebaut",
+			},
+		},
 	},
 }
 
-func (s *Sichtbarkeitsbereich) Hinzufügen(o Objekt) {
+func (s *Sichtbarkeitsbereich) Hinzufügen(o Objekt) Objekt {
 	s.namen[o.Name()] = o
+	return o
 }
 
 func (s *Sichtbarkeitsbereich) Suchen(n string) (*Sichtbarkeitsbereich, Objekt) {
@@ -33,4 +41,16 @@ func (s *Sichtbarkeitsbereich) Suchen(n string) (*Sichtbarkeitsbereich, Objekt) 
 	}
 
 	return s.übergeordneterSichtbarkeitsbereich.Suchen(n)
+}
+
+func (s *Sichtbarkeitsbereich) Ersetzen(n string, o Objekt) {
+	if _, ok := s.namen[n]; ok {
+		s.namen[n] = o
+	}
+
+	if s.übergeordneterSichtbarkeitsbereich == nil {
+		return
+	}
+
+	s.übergeordneterSichtbarkeitsbereich.Ersetzen(n, o)
 }

@@ -4,7 +4,13 @@ import "Tawa/kompilierer/v2/parser"
 
 type Expression interface {
 	Node
+	istExpression()
 }
+
+type istExpressionImpl struct {
+}
+
+func (istExpressionImpl) istExpression() {}
 
 func terminalVonParser(p parser.Terminal) Expression {
 	if p.Variable != nil {
@@ -17,6 +23,11 @@ func terminalVonParser(p parser.Terminal) Expression {
 			pos:  pos{p.Pos, p.EndPos},
 			Wert: *p.Ganzzahl,
 		}
+	} else if p.Zeichenkette != nil {
+		return &ZeichenketteExpression{
+			pos:  pos{p.Pos, p.EndPos},
+			Wert: *p.Zeichenkette,
+		}
 	} else {
 		panic("e")
 	}
@@ -26,12 +37,24 @@ type GanzzahlExpression struct {
 	pos
 
 	Wert int
+
+	istExpressionImpl
+}
+
+type ZeichenketteExpression struct {
+	pos
+
+	Wert string
+
+	istExpressionImpl
 }
 
 type IdentExpression struct {
 	pos
 
-	Ident *Symbolkette
+	Ident *Ident
+
+	istExpressionImpl
 }
 
 var _ Expression = &IdentExpression{}
@@ -41,6 +64,8 @@ type SelektorExpression struct {
 
 	Objekt Expression
 	Feld   *Ident
+
+	istExpressionImpl
 }
 
 type BinaryExpression struct {
@@ -49,6 +74,8 @@ type BinaryExpression struct {
 	Links    Expression
 	Operator parser.BinaryOperator
 	Rechts   Expression
+
+	istExpressionImpl
 }
 
 var _ Expression = &BinaryExpression{}

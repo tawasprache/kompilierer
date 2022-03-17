@@ -6,6 +6,7 @@ type Objekt interface {
 	Name() string
 	Paket() string
 	Pos() lexer.Position
+	Typ() Typ
 
 	Sichtbarkeitsbereich() *Sichtbarkeitsbereich
 }
@@ -15,6 +16,7 @@ type objekt struct {
 	name                 string
 	paket                string
 	pos                  lexer.Position
+	typ                  Typ
 }
 
 func (o *objekt) Name() string {
@@ -29,6 +31,10 @@ func (o *objekt) Pos() lexer.Position {
 	return o.pos
 }
 
+func (o *objekt) Typ() Typ {
+	return o.typ
+}
+
 func (o *objekt) Sichtbarkeitsbereich() *Sichtbarkeitsbereich {
 	return o.sichtbarkeitsbereich
 }
@@ -37,11 +43,15 @@ type Typname struct {
 	objekt
 }
 
+func (t *Typname) Typ() Typ {
+	return &Genanntetyp{
+		Name:  t.name,
+		Paket: t.paket,
+	}
+}
+
 type Funktion struct {
 	objekt
-
-	Argumenten  []*Typname
-	Rückgabetyp *Typname
 }
 
 type Variable struct {

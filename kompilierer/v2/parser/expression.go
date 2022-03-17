@@ -24,6 +24,7 @@ type Terminal struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
-	Ganzzahl *int         `  @Int`
-	Variable *Symbolkette `| @@`
+	Ganzzahl     *int         `  @Int`
+	Variable     *Symbolkette `| @@`
+	Zeichenkette *string      `| (@String | @RawString)`
 }

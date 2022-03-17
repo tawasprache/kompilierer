@@ -4,12 +4,24 @@ import "Tawa/kompilierer/v2/parser"
 
 type Anweisung interface {
 	Node
+	istAnweisung()
 }
 
+type istAnweisungImpl struct {
+}
+
+func (istAnweisungImpl) istAnweisung() {}
+
 func gibVonParser(p parser.Gib) *Gib {
+	if p.Wert == nil {
+		return &Gib{
+			pos:  pos{p.Pos, p.EndPos},
+			Wert: nil,
+		}
+	}
 	return &Gib{
 		pos:  pos{p.Pos, p.EndPos},
-		Wert: expressionVonParser(p.Wert),
+		Wert: expressionVonParser(*p.Wert),
 	}
 }
 
@@ -45,6 +57,8 @@ type Gib struct {
 	pos
 
 	Wert Expression
+
+	istAnweisungImpl
 }
 
 var _ Anweisung = &Gib{}
@@ -54,6 +68,8 @@ type Ist struct {
 
 	Variable *Ident
 	Wert     Expression
+
+	istAnweisungImpl
 }
 
 var _ Anweisung = &Ist{}
@@ -63,6 +79,8 @@ type Sei struct {
 
 	Variable *Ident
 	Wert     Expression
+
+	istAnweisungImpl
 }
 
 var _ Anweisung = &Sei{}

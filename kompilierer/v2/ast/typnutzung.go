@@ -9,7 +9,7 @@ type Typnutzung interface {
 type Typkonstruktor struct {
 	pos
 
-	Symbolkette *Symbolkette
+	Ident *Ident
 }
 
 var _ Typnutzung = &Typkonstruktor{}
@@ -21,7 +21,7 @@ func typnutzungVonParser(p parser.Typ) Typnutzung {
 				anfang: p.Pos,
 				ende:   p.EndPos,
 			},
-			Symbolkette: symbolketteVonParser(p.Typkonstruktor.Name),
+			Ident: symbolketteVonParser(p.Typkonstruktor.Name),
 		}
 	} else {
 		panic("e")

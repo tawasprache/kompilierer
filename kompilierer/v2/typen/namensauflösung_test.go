@@ -18,7 +18,8 @@ func TestNamensaufloesung(t *testing.T) {
 	}
 
 	datei := ast.VonParser(v)
-	fehler := Namenaufslösung(datei)
+	k := NeuKontext()
+	fehler := Namenaufslösung(datei, k)
 	if len(fehler) > 0 {
 		t.Fail()
 	}

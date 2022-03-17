@@ -37,11 +37,7 @@ func Walk(v Visitor, n Node) {
 		Walk(v, node.Name)
 		Walk(v, node.Typ)
 	case *Typkonstruktor:
-		Walk(v, node.Symbolkette)
-	case *Symbolkette:
-		for _, symbol := range node.Name {
-			Walk(v, symbol)
-		}
+		Walk(v, node.Ident)
 	case *Block:
 		for _, anweisung := range node.Anweisungen {
 			Walk(v, anweisung)
@@ -53,7 +49,9 @@ func Walk(v Visitor, n Node) {
 		Walk(v, node.Variable)
 		Walk(v, node.Wert)
 	case *Gib:
-		Walk(v, node.Wert)
+		if node.Wert != nil {
+			Walk(v, node.Wert)
+		}
 	case *IdentExpression:
 		Walk(v, node.Ident)
 	case *SelektorExpression:
@@ -66,7 +64,7 @@ func Walk(v Visitor, n Node) {
 	case *Argument:
 		Walk(v, node.Name)
 		Walk(v, node.Typ)
-	case *Ident, *GanzzahlExpression:
+	case *Ident, *GanzzahlExpression, *ZeichenketteExpression:
 		return
 	default:
 		panic("eep " + reflect.TypeOf(node).Name())
