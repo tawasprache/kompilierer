@@ -135,7 +135,7 @@ rescan:
 		case scanner.Ident,
 			scanner.Int, scanner.Float,
 			scanner.String,
-			scanner.RawString, operator,
+			scanner.RawString,
 			')', '}', ']':
 
 			t.prevType = eos

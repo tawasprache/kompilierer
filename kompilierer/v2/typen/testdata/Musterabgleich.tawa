@@ -1,4 +1,4 @@
-paket Hallo
+paket Musterabgleich
 
 typ Farbe = verbund
 	a: Eingebaut::Ganz

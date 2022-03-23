@@ -45,6 +45,23 @@ func terminalVonParser(p parser.Terminal) Expression {
 			})
 		}
 		return s
+	} else if p.Musterabgleich != nil {
+		m := &MusterabgleichExpression{
+			pos:  pos{p.Pos, p.EndPos},
+			Wert: expressionVonParser(p.Musterabgleich.Wert),
+		}
+		for _, muster := range p.Musterabgleich.Mustern {
+			pat := &Pattern{}
+			pat.Name = symbolketteVonParser(muster.Pattern.Name)
+			for _, vr := range muster.Pattern.Variabeln {
+				pat.Variabeln = append(pat.Variabeln, identVonParser(vr))
+			}
+			m.Mustern = append(m.Mustern, &Muster{
+				Pattern:    pat,
+				Expression: expressionVonParser(muster.Expression),
+			})
+		}
+		return m
 	} else {
 		panic("e")
 	}
@@ -127,6 +144,29 @@ func binaryVonParser(
 		Operator: op,
 		Rechts:   expressionVonParser(rechts),
 	}
+}
+
+type MusterabgleichExpression struct {
+	pos
+
+	Wert    Expression `"musterabgleich" @@ "mit"`
+	Mustern []*Muster  `@@* "beende"`
+
+	istExpressionImpl
+}
+
+type Muster struct {
+	pos
+
+	Pattern    *Pattern   `@@`
+	Expression Expression `"=>" @@ EOS`
+}
+
+type Pattern struct {
+	pos
+
+	Name      *Ident   `"#" @@`
+	Variabeln []*Ident `("(" ( @@ ( "," @@ )* )? ")")?`
 }
 
 func expressionVonParser(p parser.Expression) Expression {

@@ -80,6 +80,19 @@ func Walk(v Visitor, n Node) {
 	case *StrukturwertFeld:
 		Walk(v, node.Name)
 		Walk(v, node.Wert)
+	case *MusterabgleichExpression:
+		Walk(v, node.Wert)
+		for _, muster := range node.Mustern {
+			Walk(v, muster)
+		}
+	case *Muster:
+		Walk(v, node.Pattern)
+		Walk(v, node.Expression)
+	case *Pattern:
+		Walk(v, node.Name)
+		for _, vari := range node.Variabeln {
+			Walk(v, vari)
+		}
 	case *Ident, *GanzzahlExpression, *ZeichenketteExpression:
 		return
 	default:

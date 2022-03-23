@@ -4,6 +4,8 @@ import (
 	"Tawa/kompilierer/v2/ast"
 	"Tawa/kompilierer/v2/fehlerberichtung"
 	"Tawa/kompilierer/v2/parser"
+
+	"github.com/alecthomas/repr"
 )
 
 type typisierung struct {
@@ -88,6 +90,10 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 		default:
 			panic("selektor")
 		}
+	case *ast.MusterabgleichExpression:
+		kind := t.synthGetypisiertExpression(expr.Wert)
+		repr.Println(kind)
+		panic("todo")
 	case *ast.StrukturwertExpression:
 		_, obj := t.s.Suchen(expr.Name.String())
 		if obj == nil {
