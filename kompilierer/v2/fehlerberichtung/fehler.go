@@ -18,11 +18,13 @@ const (
 	TypNichtGefunden
 	VarNichtGefunden
 	FeldNichtGefunden
-	MüssenFällSein
+	MüssenFallSein
 	NichtGenugArgumente
 	ZuVieleArgumente
 	IstKeinTyp
 	IstKeinVariable
+	IstKeinFall
+	HatKeineFälle
 )
 
 type Fehler struct {
@@ -53,6 +55,10 @@ func String(f Fehlercode) string {
 		return "Es ist kein Variable"
 	case FeldNichtGefunden:
 		return "Feld nicht gefunden"
+	case IstKeinFall:
+		return "Ist kein Fall"
+	case HatKeineFälle:
+		return "Typ hat keine Fälle"
 	default:
 		panic("a")
 	}

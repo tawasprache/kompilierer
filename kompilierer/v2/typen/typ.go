@@ -92,6 +92,15 @@ func (s *Strukturtyp) Feld(n string) (f *Strukturfeld) {
 	return nil
 }
 
+func (s *Strukturtyp) Fall(n string) (f *Strukturfall) {
+	for _, es := range s.Fälle {
+		if es.name == n {
+			return es
+		}
+	}
+	return nil
+}
+
 type Fehlertyp struct {
 }
 

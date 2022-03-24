@@ -91,6 +91,20 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 			},
 		)
 		k.push()
+	case *ast.Muster:
+		k.push()
+		for _, variable := range x.Pattern.Variabeln {
+			k.ktx.Defs[variable] = k.sichtbarkeitsbereich.Hinzufügen(
+				&Variable{
+					objekt: objekt{
+						sichtbarkeitsbereich: k.sichtbarkeitsbereich,
+						name:                 variable.Name,
+						paket:                "TODO",
+						pos:                  variable.Anfang(),
+					},
+				},
+			)
+		}
 	case *ast.Typdeklaration:
 		strukturTyp := &Strukturtyp{
 			objekt: objekt{
@@ -114,20 +128,32 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 			}
 			return r
 		}()
-		// strukturTyp.Fälle = func() (r []*Strukturfall) {
-		// 	for _, feld := range x. {
-		// 		t, feh := k.sucheTyp(feld.Typ)
-		// 		if feh != nil {
-		// 			panic(feh)
-		// 		}
-		// 		r = append(r, &Strukturfeld{
-		// 			Name:                      feld.Name.Name,
-		// 			Typ:                       t.Typ(),
-		// 			ÜbergeordneterStrukturtyp: strukturTyp,
-		// 		})
-		// 	}
-		// 	return r
-		// }()
+		strukturTyp.Fälle = func() (r []*Strukturfall) {
+			for _, fall := range x.Fälle {
+				s := &Strukturfall{
+					objekt: objekt{
+						sichtbarkeitsbereich: k.sichtbarkeitsbereich,
+						name:                 fall.Name.Name,
+						paket:                "TODO",
+						pos:                  x.Anfang(),
+					},
+				}
+				s.Fallname = fall.Name.Name
+				for _, feld := range fall.Felden {
+					t, feh := k.sucheTyp(feld.Typ)
+					if feh != nil {
+						panic(feh)
+					}
+					s.Felden = append(s.Felden, Strukturfeld{
+						Name:                      feld.Name.Name,
+						Typ:                       t.Typ(),
+						ÜbergeordneterStrukturtyp: strukturTyp,
+					})
+				}
+				r = append(r, s)
+			}
+			return r
+		}()
 		k.ktx.Defs[x.Name] = strukturTyp.sichtbarkeitsbereich.Hinzufügen(strukturTyp)
 	case *ast.Argument:
 		// fehler handled in funktiondeklaration
@@ -204,7 +230,7 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 
 func (k *namenaufslösungkontext) EndVisit(n ast.Node) {
 	switch n.(type) {
-	case *ast.Funktiondeklaration:
+	case *ast.Funktiondeklaration, *ast.Muster:
 		k.ktx.Sichtbarkeitsbereichen[n] = k.sichtbarkeitsbereich
 		k.pop()
 	}

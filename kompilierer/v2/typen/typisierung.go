@@ -4,8 +4,7 @@ import (
 	"Tawa/kompilierer/v2/ast"
 	"Tawa/kompilierer/v2/fehlerberichtung"
 	"Tawa/kompilierer/v2/parser"
-
-	"github.com/alecthomas/repr"
+	"reflect"
 )
 
 type typisierung struct {
@@ -20,7 +19,7 @@ func (t *typisierung) checkGetypisiertExpression(expr ast.Expression, mit Typ) T
 	default:
 		ruck := t.synthGetypisiertExpression(expr)
 		if ruck == nil {
-			panic("nil")
+			panic("nil " + reflect.TypeOf(expr).String())
 		}
 		if _, ok := ruck.(*Fehlertyp); ok {
 			return mit
@@ -73,7 +72,7 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 	case *ast.IdentExpression:
 		_, obj := t.s.Suchen(expr.Ident.String())
 		if obj == nil {
-			panic("nicht gefunden")
+			panic(expr.Ident.String() + " nicht gefunden")
 		}
 		return obj.Typ()
 	case *ast.SelektorExpression:
@@ -92,8 +91,35 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 		}
 	case *ast.MusterabgleichExpression:
 		kind := t.synthGetypisiertExpression(expr.Wert)
-		repr.Println(kind)
-		panic("todo")
+		strukturtyp, ok := kind.Basis().(*Strukturtyp)
+		if !ok || len(strukturtyp.Fälle) == 0 {
+			t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.HatKeineFälle, expr.Wert))
+			return &Fehlertyp{} // TODO: gehen dorthin
+		}
+		var falltyp Typ
+		for _, fall := range expr.Mustern {
+			sichtbarkeitsbereich := t.ktx.Sichtbarkeitsbereichen[fall]
+			f := strukturtyp.Fall(fall.Pattern.Name.Name)
+			if f == nil {
+				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.IstKeinFall, fall.Pattern.Name))
+				for _, variable := range fall.Pattern.Variabeln {
+					sichtbarkeitsbereich.namen[variable.Name].(*Variable).typ = &Fehlertyp{}
+				}
+			} else {
+				for idx, variable := range fall.Pattern.Variabeln {
+					sichtbarkeitsbereich.namen[variable.Name].(*Variable).typ = f.Felden[idx].Typ
+				}
+			}
+			alt := t.s
+			t.s = sichtbarkeitsbereich
+			if falltyp == nil {
+				falltyp = t.synthGetypisiertExpression(fall.Expression)
+			} else {
+				t.checkGetypisiertExpression(fall.Expression, falltyp)
+			}
+			t.s = alt
+		}
+		return falltyp
 	case *ast.StrukturwertExpression:
 		_, obj := t.s.Suchen(expr.Name.String())
 		if obj == nil {
@@ -129,7 +155,7 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 			}
 		} else {
 			if len(s.Fälle) > 0 {
-				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.MüssenFällSein, expr))
+				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.MüssenFallSein, expr))
 			}
 		}
 

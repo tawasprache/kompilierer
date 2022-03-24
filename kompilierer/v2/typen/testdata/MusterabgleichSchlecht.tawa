@@ -23,5 +23,7 @@ funk RotOderH(von: Farbe) Ganzzahl: beginne
             r
         #HSV(h, s, v) =>
             h
+        #LOL(l) =>
+            l
     beende
 beende
