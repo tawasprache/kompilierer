@@ -20,7 +20,6 @@ beende
 funk Hallo(): beginne
     sei a := 5
     a := a + 3
-    k := (1 + 2).a.c
 
     gib 5
 

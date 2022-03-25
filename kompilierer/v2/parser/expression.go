@@ -52,7 +52,7 @@ type Musterabgleich struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
-	Wert    Expression `"musterabgleich" @@ "mit" EOS?`
+	Wert    Expression `"abgleiche" @@ "mit" EOS?`
 	Mustern []Muster   `@@* "beende"`
 }
 

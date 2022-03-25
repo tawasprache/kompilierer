@@ -18,7 +18,7 @@ mit fälle
 beende
 
 funk RotOderH(von: Farbe) Ganzzahl: beginne
-    gib musterabgleich von mit
+    gib abgleiche von mit
         #RGB(r, g, b) =>
             r
         #HSV(h, s, v) =>

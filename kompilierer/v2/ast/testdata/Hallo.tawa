@@ -17,8 +17,8 @@ mit fälle
     )
 beende
 
-funk NeueFarbe(von: Farbe) Farbe: beginne
-    a := musterabgleich von mit
+funk NeueFarbe(es: Farbe) Farbe: beginne
+    a := abgleiche es mit
         #RGB(r, g, b) =>
             r
         #HSV(h, s, v) =>

@@ -149,7 +149,7 @@ func binaryVonParser(
 type MusterabgleichExpression struct {
 	pos
 
-	Wert    Expression `"musterabgleich" @@ "mit"`
+	Wert    Expression `"abgleiche" @@ "mit"`
 	Mustern []*Muster  `@@* "beende"`
 
 	istExpressionImpl
