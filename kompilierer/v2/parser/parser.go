@@ -25,9 +25,10 @@ type Typ struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
+	Expression *Expression `@@`
 	// Typvariable    *Typvariable    `  ("§"@Ident)`
 	// Typfunktion    *Typfunktion    `| (@@)`
-	Typkonstruktor *Typkonstruktor `(@@)`
+	// Typkonstruktor *Typkonstruktor `(@@)`
 }
 
 // type Typfunktion struct {
@@ -35,26 +36,19 @@ type Typ struct {
 // 	Rückgabetyp *Typ  `(":" @@)?`
 // }
 // type Typvariable string
-type Typkonstruktor struct {
-	Pos    lexer.Position
-	EndPos lexer.Position
+// type Typkonstruktor struct {
+// 	Pos    lexer.Position
+// 	EndPos lexer.Position
 
-	Name Symbolkette `@@`
-	// Generischeargumenten []Typ       `("[" ( @@ ( "," @@ )* )? "]")?`
-}
+// 	Name Symbolkette `@@`
+// 	// Generischeargumenten []Typ       `("[" ( @@ ( "," @@ )* )? "]")?`
+// }
 
 type Ident struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
 	Name string `@Ident`
-}
-
-type Symbolkette struct {
-	Pos    lexer.Position
-	EndPos lexer.Position
-
-	Symbolen []Ident `@@ ( "::" @@ )*`
 }
 
 type Argument struct {

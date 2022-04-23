@@ -41,8 +41,8 @@ func Walk(v Visitor, n Node) {
 	case *Feld:
 		Walk(v, node.Name)
 		Walk(v, node.Typ)
-	case *Typkonstruktor:
-		Walk(v, node.Ident)
+	// case *Typkonstruktor:
+	// 	Walk(v, node.Ident)
 	case *Block:
 		for _, anweisung := range node.Anweisungen {
 			Walk(v, anweisung)
@@ -70,7 +70,7 @@ func Walk(v Visitor, n Node) {
 		Walk(v, node.Name)
 		Walk(v, node.Typ)
 	case *StrukturwertExpression:
-		Walk(v, node.Name)
+		Walk(v, node.Typ)
 		for _, arg := range node.Argumente {
 			Walk(v, arg)
 		}
@@ -89,7 +89,7 @@ func Walk(v Visitor, n Node) {
 		Walk(v, node.Pattern)
 		Walk(v, node.Expression)
 	case *Pattern:
-		Walk(v, node.Name)
+		Walk(v, node.Konstruktor)
 		for _, vari := range node.Variabeln {
 			Walk(v, vari)
 		}

@@ -83,6 +83,13 @@ func (s *Strukturtyp) Typ() Typ {
 	return s
 }
 
+func (s *Strukturtyp) Kindobjekte() (r []Objekt) {
+	for _, es := range s.Fälle {
+		r = append(r, es)
+	}
+	return r
+}
+
 func (s *Strukturtyp) Feld(n string) (f *Strukturfeld) {
 	for _, es := range s.Felden {
 		if es.Name == n {

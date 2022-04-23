@@ -26,7 +26,7 @@ type Terminal struct {
 
 	Ganzzahl       *int            `  @Int`
 	Musterabgleich *Musterabgleich `| @@`
-	Variable       *Symbolkette    `| @@`
+	Variable       *Ident          `| @@`
 	Zeichenkette   *string         `| (@String | @RawString)`
 	Strukturwert   *Strukturwert   `| @@`
 }
@@ -35,7 +35,7 @@ type Strukturwert struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
-	Name           Symbolkette    `"#" @@`
+	Typ            Expression     `"#" @@`
 	Argumente      []Expression   `("(" ( @@ ( "," @@ )* )? ")")?`
 	Strukturfelden []Strukturfeld `("{" ( @@ ( "," @@ )* )? "}")?`
 }
@@ -68,6 +68,6 @@ type Pattern struct {
 	Pos    lexer.Position
 	EndPos lexer.Position
 
-	Name      Symbolkette `"#" @@`
-	Variabeln []Ident     `("(" ( @@ ( "," @@ )* )? ")")?`
+	Konstruktor Expression `"#" @@`
+	Variabeln   []Ident    `("(" ( @@ ( "," @@ )* )? ")")?`
 }

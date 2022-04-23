@@ -7,6 +7,7 @@ type Objekt interface {
 	Paket() string
 	Pos() lexer.Position
 	Typ() Typ
+	Kindobjekte() []Objekt
 
 	Sichtbarkeitsbereich() *Sichtbarkeitsbereich
 }
@@ -17,10 +18,15 @@ type objekt struct {
 	paket                string
 	pos                  lexer.Position
 	typ                  Typ
+	kindobjekte          []Objekt
 }
 
 func (o *objekt) Name() string {
 	return o.name
+}
+
+func (o *objekt) Kindobjekte() []Objekt {
+	return o.kindobjekte
 }
 
 func (o *objekt) Paket() string {

@@ -30,20 +30,42 @@ func neuNamenaufslösungkontext(ktx *Kontext) *namenaufslösungkontext {
 	return k
 }
 
-func (k *namenaufslösungkontext) sucheTyp(a ast.Typnutzung) (*Strukturtyp, error) {
+func (k *Sichtbarkeitsbereich) sucheObjekt(a ast.Typnutzung) (Objekt, error) {
 	switch t := a.(type) {
-	case *ast.Typkonstruktor:
-		_, o := k.sichtbarkeitsbereich.Suchen(t.Ident.String())
-		switch objekt := o.(type) {
-		case *Strukturtyp:
-			return objekt, nil
-		case nil:
+	case *ast.IdentExpression:
+		_, o := k.Suchen(t.Ident.String())
+		if o == nil {
 			return nil, fehlerberichtung.Neu(fehlerberichtung.TypNichtGefunden, a)
-		default:
-			return nil, fehlerberichtung.Neu(fehlerberichtung.IstKeinTyp, a)
 		}
+		return o, nil
+	case *ast.SelektorExpression:
+		übergeordneterObjekt, feh := k.sucheObjekt(t.Objekt)
+		if feh != nil {
+			println("feld fail")
+			return nil, feh
+		}
+		for _, objekt := range übergeordneterObjekt.Kindobjekte() {
+			if objekt.Name() == t.Feld.Name {
+				return objekt, nil
+			}
+		}
+		return nil, fehlerberichtung.Neu(fehlerberichtung.FeldNichtGefunden, a)
 	default:
 		panic("e")
+	}
+}
+
+func (k *Sichtbarkeitsbereich) sucheTyp(a ast.Typnutzung) (Typ, error) {
+	v, feh := k.sucheObjekt(a)
+	if feh != nil {
+		return nil, feh
+	}
+
+	switch t := v.(type) {
+	case Typ:
+		return t, nil
+	default:
+		return nil, fehlerberichtung.Neu(fehlerberichtung.IstKeinTyp, a)
 	}
 }
 
@@ -62,7 +84,7 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 							var r []Typ
 
 							for _, arg := range x.Argumenten.Argumente {
-								t, feh := k.sucheTyp(arg.Typ)
+								t, feh := k.sichtbarkeitsbereich.sucheTyp(arg.Typ)
 								if feh != nil {
 									k.fehler = append(k.fehler, feh)
 									r = append(r, nil /* TODO */)
@@ -78,7 +100,7 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 								return nil
 							}
 
-							t, feh := k.sucheTyp(x.Rückgabetyp)
+							t, feh := k.sichtbarkeitsbereich.sucheTyp(x.Rückgabetyp)
 							if feh != nil {
 								k.fehler = append(k.fehler, feh)
 								// TODO: fehlertyp
@@ -116,13 +138,13 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 		}
 		strukturTyp.Felden = func() (r []*Strukturfeld) {
 			for _, feld := range x.Felden {
-				t, feh := k.sucheTyp(feld.Typ)
+				t, feh := k.sichtbarkeitsbereich.sucheTyp(feld.Typ)
 				if feh != nil {
 					panic(feh)
 				}
 				r = append(r, &Strukturfeld{
 					Name:                      feld.Name.Name,
-					Typ:                       t.Typ(),
+					Typ:                       t,
 					ÜbergeordneterStrukturtyp: strukturTyp,
 				})
 			}
@@ -140,13 +162,13 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 				}
 				s.Fallname = fall.Name.Name
 				for _, feld := range fall.Felden {
-					t, feh := k.sucheTyp(feld.Typ)
+					t, feh := k.sichtbarkeitsbereich.sucheTyp(feld.Typ)
 					if feh != nil {
 						panic(feh)
 					}
 					s.Felden = append(s.Felden, Strukturfeld{
 						Name:                      feld.Name.Name,
-						Typ:                       t.Typ(),
+						Typ:                       t,
 						ÜbergeordneterStrukturtyp: strukturTyp,
 					})
 				}
@@ -157,7 +179,7 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 		k.ktx.Defs[x.Name] = strukturTyp.sichtbarkeitsbereich.Hinzufügen(strukturTyp)
 	case *ast.Argument:
 		// fehler handled in funktiondeklaration
-		t, _ := k.sucheTyp(x.Typ)
+		t, _ := k.sichtbarkeitsbereich.sucheTyp(x.Typ)
 		k.ktx.Defs[x.Name] = k.sichtbarkeitsbereich.Hinzufügen(
 			&Variable{
 				objekt: objekt{
@@ -165,7 +187,7 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 					name:                 x.Name.Name,
 					paket:                "TODO",
 					pos:                  x.Anfang(),
-					typ:                  t.Typ(),
+					typ:                  t,
 				},
 			},
 		)
@@ -180,37 +202,39 @@ func (k *namenaufslösungkontext) Visit(n ast.Node) ast.Visitor {
 				},
 			},
 		)
-	case *ast.Typkonstruktor:
-		_, o := k.sichtbarkeitsbereich.Suchen(x.Ident.String())
-		switch o.(type) {
-		case *Strukturtyp:
-			k.ktx.Benutzern[x.Ident] = o
-			return k
-		case nil:
-			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.TypNichtGefunden, n))
-		default:
-			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.IstKeinTyp, n))
-		}
+	// case *ast.Typkonstruktor:
+	// 	_, o := k.sichtbarkeitsbereich.Suchen(x.Ident.String())
+	// 	switch o.(type) {
+	// 	case *Strukturtyp:
+	// 		k.ktx.Benutzern[x.Ident] = o
+	// 		return k
+	// 	case nil:
+	// 		k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.TypNichtGefunden, n))
+	// 	default:
+	// 		k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.IstKeinTyp, n))
+	// 	}
 	case *ast.IdentExpression:
 		_, o := k.sichtbarkeitsbereich.Suchen(x.Ident.String())
 		switch o.(type) {
-		case *Variable:
-			k.ktx.Benutzern[x.Ident] = o
-			return k
+		// case *Variable:
+		// 	k.ktx.Benutzern[x.Ident] = o
+		// 	return k
 		case nil:
 			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.VarNichtGefunden, n))
 		default:
-			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.IstKeinVariable, n))
+			k.ktx.Benutzern[x.Ident] = o
+			return k
+			// k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.IstKeinVariable, n))
 		}
 	case *ast.StrukturwertExpression:
-		_, o := k.sichtbarkeitsbereich.Suchen(x.Name.String())
+		o, _ := k.sichtbarkeitsbereich.sucheObjekt(x.Typ)
 		var strukturtyp *Strukturtyp
 		switch objekt := o.(type) {
 		case *Strukturfall:
-			k.ktx.Benutzern[x.Name] = objekt
+			k.ktx.Benutzern[x.Typ] = objekt
 			strukturtyp = objekt.ÜbergeordneterStrukturtyp
 		case *Strukturtyp:
-			k.ktx.Benutzern[x.Name] = objekt
+			k.ktx.Benutzern[x.Typ] = objekt
 			strukturtyp = objekt
 		case nil:
 			k.fehler = append(k.fehler, fehlerberichtung.Neu(fehlerberichtung.TypNichtGefunden, n))
@@ -237,15 +261,15 @@ func (k *namenaufslösungkontext) EndVisit(n ast.Node) {
 }
 
 type Kontext struct {
-	Defs                   map[*ast.Ident]Objekt
-	Benutzern              map[*ast.Ident]Objekt
+	Defs                   map[ast.Node]Objekt
+	Benutzern              map[ast.Node]Objekt
 	Sichtbarkeitsbereichen map[ast.Node]*Sichtbarkeitsbereich
 }
 
 func NeuKontext() *Kontext {
 	return &Kontext{
-		Defs:                   map[*ast.Ident]Objekt{},
-		Benutzern:              map[*ast.Ident]Objekt{},
+		Defs:                   map[ast.Node]Objekt{},
+		Benutzern:              map[ast.Node]Objekt{},
 		Sichtbarkeitsbereichen: map[ast.Node]*Sichtbarkeitsbereich{},
 	}
 }

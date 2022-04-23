@@ -27,6 +27,9 @@ var Falsch Objekt = &Strukturfall{
 }
 
 var Wahrheitswert = &Strukturtyp{
+	objekt: objekt{
+		kindobjekte: []Objekt{Wahr, Falsch},
+	},
 	Fälle: []*Strukturfall{
 		Wahr.(*Strukturfall),
 		Falsch.(*Strukturfall),

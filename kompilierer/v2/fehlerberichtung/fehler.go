@@ -18,6 +18,7 @@ const (
 	TypNichtGefunden
 	VarNichtGefunden
 	FeldNichtGefunden
+	FallNichtGefunden
 	MüssenFallSein
 	NichtGenugArgumente
 	ZuVieleArgumente
@@ -48,6 +49,8 @@ func String(f Fehlercode) string {
 	case TypNichtGefunden:
 		return "Typ kann nicht gefunden"
 	case VarNichtGefunden:
+		return "Var kann nicht gefunden"
+	case FallNichtGefunden:
 		return "Var kann nicht gefunden"
 	case IstKeinTyp:
 		return "Es ist kein Typ"

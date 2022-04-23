@@ -16,7 +16,7 @@ func terminalVonParser(p parser.Terminal) Expression {
 	if p.Variable != nil {
 		return &IdentExpression{
 			pos:   pos{p.Pos, p.EndPos},
-			Ident: symbolketteVonParser(*p.Variable),
+			Ident: identVonParser(*p.Variable),
 		}
 	} else if p.Ganzzahl != nil {
 		return &GanzzahlExpression{
@@ -30,8 +30,8 @@ func terminalVonParser(p parser.Terminal) Expression {
 		}
 	} else if p.Strukturwert != nil {
 		s := &StrukturwertExpression{
-			pos:  pos{p.Pos, p.EndPos},
-			Name: symbolketteVonParser(p.Strukturwert.Name),
+			pos: pos{p.Pos, p.EndPos},
+			Typ: expressionVonParser(p.Strukturwert.Typ),
 		}
 		for _, arg := range p.Strukturwert.Argumente {
 			s.Argumente = append(s.Argumente, expressionVonParser(arg))
@@ -51,8 +51,10 @@ func terminalVonParser(p parser.Terminal) Expression {
 			Wert: expressionVonParser(p.Musterabgleich.Wert),
 		}
 		for _, muster := range p.Musterabgleich.Mustern {
-			pat := &Pattern{}
-			pat.Name = symbolketteVonParser(muster.Pattern.Name)
+			pat := &Pattern{
+				pos: pos{muster.Pattern.Pos, muster.Pattern.EndPos},
+			}
+			pat.Konstruktor = expressionVonParser(muster.Pattern.Konstruktor)
 			for _, vr := range muster.Pattern.Variabeln {
 				pat.Variabeln = append(pat.Variabeln, identVonParser(vr))
 			}
@@ -77,7 +79,7 @@ type StrukturwertFeld struct {
 type StrukturwertExpression struct {
 	pos
 
-	Name      *Ident
+	Typ       Expression
 	Argumente []Expression
 	Felden    []*StrukturwertFeld
 
@@ -165,8 +167,8 @@ type Muster struct {
 type Pattern struct {
 	pos
 
-	Name      *Ident   `"#" @@`
-	Variabeln []*Ident `("(" ( @@ ( "," @@ )* )? ")")?`
+	Konstruktor Expression `"#" @@`
+	Variabeln   []*Ident   `("(" ( @@ ( "," @@ )* )? ")")?`
 }
 
 func expressionVonParser(p parser.Expression) Expression {

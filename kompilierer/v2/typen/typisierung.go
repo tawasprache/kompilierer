@@ -99,15 +99,21 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 		var falltyp Typ
 		for _, fall := range expr.Mustern {
 			sichtbarkeitsbereich := t.ktx.Sichtbarkeitsbereichen[fall]
-			f := strukturtyp.Fall(fall.Pattern.Name.Name)
-			if f == nil {
-				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.IstKeinFall, fall.Pattern.Name))
+			konstruktor, _ := t.s.sucheObjekt(fall.Pattern.Konstruktor)
+			switch konstruktor := konstruktor.(type) {
+			case *Strukturfall:
+				for idx, variable := range fall.Pattern.Variabeln {
+					sichtbarkeitsbereich.namen[variable.Name].(*Variable).typ = konstruktor.Felden[idx].Typ
+				}
+			case nil:
+				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.FeldNichtGefunden, fall.Pattern.Konstruktor))
 				for _, variable := range fall.Pattern.Variabeln {
 					sichtbarkeitsbereich.namen[variable.Name].(*Variable).typ = &Fehlertyp{}
 				}
-			} else {
-				for idx, variable := range fall.Pattern.Variabeln {
-					sichtbarkeitsbereich.namen[variable.Name].(*Variable).typ = f.Felden[idx].Typ
+			default:
+				t.fehler = append(t.fehler, fehlerberichtung.Neu(fehlerberichtung.IstKeinFall, fall.Pattern.Konstruktor))
+				for _, variable := range fall.Pattern.Variabeln {
+					sichtbarkeitsbereich.namen[variable.Name].(*Variable).typ = &Fehlertyp{}
 				}
 			}
 			alt := t.s
@@ -121,7 +127,7 @@ func (t *typisierung) synthGetypisiertExpression(expr ast.Expression) Typ {
 		}
 		return falltyp
 	case *ast.StrukturwertExpression:
-		_, obj := t.s.Suchen(expr.Name.String())
+		obj, _ := t.s.sucheObjekt(expr.Typ)
 		if obj == nil {
 			panic("nicht gefunden")
 		}
@@ -209,7 +215,7 @@ func (t *typisierung) EndVisit(n ast.Node) {
 }
 
 func Typisierung(a *ast.Datei, ktx *Kontext) []error {
-	k := &typisierung{nil, ktx, nil, nil}
+	k := &typisierung{nil, ktx, Welt, nil}
 	ast.Walk(k, a)
 	return k.fehler
 }

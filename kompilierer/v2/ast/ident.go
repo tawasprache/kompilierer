@@ -2,7 +2,6 @@ package ast
 
 import (
 	"Tawa/kompilierer/v2/parser"
-	"strings"
 )
 
 type Ident struct {
@@ -24,19 +23,5 @@ func identVonParser(p parser.Ident) *Ident {
 			ende:   p.EndPos,
 		},
 		Name: p.Name,
-	}
-}
-
-func symbolketteVonParser(p parser.Symbolkette) *Ident {
-	idents := []string{}
-	for _, es := range p.Symbolen {
-		idents = append(idents, es.Name)
-	}
-	return &Ident{
-		pos: pos{
-			anfang: p.Pos,
-			ende:   p.EndPos,
-		},
-		Name: strings.Join(idents, "::"),
 	}
 }

@@ -19,11 +19,11 @@ beende
 
 funk RotOderH(von: Farbe) Ganzzahl: beginne
     gib abgleiche von mit
-        #RGB(r, g, b) =>
+        #Farbe.RGB(r, g, b) =>
             r
-        #HSV(h, s, v) =>
+        #Farbe.HSV(h, s, v) =>
             h
-        #LOL(l) =>
+        #Farbe.LOL(l) =>
             l
     beende
 beende
