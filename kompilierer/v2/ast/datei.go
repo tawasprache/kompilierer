@@ -6,6 +6,7 @@ type Datei struct {
 	pos
 
 	Deklarationen []Deklaration
+	Verwendungen  []*Verwendung
 }
 
 func VonParser(p parser.Modul) *Datei {
@@ -24,6 +25,9 @@ func VonParser(p parser.Modul) *Datei {
 		} else {
 			panic("e")
 		}
+	}
+	for _, es := range p.Verwendungen {
+		datei.Verwendungen = append(datei.Verwendungen, verwendungVonParser(es))
 	}
 
 	return &datei

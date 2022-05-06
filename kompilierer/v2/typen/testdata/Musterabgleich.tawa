@@ -5,23 +5,23 @@ typ Farbe = verbund
 
 mit fälle
 	RGB: (
-        r: Ganzzahl
-        b: Ganzzahl
-        g: Ganzzahl
-    )
+		r: Ganzzahl
+		b: Ganzzahl
+		g: Ganzzahl
+	)
 
 	HSV: (
-        h: Ganzzahl
-        s: Ganzzahl
-        v: Ganzzahl
-    )
+		h: Ganzzahl
+		s: Ganzzahl
+		v: Ganzzahl
+	)
 beende
 
 funk RotOderH(von: Farbe) Ganzzahl: beginne
-    gib abgleiche von mit
-        #Farbe.RGB(r, g, b) =>
-            r
-        #Farbe.HSV(h, s, v) =>
-            h
-    beende
+	gib abgleiche von mit
+		#Farbe.RGB(r, g, b) =>
+			r
+		#Farbe.HSV(h, s, v) =>
+			h
+	beende
 beende

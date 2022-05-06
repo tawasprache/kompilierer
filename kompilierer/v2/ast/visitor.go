@@ -93,6 +93,10 @@ func Walk(v Visitor, n Node) {
 		for _, vari := range node.Variabeln {
 			Walk(v, vari)
 		}
+	case *Verwendung:
+		if node.Als != nil {
+			Walk(v, node.Als)
+		}
 	case *Ident, *GanzzahlExpression, *ZeichenketteExpression:
 		return
 	default:

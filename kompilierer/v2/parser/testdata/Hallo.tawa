@@ -1,20 +1,20 @@
 paket Hallo
 
 typ Farbe = verbund
-	a: Eingebaut::Ganz
+	a: Ganzzahl
 
 mit fälle
 	RGB: (
-        r: Eingebaut::Ganz
-        b: Eingebaut::Ganz
-        g: Eingebaut::Ganz
-    )
+		r: Ganzzahl
+		b: Ganzzahl
+		g: Ganzzahl
+	)
 
 	HSV: (
-        h: Eingebaut::Ganz
-        s: Eingebaut::Ganz
-        v: Eingebaut::Ganz
-    )
+		h: Ganzzahl
+		s: Ganzzahl
+		v: Ganzzahl
+	)
 beende
 
 funk Hallo(): beginne

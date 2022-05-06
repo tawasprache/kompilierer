@@ -1,7 +1,10 @@
 paket Hallo
 
+verwende "Tawa/DeineMutter"
+verwende "Tawa/Farben" als Farben
+
 typ Farbe = verbund
-    a: Eingebaut::Ganz
+	a: Ganzzahl
 beende
 
 funk NeueFarbe(von: Farbe) Farbe: beginne

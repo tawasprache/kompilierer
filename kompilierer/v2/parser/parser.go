@@ -10,7 +10,16 @@ type Modul struct {
 	EndPos lexer.Position
 
 	Name               Ident              `"paket" @@ EOS`
+	Verwendungen       []Verwendung       `(@@ EOS)*`
 	Moduldeklarationen []Moduldeklaration `(@@ EOS)*`
+}
+
+type Verwendung struct {
+	Pos    lexer.Position
+	EndPos lexer.Position
+
+	Paket string `"verwende" (@String | @RawString)`
+	Als   *Ident `("als" @@)?`
 }
 
 type Moduldeklaration struct {

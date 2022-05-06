@@ -1,0 +1,8 @@
+paket Nutzung
+
+verwende "Deine"
+verwende "Mutter" als Mama
+
+funk Math() Ganzzahl: beginne
+    gib Deine.Mutter() + Mama.Deine()
+beende

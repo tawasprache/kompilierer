@@ -1,37 +1,40 @@
 paket Hallo
 
+verwende "Tawa/DeineMutter"
+verwende "Tawa/Farben" als Farben
+
 typ Farbe = verbund
-	a: Eingebaut::Ganz
+	a: Ganzzahl
 
 mit fälle
 	RGB: (
-        r: Eingebaut::Ganz
-        b: Eingebaut::Ganz
-        g: Eingebaut::Ganz
-    )
+		r: Ganzzahl
+		b: Ganzzahl
+		g: Ganzzahl
+	)
 
 	HSV: (
-        h: Eingebaut::Ganz
-        s: Eingebaut::Ganz
-        v: Eingebaut::Ganz
-    )
+		h: Ganzzahl
+		s: Ganzzahl
+		v: Ganzzahl
+	)
 beende
 
 funk NeueFarbe(es: Farbe) Farbe: beginne
-    a := abgleiche es mit
-        #RGB(r, g, b) =>
-            r
-        #HSV(h, s, v) =>
-            h
-    beende
+	a := abgleiche es mit
+		#RGB(r, g, b) =>
+			r
+		#HSV(h, s, v) =>
+			h
+	beende
 beende
 
 funk Hallo(): beginne
-    sei a := 5
-    a := a + 3
-    k := a.b
+	sei a := 5
+	a := a + 3
+	k := a.b
 
-    gib 5
+	gib 5
 
-    a := 3
+	a := 3
 beende
